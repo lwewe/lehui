@@ -263,7 +263,7 @@
 </template>
 <script>
 import City from "@/components/City.vue";
-
+import { getHemaLoginUrlshangcheng } from "@/api/hemashangcheng";
 import { getIndexList } from "@/api/lhcard";
 import { brandList, productLists, categoryList, channelList, homeInd, zoneList } from "@/api/lhjdtm";
 import { getYonghuiLoginUrl } from "@/api/yonghui";
@@ -282,8 +282,12 @@ import { getHemaLoginUrl } from "@/api/hema";
 import { getDacheLoginUrl } from "@/api/dache";
 import { getMaidelongLoginUrl } from "@/api/maidelong";
 import { getQuchenshiLoginUrl } from "@/api/quchenshi";
-
+import { getDongfangLoginUrl } from "@/api/dongfang";
 import { getPlatformName } from '@/utils/platform'
+
+import { getJuheShangchaoLoginUrl } from "@/api/juheshangchao";
+
+
 export default {
   name: "IndexView",
   components: {
@@ -392,6 +396,115 @@ export default {
     }
   },
   methods: {
+    // 跳转到聚合商超免密登录
+    async goToJuheShangchao() {
+      // 防止重复点击
+      if (this.isGettingLocation) return;
+
+      this.isGettingLocation = true;
+
+      try {
+        this.$toast.loading({
+          message: '正在跳转聚合商超...',
+          forbidClick: true,
+          duration: 0
+        });
+
+        const res = await getJuheShangchaoLoginUrl();
+
+        this.$toast.clear();
+
+        console.log('聚合商超免密登录接口返回:', res);
+
+        // ✅ 注意：返回的是 data.jdUrl
+        if (res.code === 200 && res.data && res.data.jdUrl) {
+          const jdUrl = res.data.jdUrl;
+          console.log('聚合商超免密登录URL:', jdUrl);
+
+          // 跳转到聚合商超
+          window.location.href = jdUrl;
+        } else {
+          this.$toast.fail(res.msg || '获取登录链接失败');
+        }
+      } catch (error) {
+        console.error('聚合商超免密登录失败:', error);
+        this.$toast.clear();
+        this.$toast.fail('跳转失败，请重试');
+      } finally {
+        this.isGettingLocation = false;
+      }
+    },
+    // 跳转到盒马免密登录
+    async goToHemashangcheng() {
+      if (this.isGettingLocation) return;
+
+      this.isGettingLocation = true;
+
+      try {
+        this.$toast.loading({
+          message: '正在跳转盒马商城...',
+          forbidClick: true,
+          duration: 0
+        });
+
+        const res = await getHemaLoginUrlshangcheng();
+
+        this.$toast.clear();
+
+        console.log('盒马商城免密登录接口返回:', res);
+
+        // ✅ 商城返回的是 data.data
+        if (res.code === 200 && res.data && res.data.data) {
+          const loginUrl = res.data.data;
+          console.log('盒马商城免密登录URL:', loginUrl);
+          window.location.href = loginUrl;
+        } else {
+          this.$toast.fail(res.msg || '获取登录链接失败');
+        }
+      } catch (error) {
+        console.error('盒马商城免密登录失败:', error);
+        this.$toast.clear();
+        this.$toast.fail('跳转失败，请重试');
+      } finally {
+        this.isGettingLocation = false;
+      }
+    },
+    // 跳转到东方甄选
+    async goToDongfang() {
+      if (this.isGettingLocation) return;
+
+      this.isGettingLocation = true;
+
+      try {
+        this.$toast.loading({
+          message: '正在跳转东方甄选...',
+          forbidClick: true,
+          duration: 0
+        });
+
+        const res = await getDongfangLoginUrl();
+
+        this.$toast.clear();
+
+        console.log('东方甄选响应:', res);
+
+        if (res.code === 200 && res.data && res.data.h5Url) {
+          const h5Url = res.data.h5Url;
+          console.log('东方甄选H5URL:', h5Url);
+
+          // 跳转到东方甄选
+          window.location.href = h5Url;
+        } else {
+          this.$toast.fail(res.msg || '获取登录链接失败');
+        }
+      } catch (error) {
+        console.error('东方甄选跳转失败:', error);
+        this.$toast.clear();
+        this.$toast.fail('跳转失败，请重试');
+      } finally {
+        this.isGettingLocation = false;
+      }
+    },
     // 跳转到麦德龙
     async goToMaidelong() {
       if (this.isGettingLocation) return;
@@ -1125,10 +1238,13 @@ export default {
         return;
       }
       if (item.id == 13) {
-        this.goToHema();
+        this.goToHemashangcheng();
         return;
       }
-
+      if (item.id == 80) {
+        this.goToJuheShangchao();
+        return;
+      }
       // 酒店
       if (item.id == 7) {
         this.goToElemaLogin();
@@ -1215,45 +1331,7 @@ export default {
       if (ixd == 7) this.$router.push({ path: "/TissueZone", query: { id: item.id } })
       if (ixd == 3) this.$router.push({ path: "/SnackZone", query: { id: item.id } })
     },
-    // 根据分类 id 获取商品列表（调用 productList 接口）
-    // getGoodPickByCategory(cate_id, page = 1) {
-    //   // this.isLoading = true
-    //   // this.loadingflag = false
-    //   productLists({
-    //     cate_id: cate_id,
-    //     platform: 0,
-    //     page: page,
-    //     pagesize: 10
-    //   }).then(res => {
-    //     // this.isLoading = false
-    //     if (res.code == 200) {
-    //       let productData = []
-    //       if (res.data && Array.isArray(res.data)) {
-    //         productData = res.data
-    //       } else if (res.data && res.data.data && Array.isArray(res.data.data)) {
-    //         productData = res.data.data
-    //       } else if (res.data && res.data.product_list && Array.isArray(res.data.product_list)) {
-    //         productData = res.data.product_list
-    //       } else if (res.data && res.data.list && Array.isArray(res.data.list)) {
-    //         productData = res.data.list
-    //       }
-    //       if (productData.length === 0) {
-    //         this.isScroll = true
-    //         return
-    //       }
-    //       if (page === 1) {
-    //         this.shopList = []
-    //       }
-    //       productData.forEach(item => {
-    //         this.shopList.push(item)
-    //       })
-    //       this.splitShopList(this.shopList)
-    //       // this.isTab = false
-    //     }
-    //   }).catch(error => {
-    //     this.isLoading = false
-    //   })
-    // },
+
     toCustomer() {
       window.location.href = this.kefu
     },
@@ -1337,7 +1415,10 @@ export default {
         this.goToQuchenshi();
         return;
       }
-
+      if (item.id == 79) {
+        this.goToDongfang();
+        return;
+      }
 
       if (item.id == 77) {
         this.goToZhongshihua();
@@ -1462,24 +1543,7 @@ export default {
       })
     },
 
-    // getFlashSaleList() {
-    //   return flashSaleList().then(res => {
-    //     if (res.code == 200) {
-    //       if (res.data.product_class) {
-    //         res.data.product_class.forEach(item => {
-    //           this.tabList.push(item)
-    //         })
-    //       }
-    //       if (this.$store.state.festivals == 2) {
-    //         this.tabList = this.tabList.filter(item => item.id == 1 || item.id == 2 || item.id == 3)
-    //       }
-    //       if (this.tabList.length > 0) {
-    //         this.active = this.tabList[0].id
-    //       }
-    //       this.flashSale = res.data.flash_sale || []
-    //     }
-    //   })
-    // },
+
 
     // 获取商品列表
     getGoodPick(page = this.page) {
