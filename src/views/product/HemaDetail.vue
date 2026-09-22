@@ -112,7 +112,7 @@
             </div>
 
             <!-- 备注 -->
-            <div style="margin-top:15px;">
+            <div style="margin-top:15px;" class="hcard">
               <div class="title">备注（选填）</div>
               <van-field v-model="remark" rows="2" autosize type="textarea" maxlength="100" placeholder="如：请放门口"
                 show-word-limit />
@@ -128,7 +128,7 @@
             </div>
 
             <!-- 详细地址 -->
-            <div style="margin-top:15px;">
+            <div style="margin-top:15px;" class="hcard">
               <div class="title">详细地址</div>
               <van-field v-model="addressDetail" placeholder="如：光谷大道1号" maxlength="50" />
             </div>
@@ -866,4 +866,6 @@ export default {
   color: #ED2F35;
   font-size: 14px;
 }
+.hcard .van-cell {
+    padding: 10px 0px !important;}
 </style>

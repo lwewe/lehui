@@ -23,9 +23,9 @@
         <!-- 左侧分类菜单：展示顶层分类 -->
         <div class="sidebar">
           <div class="menu-item" v-for="(item, index) in topCategories" :key="item.id"
-            :class="{ active: activeCategoryId === item.id }" @click="selectCategory(item, index)">
+            :class="{ active: String(activeCategoryId) === String(item.id) }" @click="selectCategory(item, index)">
             {{ item.title }}
-            <div class="active-line" v-if="activeCategoryId === item.id"></div>
+            <div class="active-line" v-if="String(activeCategoryId) === String(item.id)"></div>
           </div>
         </div>
 
@@ -108,6 +108,12 @@ export default {
   computed: {
     // 可以保留，但逻辑已放到方法中
   },
+  activated() {
+    console.log('JingzaoCategory activated');
+    if (this.topCategories.length === 0) {
+      this.IndexcategoryList();
+    }
+  },
   methods: {
     // 获取首页数据
     Indexhome() {
@@ -125,12 +131,21 @@ export default {
         console.log('分类数据:', res);
         if (res.code === 200) {
           this.categories = res.data || [];
-          // 筛选顶层分类
-          this.topCategories = this.categories.filter(item => item.pid === 0);
+          // 顶层分类：pid 用字符串比较，避免类型不一致
+          this.topCategories = this.categories.filter(item => String(item.pid) === '0');
 
-          // 默认选中第一个顶层分类
+          // 默认选中第一个
           if (this.topCategories.length > 0) {
             this.selectCategory(this.topCategories[0], 0);
+          }
+
+          // 首页带 categoryId 进来时，高亮对应的一级分类
+          const cid = this.$route.query.categoryId;
+          if (cid) {
+            const index = this.topCategories.findIndex(item => String(item.id) === String(cid));
+            if (index !== -1) {
+              this.selectCategory(this.topCategories[index], index);
+            }
           }
         }
       });
@@ -172,13 +187,11 @@ export default {
 
     // 选择顶层分类
     selectCategory(category, index) {
+      if (!category) return;
       this.activeCategoryId = category.id;
       this.activeCategoryIndex = index;
       this.currentCategory = category;
-      this.goodsList = [];  // 清空之前的商品列表
-
-      // 如果有子分类，不加载商品
-      // 如果没有子分类，加载该分类下的商品
+      this.goodsList = [];
       if (!category.children || category.children.length === 0) {
         this.IndexproductList(category.id);
       }
@@ -207,7 +220,8 @@ export default {
   },
 
   mounted() {
-    // this.Indexhome();
+
+    console.log('JingzaoCategory mounted');
     this.IndexcategoryList();
   }
 };
@@ -317,7 +331,7 @@ export default {
 
       &.active {
         background: #fff;
-        color: #d32f2f;
+        color: #d32f2f !important;
         font-weight: bold;
 
         .active-line {
@@ -458,9 +472,20 @@ export default {
 
     &.active {
       .tab-text {
-        color: #ff3b30;
+        color: #ff3b30 !important;
         font-weight: bold;
       }
+    }
+  }
+}
+.tab-item {
+  .tab-text {
+    font-size: 10px;
+    color: #999;
+
+    &.active {
+      color: #ff3b30 !important;
+      font-weight: bold;
     }
   }
 }

@@ -82,6 +82,9 @@ export default {
     }
   },
   
+activated() {
+     this.channelDetailIndex()
+  },
   mounted() {
     this.channelDetailIndex()
   },

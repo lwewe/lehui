@@ -102,17 +102,17 @@
 
     <!-- 6. 底部导航 -->
     <div class="tab-bar">
-      <div class="tab-item" @click="goToHome">
+      <div class="tab-item" @click="goToHome" :class="{ active: $route.path === '/JingdongChannel' }">
         <img class="tab-icon"
           :src="$route.path === '/JingdongChannel' ? require('../../assets/lh/jdzy/hm1-1.png') : require('../../assets/lh/jdzy/hm1-0.png')"
           alt="首页" />
-        <div class="tab-text" :class="{ active: $route.path === '/JingdongChannel' }">首页</div>
+        <div class="tab-text"  >首页</div>
       </div>
-      <div class="tab-item" @click="goToCategory">
+      <div class="tab-item" @click="goToCategory"  :class="{ active: $route.path === '/JingdongCategory' }">
         <img class="tab-icon"
           :src="$route.path === '/JingdongCategory' ? require('../../assets/lh/jdzy/hm2-2.png') : require('../../assets/lh/jdzy/hm2-2.png')"
           alt="分类" />
-        <div class="tab-text" :class="{ active: $route.path === '/JingdongCategory' }">分类</div>
+        <div class="tab-text"  >分类</div>
       </div>
     </div>
   </div>
@@ -145,6 +145,17 @@ export default {
     }
   },
   methods: {
+     goToCategoryWithId(item) {
+      this.$router.push({
+        path: '/productList',
+        query: {
+          keyword: item.title,
+          platform: 1,
+          jd_type: 2,
+          t: Date.now()
+        }
+      });
+    },
     // 获取首页数据（home接口）
     Indexhome() {
       home({ platform: this.platform, limit: 10 }).then(res => {
@@ -238,17 +249,17 @@ export default {
     //   });
     // },
 
- goToCategoryWithId(item) {
-  this.$router.push({
-    path: '/productList',
-    query: {
-      keyword: item.title,
-      platform: 1,
-      jd_type: 2,
-      t: Date.now()
-    }
-  });
-},
+//  goToCategoryWithId(item) {
+//   this.$router.push({
+//     path: '/productList',
+//     query: {
+//       keyword: item.title,
+//       platform: 1,
+//       jd_type: 2,
+//       t: Date.now()
+//     }
+//   });
+// },
     // 跳转超值购列表
     // goToSuperValue(type) {
     //   // this.$router.push({
@@ -332,27 +343,36 @@ export default {
             }));
           }
 
+          this.hotList =data.sections[0].items
+            this.recommendList = data.sections[1].items
+             this.newList =data.sections[2].items
+             this.goodsList =data.sections[3].items
+
           // 3. sections：按 title 精确匹配
           if (data.sections && data.sections.length > 0) {
+            
             data.sections.forEach(section => {
               const items = (section.items || []).map(p => ({ ...p, img: fixImg(p.img) }));
 
-              if (section.title === '热销推荐') {
-                this.hotList = items;
-              } else if (section.title === '超值购') {
-                this.recommendList = items.slice(0, 2);   // 双卡片只取前 2 个
-              } else if (section.title === '上新了') {
-                this.newList = items.slice(0, 2);         // 双卡片只取前 2 个
-              } else if (section.title === '首页下面得') {
-                this.goodsList = items;                   // 底部瀑布流
-              }
+              // if (section.title === '热销推荐') {
+              //   this.hotList = items;
+              // } else if (section.title === '超值购') {
+              //   this.recommendList = items.slice(0, 2);   // 双卡片只取前 2 个
+              // } else if (section.title === '上新了') {
+              //   this.newList = items.slice(0, 2);         // 双卡片只取前 2 个
+              // } else if (section.title === '首页下面得') {
+              //   this.goodsList = items;                   // 底部瀑布流
+              // }
             });
           }
         }
       })
     }
   },
-
+activated() {
+  // 每次进入都重新请求
+  this.channelDetailIndex();
+},
   mounted() {
 
     this.channelDetailIndex();

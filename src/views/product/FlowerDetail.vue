@@ -58,7 +58,7 @@
     <div>
       <van-goods-action>
         <van-goods-action-mini-btn @click="toKefu" :icon="require('../../assets/tubiao/kfz.png')" text="客服" />
-        <van-goods-action-big-btn class="toPay" style="width:100%;" primary text="立即购买-" @click="openSelect" />
+        <van-goods-action-big-btn class="toPay" style="width:100%;" primary text="立即购买" @click="openSelect" />
       </van-goods-action>
     </div>
 
@@ -113,14 +113,14 @@
               </div>
             </div>
             <!-- 贺卡 -->
-            <div style="margin-top:15px;">
+            <div style="margin-top:15px;" class="hcard">
               <div class="title">贺卡信息（选填）</div>
               <van-field v-model="cardInfo" rows="2" autosize type="textarea" maxlength="50" placeholder="如：生日快乐"
                 show-word-limit />
             </div>
 
             <!-- 备注 -->
-            <div style="margin-top:15px;">
+            <div style="margin-top:15px;" class="hcard">
               <div class="title">买家备注（选填）</div>
               <van-field v-model="remark" rows="2" autosize type="textarea" maxlength="100" placeholder="如：请在工作日送达"
                 show-word-limit />
@@ -135,7 +135,7 @@
               </div>
             </div>
 
-            <div style="margin-top:15px;">
+            <div style="margin-top:15px;" class="hcard">
               <div class="title">门牌楼号</div>
               <van-field v-model="addressDetail" placeholder="如：XX小区 3号楼 502" maxlength="50" />
             </div>
@@ -151,7 +151,7 @@
           <!-- 5.3 底部按钮 -->
           <div class="footer">
             <div class="button" v-if="selectId == 1">
-              <div class="resetting complete" style="width:100%;" @click="submitOrder">确认下单-</div>
+              <div class="resetting complete" style="width:100%;" @click="submitOrder">确认下单</div>
             </div>
             <div class="button" v-if="selectId == 2">
               <div class="resetting complete" @click="addNewAddress"
@@ -1046,4 +1046,6 @@ confirmTime(val) {
   color: #c8c9cc;
   font-size: 14px;
 }
+.hcard .van-cell {
+    padding: 10px 0px !important;}
 </style>

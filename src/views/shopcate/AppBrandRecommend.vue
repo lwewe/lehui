@@ -180,6 +180,7 @@ export default {
       }
     }
   },
+  
   mounted() {
     this.fetchBrandList().then(() => {
       this.fetchGoods()

@@ -7,7 +7,7 @@
         <div class="search-row">
           <div class="location">
             <div class="back-btn" @click="goBack">
-         
+
               <img src="../../assets/lh/bk1.png" style="width: 12px;" alt="返回" />
             </div>
           </div>
@@ -158,7 +158,7 @@ export default {
               if (section.items && section.items.length > 0) {
                 // 根据 section.type 或 title 区分
                 if (section.title === '超值购') {
-                  this.hotList = section.items.slice(0,4);
+                  this.hotList = section.items.slice(0, 4);
                 } else if (section.title === '热销推荐' || section.title === '上新') {
                   this.goodsList = section.items;
                 }
@@ -183,10 +183,21 @@ export default {
       }
     },
 
+    // goToCategoryWithId(item) {
+    //   this.$router.push({
+    //     path: '/JingzaoCategory',
+    //     query: { categoryId: item.id, categoryTitle: item.title }
+    //   });
+    // },
     goToCategoryWithId(item) {
       this.$router.push({
-        path: '/JingzaoCategory',
-        query: { categoryId: item.id, categoryTitle: item.title }
+        path: '/productList',
+        query: {
+          keyword: item.title,
+          platform: 1,
+          jd_type: 3,
+          t: Date.now()
+        }
       });
     },
 
@@ -218,7 +229,10 @@ export default {
       this.$router.push('/JingzaoCategory');
     }
   },
-
+  activated() {
+    // 每次进入都重新请求
+    this.channelDetailIndex();
+  },
   mounted() {
     this.channelDetailIndex();
   }

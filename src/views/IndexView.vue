@@ -263,7 +263,7 @@
 </template>
 <script>
 import City from "@/components/City.vue";
-import { getHemaLoginUrlshangcheng } from "@/api/hemashangcheng";
+import { getElemaLoginUrlshangcheng } from "@/api/elemashangcheng";
 import { getIndexList } from "@/api/lhcard";
 import { brandList, productLists, categoryList, channelList, homeInd, zoneList } from "@/api/lhjdtm";
 import { getYonghuiLoginUrl } from "@/api/yonghui";
@@ -286,7 +286,9 @@ import { getDongfangLoginUrl } from "@/api/dongfang";
 import { getPlatformName } from '@/utils/platform'
 
 import { getJuheShangchaoLoginUrl } from "@/api/juheshangchao";
-
+import { getMeituanLoginUrl } from "@/api/meituan";
+import { getTuangouLoginUrl } from "@/api/meituantuangou";
+import { getXiaoxiangLoginUrl } from "@/api/xiaoxiang";
 
 export default {
   name: "IndexView",
@@ -396,6 +398,162 @@ export default {
     }
   },
   methods: {
+    // 跳转到美团小象超市免密登录
+    async goToXiaoxiang() {
+      if (this.isGettingLocation) return;
+
+      this.isGettingLocation = true;
+
+      try {
+        this.$toast.loading({
+          message: '正在跳转美团小象超市...',
+          forbidClick: true,
+          duration: 0
+        });
+
+        const res = await getXiaoxiangLoginUrl();
+
+        this.$toast.clear();
+
+        console.log('美团小象超市免密登录接口返回:', res);
+
+        // ✅ 和饿了么、美团外卖、美团到店一样，res.data 本身就是 URL 字符串
+        if (res.code === 200 && res.data) {
+          const loginUrl = res.data;
+          console.log('美团小象超市免密登录URL:', loginUrl);
+          window.location.href = loginUrl;
+        } else {
+          this.$toast.fail(res.msg || '获取登录链接失败');
+        }
+      } catch (error) {
+        console.error('美团小象超市免密登录失败:', error);
+        this.$toast.clear();
+        this.$toast.fail('跳转失败，请重试');
+      } finally {
+        this.isGettingLocation = false;
+      }
+    },
+    // 跳转到美团到店(美食团购)免密登录
+    async goToTuangou() {
+      if (this.isGettingLocation) return;
+
+      this.isGettingLocation = true;
+
+      try {
+        this.$toast.loading({
+          message: '正在跳转美团到店...',
+          forbidClick: true,
+          duration: 0
+        });
+
+        const res = await getTuangouLoginUrl();
+
+        this.$toast.clear();
+
+        console.log('美团到店免密登录接口返回:', res);
+
+        // ✅ 和饿了么、美团外卖一样，res.data 本身就是 URL 字符串
+        if (res.code === 200 && res.data) {
+          const loginUrl = res.data;
+          console.log('美团到店免密登录URL:', loginUrl);
+          window.location.href = loginUrl;
+        } else {
+          this.$toast.fail(res.msg || '获取登录链接失败');
+        }
+      } catch (error) {
+        console.error('美团到店免密登录失败:', error);
+        this.$toast.clear();
+        this.$toast.fail('跳转失败，请重试');
+      } finally {
+        this.isGettingLocation = false;
+      }
+    },
+    // 跳转到美团外卖免密登录
+    async goToMeituan() {
+      if (this.isGettingLocation) return;
+
+      this.isGettingLocation = true;
+
+      try {
+        this.$toast.loading({
+          message: '正在跳转美团外卖...',
+          forbidClick: true,
+          duration: 0
+        });
+
+        const res = await getMeituanLoginUrl();
+
+        this.$toast.clear();
+
+        console.log('美团外卖免密登录接口返回:', res);
+
+        // ✅ 和饿了么一样，res.data 本身就是 URL 字符串
+        if (res.code === 200 && res.data) {
+          const loginUrl = res.data;
+          console.log('美团外卖免密登录URL:', loginUrl);
+          window.location.href = loginUrl;
+        } else {
+          this.$toast.fail(res.msg || '获取登录链接失败');
+        }
+      } catch (error) {
+        console.error('美团外卖免密登录失败:', error);
+        this.$toast.clear();
+        this.$toast.fail('跳转失败，请重试');
+      } finally {
+        this.isGettingLocation = false;
+      }
+    },
+    // 跳转到饿了么(开票版)免密登录
+    async goToElemaLoginshangcheng() {
+      if (this.isGettingLocation) return;
+
+      this.isGettingLocation = true;
+
+      try {
+        // 1. 提示获取位置
+        this.$toast.loading({
+          message: '正在获取位置...',
+          forbidClick: true,
+          duration: 0
+        });
+
+        // 2. 拿经纬度
+        const position = await this.getCurrentPosition();
+        console.log('饿了么获取到的位置:', position);
+
+        // 3. 更新提示
+        this.$toast.loading({
+          message: '正在跳转饿了么...',
+          forbidClick: true,
+          duration: 0
+        });
+
+        // 4. 传经纬度调接口
+        const res = await getElemaLoginUrlshangcheng({
+          latitude: position.latitude,
+          longitude: position.longitude
+        });
+
+        this.$toast.clear();
+
+        console.log('饿了么免密登录接口返回:', res);
+
+        // ✅ 饿了么特殊：res.data 本身就是 URL 字符串
+        if (res.code === 200 && res.data) {
+          const loginUrl = res.data;
+          console.log('饿了么免密登录URL:', loginUrl);
+          window.location.href = loginUrl;
+        } else {
+          this.$toast.fail(res.msg || '获取登录链接失败');
+        }
+      } catch (error) {
+        console.error('饿了么免密登录失败:', error);
+        this.$toast.clear();
+        this.$toast.fail('跳转失败，请重试');
+      } finally {
+        this.isGettingLocation = false;
+      }
+    },
     // 跳转到聚合商超免密登录
     async goToJuheShangchao() {
       // 防止重复点击
@@ -1205,6 +1363,28 @@ export default {
       }
     },
     toSort(item) {
+      //   alert(item.id)
+      // return false
+      if (item.id == 10) {//xiaoxiang
+        this.goToXiaoxiang();
+        return;
+      }
+      if (item.id == 6) {//meituan
+        this.goToMeituan();
+        return;
+      }
+      if (item.id == 11) {//meituan daodian tuangou
+        this.goToTuangou();
+        return;
+      }
+      if (item.id == 80) {
+        this.goToJuheShangchao();
+        return;
+      }
+      if (item.id == 7) {
+        this.goToElemaLoginshangcheng();
+        return;
+      }
 
       if (item.id == 15) {
         this.$router.push({

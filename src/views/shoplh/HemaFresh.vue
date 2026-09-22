@@ -156,7 +156,11 @@ export default {
   },
   mounted() {
     this.fetchHomeData();
-  }
+  },
+  activated() {
+  // 每次进入都重新请求
+  this.fetchHomeData();
+}
 };
 </script>
 

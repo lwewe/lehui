@@ -49,7 +49,7 @@
   </div>
 </template>
 
- <script>
+<script>
 import { channelDetail } from "@/api/lhjdtm";
 import { getPlatformName } from '@/utils/platform'
 
@@ -66,39 +66,27 @@ export default {
   methods: {
     getPlatformName,
 
-    async fetchHomeData() {
-      try {
-        const res = await channelDetail({ id: 12 });
-        if (res.code === 200 && res.data) {
-          const data = res.data;
+   async fetchHomeData() {
+  try {
+    const res = await channelDetail({ id: 12 });
+    if (res.code === 200 && res.data) {
+      const data = res.data;
 
-          if (data.banner && data.banner.length) {
-            this.bannerImg = data.banner[0].img;
-          }
-          this.navList = (data.nav || []).map((item, index) => ({
-            id: index,
-            title: item.title,
-            img: item.img || '',
-            products: item.products || []
-          }));
-
-          // 默认显示第一个分类
-          if (this.navList.length > 0) {
-            this.handleNavClick(this.navList[0]);
-          }
-        }
-      } catch (err) {
-        console.error('channelDetail 失败:', err);
+      if (data.banner && data.banner.length) {
+        this.bannerImg = data.banner[0].img;
       }
-    },
 
-    handleNavClick(item) {
-      const products = item.id === 0
-        ? (this.navList || []).flatMap(n => n.products || [])
-        : (item.products || []);
+      this.navList = (data.nav || []).map((item, index) => ({
+        id: index,
+        title: item.title,
+        img: item.img || '',
+        products: item.products || []
+      }));
 
-      this.flowerList = products.map(p => ({
-        id: p.product_id || p.id,     // ⚠ 优先用三方 product_id
+      // 默认展示所有分类下的商品，不跳转
+      const allProducts = this.navList.flatMap(n => n.products || []);
+      this.flowerList = allProducts.map(p => ({
+        id: p.product_id || p.id,
         local_id: p.id,
         title: p.title,
         img: p.img,
@@ -106,7 +94,37 @@ export default {
         market_price: p.market_price || '',
         platform: 5
       }));
-    },
+    }
+  } catch (err) {
+    console.error('channelDetail 失败:', err);
+  }
+},
+
+  handleNavClick(item) {
+  this.$router.push({
+    path: '/productList',
+    query: {
+      keyword: item.title,
+      platform: 5,
+      t: Date.now()
+    }
+  });
+},
+    // handleNavClick(item) {
+    //   const products = item.id === 0
+    //     ? (this.navList || []).flatMap(n => n.products || [])
+    //     : (item.products || []);
+
+    //   this.flowerList = products.map(p => ({
+    //     id: p.product_id || p.id,     // ⚠ 优先用三方 product_id
+    //     local_id: p.id,
+    //     title: p.title,
+    //     img: p.img,
+    //     sell_price: p.sell_price,
+    //     market_price: p.market_price || '',
+    //     platform: 5
+    //   }));
+    // },
 
     goToDetail(item) {
       this.$router.push({
@@ -119,9 +137,13 @@ export default {
       console.log('点击Banner');
     }
   },
-  mounted() {
+  // mounted() {
+  //   this.fetchHomeData();
+  // },
+  activated() {
+    // 每次进入都重新请求
     this.fetchHomeData();
-  }
+  },
 }
 </script>
 <style scoped lang="less">

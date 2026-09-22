@@ -9,8 +9,12 @@
 
     <!-- 3. 商品列表 (左图右文结构) -->
     <div class="list-wrapper" v-if="goodsList.length > 0">
-      <div class="list-item" v-for="(item, index) in goodsList" :key="index" @click="goToDetail(item)">
-
+      <div
+        class="list-item"
+        v-for="(item, index) in goodsList"
+        :key="index"
+        @click="goToDetail(item)"
+      >
         <!-- 左侧：商品图片 -->
         <div class="item-img-box">
           <img class="item-img" :src="item.img" alt="" />
@@ -21,26 +25,22 @@
           <!-- 标题 -->
           <div class="item-title">{{ item.title }}</div>
 
-          <!-- 副标题 -->
-          <!-- <div class="item-subtitle" v-if="item.subtitle">{{ item.subtitle }}</div> -->
-
-          <!-- 标签组 -->
-          <!-- <div class="item-tags">
-            <span class="tag-red" v-if="item.sale_num">已售{{ formatSaleNum(item.sale_num) }}</span>
-            <span class="tag-blue" v-if="item.stock > 0">有货</span>
-          </div> -->
-
           <!-- 底部长条胶囊 (价格 + 加号按钮) -->
           <div class="price-capsule">
             <div class="capsule-left">
               <div class="price-tag-icon">
-                <img src="../../assets/lh/jdzy/8.png" style="height: 14px; margin-right: 4px; display: inline-block;">
+                <img
+                  src="../../assets/lh/jdzy/8.png"
+                  style="height: 14px; margin-right: 4px; display: inline-block;"
+                />
               </div>
               <div class="price-box">
                 <span class="price-label">到手价</span>
                 <span class="symbol">¥</span>
                 <span class="price">{{ item.sell_price }}</span>
-                <span class="original-price" v-if="item.market_price">¥{{ item.market_price }}</span>
+                <span class="original-price" v-if="item.market_price">
+                  ¥{{ item.market_price }}
+                </span>
               </div>
             </div>
 
@@ -52,63 +52,86 @@
     </div>
 
     <!-- 空状态 -->
-    <div class="empty-tip" v-else-if="!loading">
-      暂无商品
-    </div>
+    <div class="empty-tip" v-else-if="!loading">暂无商品</div>
   </div>
 </template>
 
 <script>
-import { home, channelDetail } from "@/api/lhjdtm";
+import { channelDetail } from "@/api/lhjdtm";
 
 export default {
   name: "SuperValueList",
   data() {
     return {
-      platform: 1,           // 默认京东平台
-      type: this.$route.query.type,     // 默认超值购
+      platform: 1,                                // 默认京东平台
+      type: this.$route.query.type || "recommend",// 路由 type
       loading: false,
       goodsList: [],
-      pageTitle: '超值购',
-    }
+
+      /**
+       * 路由 type -> sections 索引 映射
+       * 只根据索引取数据，不依赖后端 title 文字
+       * sections 顺序： [热销推荐, 超值购, 上新了, 首页下面得]
+       */
+      typeIndexMap: {
+        hot: 0,        // 热销推荐
+        recommend: 1,  // 超值购
+        new: 2         // 上新了
+      }
+    };
   },
+  watch: {
+  '$route.query.type'(newType) {
+    if (newType) {
+      this.type = newType;
+      this.channelDetailIndex();  // 重新取数
+    }
+  }
+},
   methods: {
-    // 获取数据
-    getData() {
+    // 根据路由 type 索引从 sections 取数据
+    channelDetailIndex() {
+      const fixImg = (url) => (url ? url.replace("http://", "https://") : "");
+
       this.loading = true;
-      home({ platform: this.platform, limit: 10 }).then(res => {
-        console.log('列表数据:', res);
-        if (res.code == 200) {
-          const data = res.data;
- 
-          // 根据 type 获取对应数据
-          switch (this.type) {
-            case 'recommend':
-              this.goodsList = data.recommend || [];
-              this.pageTitle = '超值购';
-              break;
-            case 'hot':
-              this.goodsList = data.hot || [];
-              this.pageTitle = '热销推荐';
-              break;
-            case 'new':
-              this.goodsList = data.new || [];
-              this.pageTitle = '上新了';
-              break;
-            default:
-              this.goodsList = data.recommend || [];
-              this.pageTitle = '超值购';
+
+      channelDetail({ id: 14 })
+        .then((res) => {
+          if (res.code == 200) {
+            const data = res.data || {};
+
+            // 1. Banner（接口返回则覆盖）
+            if (data.banner && data.banner.length > 0) {
+              this.bannerImg = fixImg(data.banner[0].img);
+            }
+
+            // 2. 根据 type 索引取 sections 数据
+            if (data.sections && data.sections.length > 0) {
+              const index = this.typeIndexMap[this.type] ?? 1; // 默认超值购
+              const section = data.sections[index];
+
+              if (section && Array.isArray(section.items)) {
+                this.goodsList = section.items.map((p) => ({
+                  ...p,
+                  img: fixImg(p.img)
+                }));
+              } else {
+                this.goodsList = [];
+              }
+            } else {
+              this.goodsList = [];
+            }
           }
-        }
-      }).finally(() => {
-        this.loading = false;
-      })
+        })
+        .finally(() => {
+          this.loading = false;
+        });
     },
 
     // 格式化销量
     formatSaleNum(num) {
       if (num >= 10000) {
-        return (num / 10000).toFixed(1) + '万';
+        return (num / 10000).toFixed(1) + "万";
       }
       return num;
     },
@@ -117,7 +140,7 @@ export default {
     goToDetail(item) {
       if (item.id) {
         this.$router.push({
-          path: '/ProductDetail',
+          path: "/ProductDetail",
           query: { id: item.id }
         });
       }
@@ -125,50 +148,11 @@ export default {
 
     // 加入购物车
     addToCart(item) {
-      console.log('加入购物车:', item);
+      console.log("加入购物车:", item);
     },
 
     goBack() {
       this.$router.go(-1);
-    }, 
-    channelDetailIndex() {
-      const fixImg = (url) => url ? url.replace('http://', 'https://') : '';
-
-      channelDetail({ id: 14 }).then(res => {
-        if (res.code == 200) {
-          const data = res.data;
-
-          // 1. Banner
-          if (data.banner && data.banner.length > 0) {
-            this.bannerImg = fixImg(data.banner[0].img);
-          }
-
-          // 2. 分类图标（nav）
-          if (data.nav && data.nav.length > 0) {
-            this.categoryList = data.nav.map((item, index) => ({
-              id: item.cate_id || item.id || index,
-              img: fixImg(item.img),
-              title: item.title,
-              link: item.link
-            }));
-          }
-
-          // 3. sections：按 title 精确匹配
-          if (data.sections && data.sections.length > 0) {
-            data.sections.forEach(section => {
-              const items = (section.items || []).map(p => ({ ...p, img: fixImg(p.img) }));
-
-              if (this.type === 'hot') {
-                this.goodsList = items;
-              } else if (section.title === 'recommend') {
-                this.goodsList = items;   // 双卡片只取前 2 个
-              } else if (section.title === 'hot') {
-                this.goodsList = items         // 双卡片只取前 2 个
-              }  
-            });
-          }
-        }
-      })
     }
   },
 
@@ -184,9 +168,8 @@ export default {
 
   mounted() {
     this.channelDetailIndex();
-
   }
-}
+};
 </script>
 
 <style scoped lang="less">

@@ -43,19 +43,21 @@
       </div>
     </div>
 
+
+    
     <!-- 3. 底部导航 -->
     <div class="tab-bar">
-      <div class="tab-item" @click="goToHome">
+      <div class="tab-item" @click="goToHome" :class="{ active: $route.path === '/JingdongChannel' }">
         <img class="tab-icon"
-          :src="$route.path === '/JingdongChannel' ? require('../../assets/lh/jdzy/hm1-1.png') : require('../../assets/lh/jdzy/hm1-0.png')"
+          :src="$route.path === '/JingdongChannel' ? require('../../assets/lh/jdzy/hm1-1.png') : require('../../assets/lh/jdzy/hm2-1.png')"
           alt="首页" />
-        <div class="tab-text" :class="{ active: $route.path === '/JingdongChannel' }">首页</div>
+        <div class="tab-text">首页</div>
       </div>
-      <div class="tab-item" @click="goToCategory">
+      <div class="tab-item" @click="goToCategory" :class="{ active: $route.path === '/JingdongCategory' }">
         <img class="tab-icon"
-          :src="$route.path === '/JingdongCategory' ? require('../../assets/lh/jdzy/hm2-2.png') : require('../../assets/lh/jdzy/hm2-2.png')"
+          :src="$route.path === '/JingdongCategory' ? require('../../assets/lh/jdzy/hm1-0.png') : require('../../assets/lh/jdzy/hm2-1.png')"
           alt="分类" />
-        <div class="tab-text" :class="{ active: $route.path === '/JingdongCategory' }">分类</div>
+        <div class="tab-text">分类</div>
       </div>
     </div>
   </div>
@@ -442,7 +444,8 @@ export default {
       color: #999;
     }
 
-    .active {
+    &.active .tab-text {
+      /* ← 关键是这个 & */
       color: #ff3b30;
       font-weight: bold;
     }

@@ -254,7 +254,9 @@ export default {
       this.$router.go(-1);
     }
   },
-
+activated() {
+     this.fetchChannelData()
+  },
   mounted() {
     this.fetchChannelData()
   }

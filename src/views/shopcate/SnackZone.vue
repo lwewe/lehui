@@ -246,7 +246,9 @@ export default {
       this.$router.go(-1);
     }
   },
-  
+  activated() {
+     this.channelDetailIndex()
+  },
   mounted() {
     this.channelDetailIndex()
   }

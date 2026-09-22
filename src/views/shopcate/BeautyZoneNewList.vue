@@ -56,6 +56,9 @@ export default {
    mounted() {
     this.channelDetailIndex()
   },
+  activated() {
+     this.channelDetailIndex()
+  },
   methods: {
  getPlatformName,
     
