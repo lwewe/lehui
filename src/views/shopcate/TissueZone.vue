@@ -1,7 +1,7 @@
 <template>
   <div class="tissue-zone-page">
     <!-- 1. 顶部导航 -->
-
+<NProgress v-if="loading" />
 
     <!-- 2. 顶部绿色大 Banner -->
     <div class="top-banner-area">
@@ -121,6 +121,7 @@ export default {
   name: "TissueZone",
   data() {
     return {
+      loading: false,      // 新增
       activeTab: 0,
       channelData: { banner: [], nav: [] },
       navList: [],
@@ -161,42 +162,77 @@ export default {
       this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
     },
     // 获取频道数据
+    // fetchChannelData() {
+    //   channelDetail({ id: this.$route.query.id || 5 }).then(res => {
+    //     if (res.code == 200) {
+    //       this.channelData = res.data
+
+    //       this.topTis1 = res.data.nav[0].children[0].sections[0].items.slice(0, 2) || []
+    //       this.topTis2 = res.data.nav[0].children[0].sections[0].items.slice(0, 2) || []
+
+
+
+    //       // ✅ 取前10个作为分类图标
+    //       this.navList = (res.data.nav || []).slice(0, 10)
+
+    //       // ✅ 提取 sections 数据
+    //       const sections = res.data.sections || []
+
+    //       // ✅ 提取 grid 类型的商品数据（3列x2行）
+    //       const gridSection = sections.find(section => section.type === 'grid')
+    //       if (gridSection && gridSection.items) {
+    //         this.tissueGoodsList = gridSection.items.slice(0, 6) // 最多显示6个
+    //       }
+
+    //       // ✅ 提取 tabs 数据
+    //       const tabsSection = sections.find(section => section.type === 'tabs')
+    //       if (tabsSection && tabsSection.tabs) {
+    //         this.tabList = tabsSection.tabs
+    //         // ✅ 将每个 tab 的 items 提取到 tabGoodsList
+    //         this.tabGoodsList = tabsSection.tabs.map(tab => tab.items || [])
+    //       }
+    //     }
+    //   }).catch(err => {
+    //     console.error('获取频道数据失败:', err)
+    //     // 可以设置兜底数据
+    //     this.setDefaultData()
+    //   })
+    // },
     fetchChannelData() {
-      channelDetail({ id: this.$route.query.id || 5 }).then(res => {
-        if (res.code == 200) {
-          this.channelData = res.data
+  this.loading = true;          // 请求开始
 
-          this.topTis1 = res.data.nav[0].children[0].sections[0].items.slice(0, 2) || []
-          this.topTis2 = res.data.nav[0].children[0].sections[0].items.slice(0, 2) || []
+  channelDetail({ id: this.$route.query.id || 5 })
+    .then(res => {
+      if (res.code == 200) {
+        this.channelData = res.data
 
+        this.topTis1 = res.data.nav[0].children[0].sections[0].items.slice(0, 2) || []
+        this.topTis2 = res.data.nav[0].children[0].sections[0].items.slice(0, 2) || []
 
+        this.navList = (res.data.nav || []).slice(0, 10)
 
-          // ✅ 取前10个作为分类图标
-          this.navList = (res.data.nav || []).slice(0, 10)
+        const sections = res.data.sections || []
 
-          // ✅ 提取 sections 数据
-          const sections = res.data.sections || []
-
-          // ✅ 提取 grid 类型的商品数据（3列x2行）
-          const gridSection = sections.find(section => section.type === 'grid')
-          if (gridSection && gridSection.items) {
-            this.tissueGoodsList = gridSection.items.slice(0, 6) // 最多显示6个
-          }
-
-          // ✅ 提取 tabs 数据
-          const tabsSection = sections.find(section => section.type === 'tabs')
-          if (tabsSection && tabsSection.tabs) {
-            this.tabList = tabsSection.tabs
-            // ✅ 将每个 tab 的 items 提取到 tabGoodsList
-            this.tabGoodsList = tabsSection.tabs.map(tab => tab.items || [])
-          }
+        const gridSection = sections.find(section => section.type === 'grid')
+        if (gridSection && gridSection.items) {
+          this.tissueGoodsList = gridSection.items.slice(0, 6)
         }
-      }).catch(err => {
-        console.error('获取频道数据失败:', err)
-        // 可以设置兜底数据
-        this.setDefaultData()
-      })
-    },
+
+        const tabsSection = sections.find(section => section.type === 'tabs')
+        if (tabsSection && tabsSection.tabs) {
+          this.tabList = tabsSection.tabs
+          this.tabGoodsList = tabsSection.tabs.map(tab => tab.items || [])
+        }
+      }
+    })
+    .catch(err => {
+      console.error('获取频道数据失败:', err)
+      this.setDefaultData()
+    })
+    .finally(() => {
+      this.loading = false;     // 成功或失败都关掉
+    })
+},
 
     // 兜底数据（接口失败时使用）
     setDefaultData() {
@@ -264,7 +300,10 @@ export default {
     },
 
     TissueCleanGoodsList() {
-      this.$router.push('/SnackFoodRankList');
+      // this.$router.push('/SnackFoodRankList');
+      
+      this.$router.push({ path: '/SnackFoodRankList', query: { id: this.$route.query.id} });
+
     },
 
     goBack() {

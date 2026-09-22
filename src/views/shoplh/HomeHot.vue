@@ -1,6 +1,6 @@
 <template>
   <div class="super-value-page">
-
+    <NProgress v-if="loading" />
     <!-- 1. 顶部导航栏 -->
 
 
@@ -23,11 +23,11 @@
           <!-- 商品信息 -->
           <div class="goods-info">
             <div class="goods-name">{{ item.title }}</div>
- <span class="platform-tag" v-if="getPlatformName(item.platform)">
-                  <!-- {{ getPlatformName(item.platform) }} -->
-                {{ getPlatformName(item.platform, item.jd_type || item.items?.[0]?.jd_type) }}
+            <span class="platform-tag" v-if="getPlatformName(item.platform)">
+              <!-- {{ getPlatformName(item.platform) }} -->
+              {{ getPlatformName(item.platform, item.jd_type || item.items?.[0]?.jd_type) }}
 
-                </span>
+            </span>
             <!-- <div class="goods-subtitle" v-if="item.subtitle">{{ item.subtitle }}</div> -->
 
             <div class="goods-bottom">
@@ -68,37 +68,46 @@ export default {
       zoneGoods2: [],      // 存放第二个专区（热卖好物）的商品
     }
   },
+  activated() {
+    // 每次进入都重新请求
+    this.zoneListIndex();
+  },
   methods: {
     getPlatformName,
     goToDetail(item) {
-       
+
       this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
     },
     // 获取超值推荐数据
     zoneListIndex() {
-      zoneList().then(res => {
-        if (res.code == 200) {
-          // 拿到所有专区
-          let allZones = res.data.list || [];
+      this.loading = true;          // 请求开始，显示全屏加载
 
-          // 找到 id=4 的那个专区（热卖好物）
-          let targetZone = allZones.find(zone => zone.id == 4);
-          this.baners = targetZone.img;
-          // 如果有这个专区，取它的商品
-          if (targetZone && targetZone.goods) {
-            this.goodsList = targetZone.goods;
-          } else {
-            // 如果没有 id=4，就取所有商品（兜底）
-            let allGoods = [];
-            allZones.forEach(zone => {
-              if (zone.goods) {
-                allGoods = allGoods.concat(zone.goods);
-              }
-            });
-            this.goodsList = allGoods;
+      zoneList()
+        .then(res => {
+          if (res.code == 200) {
+            let allZones = res.data.list || [];
+
+            let targetZone = allZones.find(zone => zone.id == 4);
+            if (targetZone) {
+              this.baners = targetZone.img;
+            }
+
+            if (targetZone && targetZone.goods) {
+              this.goodsList = targetZone.goods;
+            } else {
+              let allGoods = [];
+              allZones.forEach(zone => {
+                if (zone.goods) {
+                  allGoods = allGoods.concat(zone.goods);
+                }
+              });
+              this.goodsList = allGoods;
+            }
           }
-        }
-      });
+        })
+        .finally(() => {
+          this.loading = false;     // 成功或失败都关掉
+        });
     },
     // 格式化销量
     formatSaleNum(num) {
@@ -135,8 +144,10 @@ export default {
   font-weight: 400;
   line-height: 14px;
   padding: 1px 4px;
-  margin-top: 4px;width: max-content;
+  margin-top: 4px;
+  width: max-content;
 }
+
 .super-value-page {
   min-height: 100vh;
   background: linear-gradient(to bottom, #FD2104, #FCFCFC);

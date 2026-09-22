@@ -1,7 +1,7 @@
 <template>
   <div class="fresh-milk-page" :style="pageBgStyle">
     <!-- 1. 顶部导航 -->
-
+    <NProgress v-if="loading" />
     <!-- 2. 顶部大 Banner -->
     <div class="top-banner-area">
       <img class="banner-img" :src="baners" alt="" />
@@ -9,13 +9,13 @@
 
     <!-- 3. 板块一：每日鲜活 (6个商品) -->
     <div class="section-box">
-      <div class="section-title"> <span class="title-text" :style="pageBgStyle1">{{title1}}</span>
+      <div class="section-title"> <span class="title-text" :style="pageBgStyle1">{{ title1 }}</span>
       </div>
       <div class="goods-grid-3">
         <div class="goods-item-3" v-for="(item, index) in dailyList" :key="index" @click="goToDetail(item)">
           <img class="item-img" :src="item.img" alt="" />
           <div class="item-name">{{ item.title }}</div>
-         
+
           <div class="item-bottom">
             <span class="price"><span style="font-size: 10px;font-weight: bold;">¥</span>{{ item.sell_price }}</span>
             <span class="add-btn">+</span>
@@ -27,12 +27,12 @@
 
     <!-- 4. 板块二：成长补给站 (6个商品) -->
     <div class="section-box">
-      <div class="section-title"> <span class="title-text" :style="pageBgStyle1">{{title2}}</span></div>
+      <div class="section-title"> <span class="title-text" :style="pageBgStyle1">{{ title2 }}</span></div>
       <div class="goods-grid-3">
         <div class="goods-item-3" v-for="(item, index) in growthList" :key="index" @click="goToDetail(item)">
           <img class="item-img" :src="item.img" alt="" />
           <div class="item-name">{{ item.title }}</div>
-          
+
           <div class="item-bottom">
             <span class="price"><span style="font-size: 10px;font-weight: bold;">¥</span>{{ item.sell_price }}</span>
             <span class="add-btn">+</span>
@@ -44,16 +44,16 @@
 
     <!-- 5. 板块三：更多推荐 (双列瀑布流) -->
     <div class="section-box">
-      <div class="section-title"> <span class="title-text" :style="pageBgStyle1">{{title3}}</span>
+      <div class="section-title"> <span class="title-text" :style="pageBgStyle1">{{ title3 }}</span>
       </div>
       <div class="goods-grid-2">
         <div class="goods-item-2" v-for="(item, index) in moreList" :key="index" @click="goToDetail(item)">
           <img class="item-img-big" :src="item.img" alt="" />
           <div class="item-info">
             <div class="item-name-big">{{ item.title }}</div>
-             <span class="platform-tag" v-if="getPlatformName(item.platform)">
-                  {{ getPlatformName(item.platform) }}
-                </span>
+            <span class="platform-tag" v-if="getPlatformName(item.platform)">
+              {{ getPlatformName(item.platform) }}
+            </span>
             <div class="item-tags">
               <span class="tag" v-for="(tag, tIndex) in item.tags" :key="tIndex">{{ tag }}</span>
             </div>
@@ -77,9 +77,10 @@ export default {
   name: "FreshMilkPage",
   data() {
     return {
-      title1:'',
-      title2:'',
-      title3:'',
+      loading: false,      // 新增
+      title1: '',
+      title2: '',
+      title3: '',
       baners: '',
       pageBgStyle1: {},
       pageBgStyle: {},
@@ -101,40 +102,68 @@ export default {
     this.channelDetailIndex()
   },
   activated() {
-     this.channelDetailIndex()
+    this.channelDetailIndex()
   },
   methods: {
-  getPlatformName,
-    
+    getPlatformName,
     channelDetailIndex() {
-      channelChildrenDetaill({ id: this.$route.query.id, nav_index: this.$route.query.nav, child_index: this.$route.query.index }).then(res => {
-        if (res.code == 200) {
-          console.log(res)
-          this.baners = res.data.banner[0].img;
-          this.dailyList = res.data.sections[0].items;
-          this.growthList = res.data.sections[1].items;
-          this.moreList = res.data.sections[2].items;
+      this.loading = true;          // 请求开始
 
-
-
-          this.title1 = res.data.sections[0].title;
-          this.title2 = res.data.sections[1].title;
-          this.title3 = res.data.sections[2].title;
-
-          const bgColorStr = res.data.bg_color || '';
-          const colors = bgColorStr.split(',').map(item => item.trim()).filter(item => item);
-          this.pageBgStyle = {
-            backgroundColor: colors[0]
-          };
-          this.pageBgStyle1 = {
-            color: colors[1]
-          };
-
-        }
+      channelChildrenDetaill({
+        id: this.$route.query.id,
+        nav_index: this.$route.query.nav,
+        child_index: this.$route.query.index
       })
+        .then(res => {
+          if (res.code == 200) {
+            this.baners = res.data.banner[0].img;
+            this.dailyList = res.data.sections[0].items;
+            this.growthList = res.data.sections[1].items;
+            this.moreList = res.data.sections[2].items;
+
+            this.title1 = res.data.sections[0].title;
+            this.title2 = res.data.sections[1].title;
+            this.title3 = res.data.sections[2].title;
+
+            const bgColorStr = res.data.bg_color || '';
+            const colors = bgColorStr.split(',').map(item => item.trim()).filter(item => item);
+            this.pageBgStyle = { backgroundColor: colors[0] };
+            this.pageBgStyle1 = { color: colors[1] };
+          }
+        })
+        .finally(() => {
+          this.loading = false;     // 成功或失败都关掉
+        });
     },
+    // channelDetailIndex() {
+    //   channelChildrenDetaill({ id: this.$route.query.id, nav_index: this.$route.query.nav, child_index: this.$route.query.index }).then(res => {
+    //     if (res.code == 200) {
+    //       console.log(res)
+    //       this.baners = res.data.banner[0].img;
+    //       this.dailyList = res.data.sections[0].items;
+    //       this.growthList = res.data.sections[1].items;
+    //       this.moreList = res.data.sections[2].items;
+
+
+
+    //       this.title1 = res.data.sections[0].title;
+    //       this.title2 = res.data.sections[1].title;
+    //       this.title3 = res.data.sections[2].title;
+
+    //       const bgColorStr = res.data.bg_color || '';
+    //       const colors = bgColorStr.split(',').map(item => item.trim()).filter(item => item);
+    //       this.pageBgStyle = {
+    //         backgroundColor: colors[0]
+    //       };
+    //       this.pageBgStyle1 = {
+    //         color: colors[1]
+    //       };
+
+    //     }
+    //   })
+    // },
     goToDetail(item) {
-      
+
       this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
     },
     goBack() {
@@ -154,8 +183,10 @@ export default {
   font-weight: 400;
   line-height: 14px;
   padding: 1px 4px;
-  margin-top: 3px; margin-bottom:4px;
+  margin-top: 3px;
+  margin-bottom: 4px;
 }
+
 .fresh-milk-page {
   background: #f7f7f7;
   min-height: 100vh;
@@ -195,11 +226,13 @@ export default {
     object-fit: cover;
   }
 }
-.title-text{
-      font-size: 14px;
-    font-weight: 600;
-    color: #333;
+
+.title-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
 }
+
 /* ================= 3. 通用板块容器 ================= */
 .section-box {
   margin: 0 10px 16px 10px;
@@ -248,7 +281,7 @@ export default {
 
     .item-img {
       width: 100%;
-       
+
       object-fit: cover;
       background: #fff;
       border-radius: 10px 10px 0 0;
@@ -266,7 +299,7 @@ export default {
       -webkit-box-orient: vertical;
       overflow: hidden;
       margin-bottom: 4px;
-      padding:  0 10px;
+      padding: 0 10px;
     }
 
     .item-bottom {
@@ -285,7 +318,8 @@ export default {
       }
 
       .add-btn {
-        width: 18px;margin-right: 10px;
+        width: 18px;
+        margin-right: 10px;
         height: 18px;
         background: #ed2e33;
         color: #fff;

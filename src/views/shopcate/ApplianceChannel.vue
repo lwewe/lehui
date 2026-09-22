@@ -1,6 +1,6 @@
 <template>
   <div class="appliance-page">
-
+<NProgress v-if="loading" />
     <!-- 2. 顶部大 Banner -->
     <div class="banner-area">
       <img class="banner-img" :src="bannerImg" alt="家电Banner" @click="handleBannerClick" />
@@ -127,6 +127,7 @@ export default {
   name: "ApplianceChannel",
   data() {
     return {
+        loading: false,      // 新增
       ghjk: '',
       activeTab: 0,
       channelData: { banner: [], nav: [] },
@@ -160,33 +161,64 @@ export default {
     goToDetail(item) {
       this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
     },
+fetchChannelData() {
+  this.loading = true;          // 请求开始
 
-    fetchChannelData() {
-      channelDetail({ id: this.$route.query.id || 4 }).then(res => {
-        if (res.code == 200) {
-          this.channelData = res.data
+  channelDetail({ id: this.$route.query.id || 4 })
+    .then(res => {
+      if (res.code == 200) {
+        this.channelData = res.data
 
-          this.navList = (res.data.nav || []).slice(0, 10)
+        this.navList = (res.data.nav || []).slice(0, 10)
 
-          if (res.data.nav?.[1]?.children?.[0]?.sections?.[0]?.items) {
-            this.healthList = res.data.nav[1].children[0].sections[0].items.slice(0, 2)
-          }
-          if (res.data.nav?.[0]?.children?.[0]?.img) {
-            this.ghjk = res.data.nav[0].children[0].img
-          }
-
-          this.subsidyList = res.data.sections?.[0]?.items || []
-
-          // ✅ 品牌推荐：从 sections 里取 type === 'brand'
-          const brandSection = res.data.sections?.find(s => s.type === 'brand')
-          this.brandList = brandSection?.items || []
-
-          this.processTabsData(res.data.sections)
+        if (res.data.nav?.[1]?.children?.[0]?.sections?.[0]?.items) {
+          this.healthList = res.data.nav[1].children[0].sections[0].items.slice(0, 2)
         }
-      }).catch(() => {
-        // 兜底
-      })
-    },
+        if (res.data.nav?.[0]?.children?.[0]?.img) {
+          this.ghjk = res.data.nav[0].children[0].img
+        }
+
+        this.subsidyList = res.data.sections?.[0]?.items || []
+
+        const brandSection = res.data.sections?.find(s => s.type === 'brand')
+        this.brandList = brandSection?.items || []
+
+        this.processTabsData(res.data.sections)
+      }
+    })
+    .catch(() => {
+      // 兜底
+    })
+    .finally(() => {
+      this.loading = false;     // 成功或失败都关掉
+    })
+},
+    // fetchChannelData() {
+    //   channelDetail({ id: this.$route.query.id || 4 }).then(res => {
+    //     if (res.code == 200) {
+    //       this.channelData = res.data
+
+    //       this.navList = (res.data.nav || []).slice(0, 10)
+
+    //       if (res.data.nav?.[1]?.children?.[0]?.sections?.[0]?.items) {
+    //         this.healthList = res.data.nav[1].children[0].sections[0].items.slice(0, 2)
+    //       }
+    //       if (res.data.nav?.[0]?.children?.[0]?.img) {
+    //         this.ghjk = res.data.nav[0].children[0].img
+    //       }
+
+    //       this.subsidyList = res.data.sections?.[0]?.items || []
+
+    //       // ✅ 品牌推荐：从 sections 里取 type === 'brand'
+    //       const brandSection = res.data.sections?.find(s => s.type === 'brand')
+    //       this.brandList = brandSection?.items || []
+
+    //       this.processTabsData(res.data.sections)
+    //     }
+    //   }).catch(() => {
+    //     // 兜底
+    //   })
+    // },
     ProductBrandLists() {
       ChannelDetail({ id: this.$route.query.id }).then(res => {
         if (res.code == 200) {

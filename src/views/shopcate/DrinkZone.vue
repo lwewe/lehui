@@ -2,7 +2,7 @@
   <div class="drink-zone-page">
     <!-- 1. 顶部导航 -->
 
-
+<NProgress v-if="loading" />
     <!-- 2. 顶部大 Banner -->
     <div class="top-banner-area">
       <img class="banner-img"
@@ -127,7 +127,8 @@ export default {
   name: "DrinkZone",
   data() {
     return {
-      bsyx: '',
+      bsyx: '', loading: false,      // 新增pendingCount: 0,   // 正在进行的请求数
+      pendingCount: 0,   // 正在进行的请求数
       // 两排 5 个分类图标
       channelData: {},  // 新增：频道详情数据
       navList: [],      // 修改：从接口获取
@@ -154,39 +155,82 @@ export default {
       this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
     },
     channelDetailIndex() {
-      channelDetail({ id: this.$route.query.id }).then(res => {
-        console.log('频道详情:', res);
-        if (res.code == 200) {
-          this.channelData = res.data
-          // 处理导航分类数据
-          this.navList = res.data.nav || []
-          this.superTop1 = res.data.nav[0].children[0].sections[0].items.slice(0, 2) || []
-          this.superTop = res.data.nav[1].children[0].sections[0].items.slice(0, 2) || []
-          // 处理轮播图
-          this.superList = res.data.sections[0].items || [];
-          this.moreList = res.data.sections[1].items || [];
-          this.bsyx = res.data.nav[2].children[0].img || []
-        }
-      })
-    },
-    productListIndex() {
-      productList({ cate_id: this.$route.query.id }).then(res => {
-        console.log('商品列表:', res);
-        if (res.code == 200) {
-          // 解析商品数据
-          let productData = []
-          if (res.data && Array.isArray(res.data)) {
-            productData = res.data
-          } else if (res.data && res.data.data && Array.isArray(res.data.data)) {
-            productData = res.data.data
-          }
+  this.pendingCount++;
+  this.loading = true;
 
-          // 分配商品到超划算和更多推荐
-          // this.superList = productData.slice(0, 6)
-          // this.moreList = productData.slice(6, 12)
-        }
-      })
-    },
+  channelDetail({ id: this.$route.query.id })
+    .then(res => {
+      if (res.code == 200) {
+        this.channelData = res.data
+        this.navList = res.data.nav || []
+        this.superTop1 = res.data.nav[0].children[0].sections[0].items.slice(0, 2) || []
+        this.superTop = res.data.nav[1].children[0].sections[0].items.slice(0, 2) || []
+        this.superList = res.data.sections[0].items || []
+        this.moreList = res.data.sections[1].items || []
+        this.bsyx = res.data.nav[2].children[0].img || []
+      }
+    })
+    .finally(() => {
+      this.pendingCount--;
+      if (this.pendingCount <= 0) {
+        this.pendingCount = 0;
+        this.loading = false;
+      }
+    })
+},
+
+productListIndex() {
+  this.pendingCount++;
+  this.loading = true;
+
+  productList({ cate_id: this.$route.query.id })
+    .then(res => {
+      if (res.code == 200) {
+        // 你的商品处理逻辑
+      }
+    })
+    .finally(() => {
+      this.pendingCount--;
+      if (this.pendingCount <= 0) {
+        this.pendingCount = 0;
+        this.loading = false;
+      }
+    })
+},
+    // channelDetailIndex() {
+    //   channelDetail({ id: this.$route.query.id }).then(res => {
+    //     console.log('频道详情:', res);
+    //     if (res.code == 200) {
+    //       this.channelData = res.data
+    //       // 处理导航分类数据
+    //       this.navList = res.data.nav || []
+    //       this.superTop1 = res.data.nav[0].children[0].sections[0].items.slice(0, 2) || []
+    //       this.superTop = res.data.nav[1].children[0].sections[0].items.slice(0, 2) || []
+    //       // 处理轮播图
+    //       this.superList = res.data.sections[0].items || [];
+    //       this.moreList = res.data.sections[1].items || [];
+    //       this.bsyx = res.data.nav[2].children[0].img || []
+    //     }
+    //   })
+    // },
+    // productListIndex() {
+    //   productList({ cate_id: this.$route.query.id }).then(res => {
+    //     console.log('商品列表:', res);
+    //     if (res.code == 200) {
+    //       // 解析商品数据
+    //       let productData = []
+    //       if (res.data && Array.isArray(res.data)) {
+    //         productData = res.data
+    //       } else if (res.data && res.data.data && Array.isArray(res.data.data)) {
+    //         productData = res.data.data
+    //       }
+
+    //       // 分配商品到超划算和更多推荐
+    //       // this.superList = productData.slice(0, 6)
+    //       // this.moreList = productData.slice(6, 12)
+    //     }
+    //   })
+    // },
     // 新增方法
     getFirstTwoProducts(nav) {
       if (nav && nav.products && Array.isArray(nav.products)) {

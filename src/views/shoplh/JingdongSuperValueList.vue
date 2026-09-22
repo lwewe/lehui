@@ -1,5 +1,6 @@
 <template>
   <div class="super-value-list">
+     <NProgress v-if="loading" />
     <!-- 1. 顶部导航 -->
 
     <!-- 2. 顶部 Banner (通栏) -->
@@ -9,12 +10,7 @@
 
     <!-- 3. 商品列表 (左图右文结构) -->
     <div class="list-wrapper" v-if="goodsList.length > 0">
-      <div
-        class="list-item"
-        v-for="(item, index) in goodsList"
-        :key="index"
-        @click="goToDetail(item)"
-      >
+      <div class="list-item" v-for="(item, index) in goodsList" :key="index" @click="goToDetail(item)">
         <!-- 左侧：商品图片 -->
         <div class="item-img-box">
           <img class="item-img" :src="item.img" alt="" />
@@ -29,10 +25,7 @@
           <div class="price-capsule">
             <div class="capsule-left">
               <div class="price-tag-icon">
-                <img
-                  src="../../assets/lh/jdzy/8.png"
-                  style="height: 14px; margin-right: 4px; display: inline-block;"
-                />
+                <img src="../../assets/lh/jdzy/8.png" style="height: 14px; margin-right: 4px; display: inline-block;" />
               </div>
               <div class="price-box">
                 <span class="price-label">到手价</span>
@@ -81,20 +74,20 @@ export default {
     };
   },
   watch: {
-  '$route.query.type'(newType) {
-    if (newType) {
-      this.type = newType;
-      this.channelDetailIndex();  // 重新取数
+    '$route.query.type'(newType) {
+      if (newType) {
+        this.type = newType;
+        this.channelDetailIndex();  // 重新取数
+      }
     }
-  }
-},
+  },
   methods: {
     // 根据路由 type 索引从 sections 取数据
     channelDetailIndex() {
       const fixImg = (url) => (url ? url.replace("http://", "https://") : "");
 
       this.loading = true;
-
+      this.goodsList = [];
       channelDetail({ id: 14 })
         .then((res) => {
           if (res.code == 200) {

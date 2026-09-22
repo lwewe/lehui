@@ -16,7 +16,7 @@
 
       <!-- 有订单 -->
       <div v-else-if="orderList.length > 0" class="order-list">
-        <div class="order-card" v-for="(item, index) in orderList" :key="item.id" @click="goDetail(item.id)">
+        <div class="order-card" v-for="(item, index) in orderList" :key="item.id" @click="goDetail(item)">
 
           <!-- 头部：订单号和状态 -->
           <div class="card-header">
@@ -54,43 +54,46 @@
           <!-- 底部：金额和操作按钮 -->
           <div class="card-footer">
             <div class="total-price">
-              总计：<span class="price-num">{{ item.total_price }}</span>
+              总计：<span class="price-num">{{ item.total_price || item.pay_amount || 0 }}</span>
               <span class="unit">元</span>
             </div>
 
             <!-- 动态按钮区域 (根据接口文档的状态值) -->
             <div class="action-buttons">
 
-              <!-- -1: 待支付 -->
-              <template v-if="item.status === -1">
-                <button class="btn" @click="handleAction('cancelOrder', item, $event)">取消订单</button>
-                <button class="btn-red" @click="handleAction('payOrder', item, $event)">立即支付</button>
+              <!-- 有 can_pay / can_cancel 字段的（途虎等新业务），优先用它 -->
+              <template v-if="item.can_pay !== undefined || item.can_cancel !== undefined">
+                <button v-if="item.can_cancel === 1" class="btn"
+                  @click="handleAction('cancelOrder', item, $event)">取消订单</button>
+                <button v-if="item.can_pay === 1" class="btn-red"
+                  @click="handleAction('payOrder', item, $event)">立即支付</button>
               </template>
 
-
-              <!-- 2: 待收货 -->
-              <template v-else-if="item.status === 2">
-                <button class="btn" @click="handleAction('viewLogistics', item, $event)">查看物流</button>
-                <button class="btn-red" @click="handleAction('confirmReceive', item, $event)">确认收货</button>
-              </template>
-
-              <!-- 7: 已核销 / used: 已核销 (等同于已完成) -->
-              <template v-else-if="item.status === 7 || item.status === 'used'">
-                <button class="btn" @click="handleAction('viewDetail', item, $event)">查看详情</button>
-              </template>
-
-              <!-- 9: 已取消 -->
-              <template v-else-if="item.status === 9">
-                <button class="btn">已取消</button>
-
-              </template>
-
-              <!-- useable: 待使用 -->
-              <template v-else-if="item.status === 'useable'">
-                <button class="btn-red" @click="handleAction('useNow', item, $event)">立即使用</button>
+              <!-- 兼容旧逻辑：没有 can_pay/can_cancel 字段的，用 status 判断 -->
+              <template v-else>
+                <template v-if="item.status === -1">
+                  <button class="btn" @click="handleAction('cancelOrder', item, $event)">取消订单</button>
+                  <button class="btn-red" @click="handleAction('payOrder', item, $event)">立即支付</button>
+                </template>
+                <template v-else-if="item.status === 2">
+                  <button class="btn" @click="handleAction('viewLogistics', item, $event)">查看物流</button>
+                  <button class="btn-red" @click="handleAction('confirmReceive', item, $event)">确认收货</button>
+                </template>
+                <template v-else-if="item.status === 7 || item.status === 'used'">
+                  <button class="btn" @click="handleAction('viewDetail', item, $event)">查看详情</button>
+                </template>
+                <template v-else-if="item.status === 9">
+                  <button class="btn">已取消</button>
+                </template>
+                <template v-else-if="item.status === 'useable'">
+                  <button class="btn-red" @click="handleAction('useNow', item, $event)">立即使用</button>
+                </template>
               </template>
 
             </div>
+
+
+
           </div>
         </div>
       </div>
@@ -184,35 +187,40 @@ export default {
   },
   methods: {
     normalizeItems(item) {
-  // 1. 有 items 数组，直接用
-  if (Array.isArray(item.items) && item.items.length) {
-    return item.items;
-  }
+      // 1. 有 items 数组，直接用
+      if (Array.isArray(item.items) && item.items.length) {
+        return item.items;
+      }
 
-  // 2. 有 product 对象（盒马、途虎）
-  if (item.product && typeof item.product === 'object') {
-    return [{
-      product_title: item.product.title || item.product_title || '',
-      product_img: item.product.img || item.product_img || '',
-      sell_price: item.product.sell_price || item.sell_price || '',
-      quantity: item.quantity || 1,
-      spec_name: ''
-    }];
-  }
+      // 2. 有 product 对象（盒马、途虎）
+      if (item.product && typeof item.product === 'object') {
+        return [{
+          product_title: item.product.title || item.product_title || '',
+          product_img: item.product.img || item.product_img || '',
+          sell_price: item.product.sell_price || item.sell_price || '',
+          quantity: item.quantity || 1,
+          spec_name: ''
+        }];
+      }
 
-  // 3. product 为 null（鲜花），用根级字段
-  return [{
-    product_title: item.product_title || '',
-    product_img: item.product_img || '',
-    sell_price: item.sell_price || '',
-    quantity: item.quantity || 1,
-    spec_name: ''
-  }];
-},
+      // 3. product 为 null（鲜花），用根级字段
+      return [{
+        product_title: item.product_title || '',
+        product_img: item.product_img || '',
+        sell_price: item.sell_price || '',
+        quantity: item.quantity || 1,
+        spec_name: ''
+      }];
+    },
     getPlatformName,
     // 订单卡片整体点击，跳转详情页
-    goDetail(id) {
-      this.$router.push({ path: '/orderDetail', query: { id } })
+    goDetail(item) {
+      // 途虎没有详情页，不跳转
+      if (item.biz === 'tuhu' || Number(item.platform) === 12) {
+        this.$toast('途虎订单暂不支持查看详情');
+        return;
+      }
+      this.$router.push({ path: '/orderDetail', query: { id: item.id } });
     },
 
     // 按钮点击事件处理
@@ -223,16 +231,32 @@ export default {
 
       if (action === 'payOrder') {
         const platform = Number(item.platform);
-        const path = platform === 4 ? '/ConfirmOrderHema' : '/confirmOrder';
 
-        const q = {
-          order_id: item.id,
-          total_price: item.total_price,
-          order_no: item.order_no
-        };
+        // ✅ 途虎 12
+        if (platform === 12 || item.biz === 'tuhu') {
+          const goods = this.normalizeItems(item)[0] || {};
+          this.$router.push({
+            path: '/TuHuConfirmOrder',
+            query: {
+              order_id: item.id,
+              order_no: item.order_no,
+              item_name: goods.product_title || '',
+              item_price: goods.sell_price || item.pay_amount || 0,
+              item_face: item.pay_amount || '',
+              uuid: item.recharge_uuid || item.uuid || ''
+            }
+          });
+          return;
+        }
 
-        // 盒马订单，把地址也带上
+        // ✅ 盒马 4
         if (platform === 4) {
+          const q = {
+            order_id: item.id,
+            total_price: item.total_price,
+            order_no: item.order_no
+          };
+
           let delivery = {};
           try {
             delivery = typeof item.delivery === 'string' ? JSON.parse(item.delivery) : (item.delivery || {});
@@ -243,9 +267,49 @@ export default {
           q.address_detail = delivery.detail || '';
           q.division_code = delivery.divisionCode || '';
           q.town_division_code = delivery.townDivisionCode || '';
+
+          this.$router.push({ path: '/ConfirmOrderHema', query: q });
+          return;
         }
 
-        this.$router.push({ path, query: q });
+        // ✅ 鲜花 5
+        // ✅ 鲜花 5
+        if (platform === 5) {
+          const q = {
+            order_id: item.id,
+            order_no: item.order_no,
+            total_price: item.total_price,
+            item_name: item.product_title || '',
+            item_img: item.product_img || '',
+            item_price: item.sell_price || item.total_price || 0,
+            num: item.quantity || 1
+          };
+
+          // ✅ 把地址从 delivery 里解析出来带上
+          let delivery = {};
+          try {
+            delivery = typeof item.delivery === 'string' ? JSON.parse(item.delivery) : (item.delivery || {});
+          } catch (e) { }
+
+          q.addr_name = delivery.name || '';
+          q.addr_phone = delivery.phone || '';
+          q.addr_text = delivery.detail || delivery.addr || '';
+          // 鲜花没有 address_id，可以传空，也可以传 delivery.id
+          q.address_id = delivery.id || '';
+
+          this.$router.push({ path: '/FlowerConfirmOrder', query: q });
+          return;
+        }
+
+        // ✅ 其他（京东/天猫/京造/供应商）→ 默认确认页
+        this.$router.push({
+          path: '/confirmOrder',
+          query: {
+            order_id: item.id,
+            total_price: item.total_price,
+            order_no: item.order_no
+          }
+        });
       }
       else if (action === 'cancelOrder') {
         // 待支付 - 取消订单（调用取消接口）
@@ -272,6 +336,11 @@ export default {
       else {
         // 其他所有情况（查看详情、确认收货、提醒发货、再次购买、在线咨询等）
         // 统一跳转订单详情页
+        if (item.biz === 'tuhu' || Number(item.platform) === 12) {
+          this.$toast('途虎订单暂不支持查看详情');
+          return;
+        }
+        // 其他平台统一跳订单详情
         this.$router.push({ path: '/orderDetail', query: { id: item.id } })
       }
     },

@@ -1,7 +1,7 @@
 <template>
   <div class="snack-zone-page">
     <!-- 1. 顶部导航 (红橙色渐变) -->
-
+<NProgress v-if="loading" />
 
     <!-- 2. 顶部大 Banner (爆款半价抢) -->
     <div class="top-banner-area">
@@ -127,7 +127,7 @@ import { getPlatformName } from '@/utils/platform'
 export default {
   name: "SnackZone",
   data() {
-    return {
+    return {   loading: false,      // 新增
       lppzTitle: '', lppz: "",
       lxhTitle: '', lxh: '',
       channelData: { banner: [] },
@@ -156,53 +156,102 @@ export default {
     goToDetail(item) {
       this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
     },
-    
-    // 获取频道详情
     channelDetailIndex() {
-      channelDetail({ id: this.$route.query.id }).then(res => {
-        if (res.code == 200) {
-          this.channelData = res.data
-          this.navList = res.data.nav || []
-          
-          // ✅ 提取 tabs 数据（从 sections 中找 type 为 tabs 的）
-          const tabsSection = (res.data.sections || []).find(section => section.type === 'tabs')
-          if (tabsSection && tabsSection.tabs) {
-            this.tabList = tabsSection.tabs
-            // ✅ 将每个 tab 的 items 提取到 tabGoodsList
-            this.tabGoodsList = tabsSection.tabs.map(tab => tab.items || [])
+  this.loading = true;          // 请求开始
+
+  channelDetail({ id: this.$route.query.id })
+    .then(res => {
+      if (res.code == 200) {
+        this.channelData = res.data
+        this.navList = res.data.nav || []
+
+        // ✅ 提取 tabs 数据（从 sections 中找 type 为 tabs 的）
+        const tabsSection = (res.data.sections || []).find(section => section.type === 'tabs')
+        if (tabsSection && tabsSection.tabs) {
+          this.tabList = tabsSection.tabs
+          this.tabGoodsList = tabsSection.tabs.map(tab => tab.items || [])
+        }
+
+        // ✅ 提取爆品推荐数据
+        if (res.data.nav && res.data.nav[0] && res.data.nav[0].children && res.data.nav[0].children[0]) {
+          this.hotList = res.data.nav[0].children[0].products.slice(0, 4)
+        }
+
+        // ✅ 提取左侧排行榜数据（夏日缤纷好食榜）
+        if (res.data.nav && res.data.nav[9] && res.data.nav[9].children && res.data.nav[9].children[0]) {
+          this.cakeList = res.data.nav[9].children[0].products.slice(0, 3) || []
+        }
+
+        // ✅ 提取右侧双拼模块数据
+        if (res.data.nav && res.data.nav[8] && res.data.nav[8].children && res.data.nav[8].children[0]) {
+          this.dklsTitle = res.data.nav[8].children[0].title
+        }
+        if (res.data.nav && res.data.nav[9] && res.data.nav[9].children && res.data.nav[9].children[0]) {
+          this.dkls = res.data.nav[9].children[0].img
+        }
+
+        if (res.data.nav && res.data.nav[4] && res.data.nav[4].children) {
+          if (res.data.nav[4].children[0]) {
+            this.lppzTitle = res.data.nav[4].children[0].title
+            this.lppz = res.data.nav[4].children[0].img
           }
-          
-          // ✅ 提取爆品推荐数据
-          if (res.data.nav && res.data.nav[0] && res.data.nav[0].children && res.data.nav[0].children[0]) {
-            this.hotList = res.data.nav[0].children[0].products.slice(0, 4)
-          }
-          
-          // ✅ 提取左侧排行榜数据（夏日缤纷好食榜）
-          if (res.data.nav && res.data.nav[9] && res.data.nav[9].children && res.data.nav[9].children[0]) {
-            this.cakeList = res.data.nav[9].children[0].products.slice(0,3) || []
-          }
-          
-          // ✅ 提取右侧双拼模块数据
-          if (res.data.nav && res.data.nav[8] && res.data.nav[8].children && res.data.nav[8].children[0]) {
-            this.dklsTitle = res.data.nav[8].children[0].title
-          }
-          if (res.data.nav && res.data.nav[9] && res.data.nav[9].children && res.data.nav[9].children[0]) {
-            this.dkls = res.data.nav[9].children[0].img
-          }
-          
-          if (res.data.nav && res.data.nav[4] && res.data.nav[4].children) {
-            if (res.data.nav[4].children[0]) {
-              this.lppzTitle = res.data.nav[4].children[0].title
-              this.lppz = res.data.nav[4].children[0].img
-            }
-            if (res.data.nav[4].children[1]) {
-              this.lxhTitle = res.data.nav[4].children[1].title
-              this.lxh = res.data.nav[4].children[1].img
-            }
+          if (res.data.nav[4].children[1]) {
+            this.lxhTitle = res.data.nav[4].children[1].title
+            this.lxh = res.data.nav[4].children[1].img
           }
         }
-      })
-    },
+      }
+    })
+    .finally(() => {
+      this.loading = false;     // 成功或失败都关掉
+    })
+},
+    // 获取频道详情
+    // channelDetailIndex() {
+    //   channelDetail({ id: this.$route.query.id }).then(res => {
+    //     if (res.code == 200) {
+    //       this.channelData = res.data
+    //       this.navList = res.data.nav || []
+          
+    //       // ✅ 提取 tabs 数据（从 sections 中找 type 为 tabs 的）
+    //       const tabsSection = (res.data.sections || []).find(section => section.type === 'tabs')
+    //       if (tabsSection && tabsSection.tabs) {
+    //         this.tabList = tabsSection.tabs
+    //         // ✅ 将每个 tab 的 items 提取到 tabGoodsList
+    //         this.tabGoodsList = tabsSection.tabs.map(tab => tab.items || [])
+    //       }
+          
+    //       // ✅ 提取爆品推荐数据
+    //       if (res.data.nav && res.data.nav[0] && res.data.nav[0].children && res.data.nav[0].children[0]) {
+    //         this.hotList = res.data.nav[0].children[0].products.slice(0, 4)
+    //       }
+          
+    //       // ✅ 提取左侧排行榜数据（夏日缤纷好食榜）
+    //       if (res.data.nav && res.data.nav[9] && res.data.nav[9].children && res.data.nav[9].children[0]) {
+    //         this.cakeList = res.data.nav[9].children[0].products.slice(0,3) || []
+    //       }
+          
+    //       // ✅ 提取右侧双拼模块数据
+    //       if (res.data.nav && res.data.nav[8] && res.data.nav[8].children && res.data.nav[8].children[0]) {
+    //         this.dklsTitle = res.data.nav[8].children[0].title
+    //       }
+    //       if (res.data.nav && res.data.nav[9] && res.data.nav[9].children && res.data.nav[9].children[0]) {
+    //         this.dkls = res.data.nav[9].children[0].img
+    //       }
+          
+    //       if (res.data.nav && res.data.nav[4] && res.data.nav[4].children) {
+    //         if (res.data.nav[4].children[0]) {
+    //           this.lppzTitle = res.data.nav[4].children[0].title
+    //           this.lppz = res.data.nav[4].children[0].img
+    //         }
+    //         if (res.data.nav[4].children[1]) {
+    //           this.lxhTitle = res.data.nav[4].children[1].title
+    //           this.lxh = res.data.nav[4].children[1].img
+    //         }
+    //       }
+    //     }
+    //   })
+    // },
     
     // 处理导航点击
     handleNavClick(item) {
@@ -250,7 +299,7 @@ export default {
      this.channelDetailIndex()
   },
   mounted() {
-    this.channelDetailIndex()
+    // this.channelDetailIndex()
   }
 }
 </script>

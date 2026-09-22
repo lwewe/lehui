@@ -1,5 +1,6 @@
 <template>
   <div class="flash-sale-page">
+ <NProgress v-if="loading" />
 
     <!-- 2. 顶部大 Banner (红色礼盒) -->
     <div class="top-banner-area">
@@ -97,7 +98,7 @@ import { getPlatformName } from '@/utils/platform'
 export default {
   name: "FlashSalePage",
   data() {
-    return {
+    return {loading: false,      // 新增
       baners: '',
       activeCategory: 0,
       rushList: [],
@@ -115,37 +116,48 @@ export default {
       return this.tabGoodsData[this.activeCategory] || [];
     }
   },
+   activated() {
+  // 每次进入都重新请求
+  this.zoneListIndex();
+},
   mounted() {
     this.zoneListIndex();
   },
   methods: {
     getPlatformName,
     zoneListIndex() {
-      zoneList().then(res => {
-        if (res.code == 200) {
-          let allZones = res.data.list || [];
+  this.loading = true;          // 请求开始，显示全屏加载
 
-          // 1. 今日疯抢：取 id=5 的商品
-          let rushZone = allZones.find(zone => zone.id == 5);
-          if (rushZone && rushZone.goods) {
-            this.rushList = rushZone.goods.slice(0,3);
-          }
-          this.baners = rushZone.img;
-          // 2. 分类 Tab：根据 id 对应
-          allZones.forEach(zone => {
-            if (zone.id == 6) {
-              this.tabGoodsData[0] = zone.goods || [];
-            } else if (zone.id == 7) {
-              this.tabGoodsData[1] = zone.goods || [];
-            } else if (zone.id == 8) {
-              this.tabGoodsData[2] = zone.goods || [];
-            } else if (zone.id == 9) {
-              this.tabGoodsData[3] = zone.goods || [];
-            }
-          });
+  zoneList()
+    .then(res => {
+      if (res.code == 200) {
+        let allZones = res.data.list || [];
+
+        // 1. 今日疯抢：取 id=5 的商品
+        let rushZone = allZones.find(zone => zone.id == 5);
+        if (rushZone && rushZone.goods) {
+          this.rushList = rushZone.goods.slice(0, 3);
         }
-      });
-    },
+        this.baners = rushZone.img;
+
+        // 2. 分类 Tab：根据 id 对应
+        allZones.forEach(zone => {
+          if (zone.id == 6) {
+            this.tabGoodsData[0] = zone.goods || [];
+          } else if (zone.id == 7) {
+            this.tabGoodsData[1] = zone.goods || [];
+          } else if (zone.id == 8) {
+            this.tabGoodsData[2] = zone.goods || [];
+          } else if (zone.id == 9) {
+            this.tabGoodsData[3] = zone.goods || [];
+          }
+        });
+      }
+    })
+    .finally(() => {
+      this.loading = false;     // 成功或失败都关掉
+    });
+},
     goToDetail(item) {
       this.$router.push({ path: '/productDetail', query: { id: item.id } });
     },

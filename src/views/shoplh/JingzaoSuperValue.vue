@@ -154,7 +154,11 @@ export default {
   
   mounted() {
       this.channelDetailIndex();
-  }
+  },
+  activated() {
+  // 每次进入都重新请求
+  this.channelDetailIndex();
+},
 }
 </script>
 

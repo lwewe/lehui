@@ -42,7 +42,7 @@
 
         </div>
       </div>
-     
+
       <!-- 平台小计 -->
       <div class="platform-summary">
         <div class="orderInfo">
@@ -62,11 +62,11 @@
         </div>
       </div>
     </div>
-<div style="background-color: white;
+    <div style="background-color: white;
     border-radius: 10px;
     margin-bottom: 10px;font-size: 14px;padding:16px;">
-   送达时间：{{ timeArrive }}
-</div>
+      送达时间：{{ timeArrive }}
+    </div>
     <!-- 支付方式 -->
     <div class="addressBox addressBox2 addressBox3">
       <Payment :result1="result" :cardList="cardList" @getResult="getResult"></Payment>

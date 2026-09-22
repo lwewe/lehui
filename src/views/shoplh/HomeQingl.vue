@@ -1,5 +1,6 @@
 <template>
   <div class="bg">
+    <NProgress v-if="loading" />
     <!-- 顶部Banner -->
     <div class="banner">
       <img :src="topImg" class="topImg" alt="">
@@ -73,7 +74,7 @@ import { zoneList } from "@/api/lhjdtm";
 
 export default {
   data() {
-    return {
+    return {loading: false,  
       currentCategory: 0,
       allZoneList: [], // 接口返回的所有分类数据
       leftIcon: require("../../assets/yj/1.png"),
@@ -91,20 +92,30 @@ export default {
   created() {
     this.getZoneList();
   },
+   activated() {
+    // 每次进入都重新请求
+    this.zoneListIndex();
+  },
   methods: {
     // 获取 zoneList 接口数据
-    getZoneList() {
-      zoneList().then(res => {
-        if (res.code == 200) {
-          this.allZoneList = res.data.list || [];
-           const watermelon = this.allZoneList.find(item => item.id === 14);
-          if (watermelon && watermelon.img) {
-            this.topImg  = watermelon.img;
-            console.log(watermelon.img)
-          }
+   getZoneList() {
+  this.loading = true;          // 请求开始
+
+  zoneList()
+    .then(res => {
+      if (res.code == 200) {
+        this.allZoneList = res.data.list || [];
+
+        const watermelon = this.allZoneList.find(item => item.id === 14);
+        if (watermelon && watermelon.img) {
+          this.topImg = watermelon.img;
         }
-      });
-    },
+      }
+    })
+    .finally(() => {
+      this.loading = false;     // 成功或失败都关掉
+    });
+},
     // Tab 点击滚动到对应板块
     scrollToSection(index) {
       this.currentCategory = index;
