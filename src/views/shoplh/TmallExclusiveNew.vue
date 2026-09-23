@@ -94,12 +94,13 @@ export default {
     
     // 查看商品详情
     goToDetail(item) {
-      if (item.id) {
-        this.$router.push({
-          path: '/ProductDetail',
-          query: { id: item.id }
-        });
-      }
+      this.$goDetail(item);
+      // if (item.id) {
+      //   this.$router.push({
+      //     path: '/ProductDetail',
+      //     query: { id: item.id }
+      //   });
+      // }
     },
     
     // 加入购物车

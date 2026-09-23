@@ -171,9 +171,7 @@
       <!--  -->
 
     </div>
-    <div @click="toNext('/productList?id=162&index1=4')" v-if="$store.state.festivals == 2" class="bannerDw">
-      <img class="img" src="../assets/dw.png" alt="">
-    </div>
+     
     <!--    tab切换-->
 
 
@@ -196,14 +194,14 @@
           <div class="bannerBox" v-if="active == 0 && shopSwiper.length > 0">
             <van-swipe :autoplay="3000" indicator-color="white">
               <van-swipe-item class="bannerImg" v-for="(item, index) in shopSwiper" :key="item.id || index"
-                @click="toDetail(item.id)">
+                @click="toDetail(item)">
                 <img class="img" :src="item.img" alt="">
               </van-swipe-item>
             </van-swipe>
           </div>
 
           <div v-for="(item, index) in leftList" :key="item.id || index" class="shop-item">
-            <div class="product-card1" @click="toDetail(item.id)">
+            <div class="product-card1" @click="toDetail(item)">
               <div class="product-img-box">
                 <img :src="item.img" alt="" class="product-img" v-if="item.img">
                 <div class="img-placeholder" v-else>暂无图片</div>
@@ -230,7 +228,7 @@
         <!-- 右列 -->
         <div class="waterfall-column">
           <div v-for="(item, index) in rightList" :key="item.id || index" class="shop-item">
-            <div class="product-card1" @click="toDetail(item.id)">
+            <div class="product-card1" @click="toDetail(item)">
               <div class="product-img-box">
                 <img :src="item.img" alt="" class="product-img" v-if="item.img">
                 <div class="img-placeholder" v-else>暂无图片</div>
@@ -332,31 +330,7 @@ export default {
       classList: [],
       sortList: [],
       backColor: "",
-      funList: [
-        {
-          id: 1,
-          img: require("../assets/banner/zuo.png"),
-          title: "甄选品牌",
-          path: "/selectBrand",
-          content: "官网买手精选推荐"
-        },
-        {
-          id: 2,
-          img: require("../assets/banner/you1.png"),
-          title: "热门商品",
-          content: "悦享热销商品",
-          path: "/hotProduct",
-          colorText: "#4F678E"
-        },
-        {
-          id: 3,
-          img: require("../assets/banner/you2.png"),
-          title: "新品专区",
-          content: "开启你的购物之旅",
-          path: "/newProduct",
-          colorText: "#694E33"
-        },
-      ],
+     
       active: 0,
       // tabList: [{
       //   flag: "1",
@@ -1082,8 +1056,8 @@ export default {
       }
     },
     goToDetail(item) {
-
-      this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
+      this.$goDetail(item);
+      // this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
     },
     // 跳转到永辉彩食鲜免密登录
     async goToYonghuiLogin() {
@@ -1199,13 +1173,14 @@ export default {
       })
     },
     // 跳转到商品详情
-    toDetail(id) {
-      if (id) {
-        this.$router.push({
-          path: "/productDetail",
-          query: { id }
-        })
-      }
+    toDetail(item) {
+      // if (id) {
+      //   this.$router.push({
+      //     path: "/productDetail",
+      //     query: { id }
+      //   })
+      // }
+      this.$goDetail(item);
     },
 
     // 分割商品列表到左右两列
@@ -1503,6 +1478,7 @@ export default {
 
     toClass(item, index) {
       console.log(item)
+        console.log('点击分类', item.title, 'index=', index, 'ixd=', index + 1)   // ← 加这行
       const ixd = index + 1;
       if (ixd == 1) this.$router.push({ path: "/FoodDelivery", query: { id: item.id } })
       if (ixd == 6) this.$router.push({ path: "/ApplianceChannel", query: { id: item.id } })
@@ -1510,6 +1486,7 @@ export default {
       if (ixd == 5) this.$router.push({ path: "/BeautyZone", query: { id: item.id } })
       if (ixd == 7) this.$router.push({ path: "/TissueZone", query: { id: item.id } })
       if (ixd == 3) this.$router.push({ path: "/SnackZone", query: { id: item.id } })
+        if (ixd == 8) this.$router.push({ path: "/filmindex" })   // ← 加这行
     },
 
     toCustomer() {
@@ -2234,133 +2211,7 @@ export default {
     }
   }
 
-  .panicBuying {
-    width: 100%;
-    height: 128px;
-    background-image: url("@/assets/banner/back.png");
-    background-size: 100% 100%;
-    box-sizing: border-box;
-    margin-top: 7px;
-    padding: 5px 13px;
-    background-color: transparent;
-
-    .panicTop {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-
-      .downtimeBack {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-      }
-
-      .downtime {
-        display: flex;
-        align-items: center;
-        font-size: 12px;
-        gap: 3px;
-        color: #DE1616;
-        margin-top: -5px;
-      }
-
-      .time {
-        color: white;
-        background-color: #DE1616;
-        border-radius: 5px;
-        padding: 2px;
-        width: 15px;
-        height: 14px;
-        line-height: 14px;
-        text-align: center;
-      }
-
-      .panicImg {
-        //width: 67px;
-        color: #31507F;
-        font-weight: bold;
-      }
-
-      .text {
-        font-size: 12px;
-        color: #857167;
-      }
-
-      .more {
-        //display: flex;
-        //align-items: center;
-        //gap: 5px;
-        font-size: 10px;
-        background-image: linear-gradient(to right, #497DC5, #5495DE);
-        padding: 2px;
-        width: 58px;
-        text-align: center;
-        border-radius: 30px;
-        color: #EEF4FB;
-      }
-    }
-
-    .birthdayBox {
-      overflow-x: auto;
-      overflow-y: hidden;
-      margin-top: 5px;
-      background-color: white;
-      border-radius: 10px;
-
-      .birthday {
-        display: flex;
-        gap: 5px;
-        padding: 5px 0px;
-
-        .listItem {
-          width: 100%;
-          padding-bottom: 5px;
-
-          .hotText {
-            background-color: #FFF8FC;
-            border: 1px solid #FBE7F0;
-            color: #F0585E;
-            border-radius: 30px;
-            text-align: center;
-            font-size: 12px;
-            //width: 70%;
-            margin: auto;
-            position: relative;
-            z-index: 2;
-            padding: 2px 0px;
-          }
-
-          .title {
-            font-size: 12px;
-            font-weight: bold;
-            color: #313131;
-            padding-top: 3px;
-            display: -webkit-box;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            -webkit-line-clamp: 2;
-            /* 显示两行 */
-          }
-
-          .shopInfo {
-            padding: 0px 6px;
-          }
-
-
-          .oprice {
-            font-size: 10px;
-            color: #A1A1A1;
-            text-decoration: line-through;
-          }
-        }
-      }
-    }
-
-
-    .birthdayBox::-webkit-scrollbar {
-      display: none
-    }
-  }
+ 
 
   .flexBox {
     width: 100%;

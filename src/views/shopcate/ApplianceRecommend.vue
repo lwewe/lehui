@@ -41,7 +41,7 @@
       <!-- --- 分组 2：清凉计划 --- -->
       <div class="goods-group">
         <!-- 分类标题居中 -->
-        <div class="group-header"> 
+        <div class="group-header">
           {{ title2 }} </div>
 
         <!-- 3个商品 (左图右文) -->
@@ -68,16 +68,16 @@
       <!-- --- 3. 更多推荐 (通栏标题 + 下面双列瀑布流) --- -->
       <div class="more-recommend-box">
         <div class="more-header"> {{ title3 }}
-          </div>
+        </div>
 
         <div class="goods-grid">
           <div class="goods-item" v-for="(item, index) in moreList" :key="index" @click="goToDetail(item)">
             <img class="goods-img" :src="item.img" alt="" />
             <div class="goods-info">
               <div class="goods-name">{{ item.title }}</div>
-                <span class="platform-tag" v-if="getPlatformName(item.platform)">
-                  {{ getPlatformName(item.platform) }}
-                </span>
+              <span class="platform-tag" v-if="getPlatformName(item.platform)">
+                {{ getPlatformName(item.platform) }}
+              </span>
               <div class="goods-bottom">
                 <div class="price-box">
                   <span class="symbol">¥</span>
@@ -111,24 +111,25 @@ export default {
       baners: '',
       // 新品启动 - 正好3个
       newArrivalList: [
-       ],
+      ],
       // 清凉计划 - 正好3个
       coolPlanList: [
-         ],
+      ],
       // 更多推荐 - 双列
       moreList: [
-        ]
+      ]
     }
   }, mounted() {
     this.channelDetailIndex()
   },
   activated() {
-     this.channelDetailIndex()
+    this.channelDetailIndex()
   },
   methods: {
     getPlatformName,
     goToDetail(item) {
-      this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
+      this.$goDetail(item);
+      // this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
     },
     // 新增：获取频道详情
     channelDetailIndex() {
@@ -167,7 +168,7 @@ export default {
 
 <style scoped lang="less">
 .platform-tag {
-  display: inline-block; 
+  display: inline-block;
   background-color: #DD0A09;
   color: #ffffff;
   border-radius: 2px;
@@ -175,8 +176,10 @@ export default {
   font-weight: 400;
   line-height: 14px;
   padding: 1px 4px;
-  margin-top: 2px;  margin-bottom: 4px;
+  margin-top: 2px;
+  margin-bottom: 4px;
 }
+
 .appliance-recommend-page {
   background: #C2EDFF;
   /* 页面最外层灰色 */
@@ -387,7 +390,7 @@ export default {
         -webkit-line-clamp: 2;
         overflow: hidden;
         line-height: 1.4;
-        -webkit-box-orient: vertical;   
+        -webkit-box-orient: vertical;
       }
 
       .goods-tags {
@@ -415,7 +418,8 @@ export default {
         color: #ed2e33;
 
         .symbol {
-          font-size: 12px;font-weight: bold;
+          font-size: 12px;
+          font-weight: bold;
         }
 
         .price {

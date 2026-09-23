@@ -60,7 +60,8 @@ export default {
   },
   methods: {
     goToDetail(item) {
-      this.$router.push({ path: "/ProductDetail", query: { id: item.id } });
+        this.$goDetail(item);
+      // this.$router.push({ path: "/ProductDetail", query: { id: item.id } });
     },
     goBack() {
       this.$router.go(-1);

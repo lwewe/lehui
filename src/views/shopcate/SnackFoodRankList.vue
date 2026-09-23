@@ -74,7 +74,9 @@ export default {
     getPlatformName,
 
     goToDetail(item) {
-      this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
+      this.$goDetail(item);
+
+      // this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
     },
 
     addToCart(item) {
@@ -82,29 +84,39 @@ export default {
     },
 
     channelDetailIndex() {
-      this.loading = true;
+  this.loading = true;
 
-      channelDetail({ id: this.$route.query.id || 2 })
-        .then(res => {
-          if (res.code == 200) {
-            const data = res.data || {};
+  channelDetail({ id: this.$route.query.id || 2 })
+    .then(res => {
+      if (res.code == 200) {
+        const data = res.data || {};
+        const nav = data.nav || [];
 
-            // 顶部 banner
-            this.baners = data.banner?.[0]?.img || '';
+        // 直接按索引取 nav[9]
+        const navItem = nav[9];
 
-            // 取 sections 里第一个 grid 的商品
-            const gridSection = (data.sections || []).find(s => s.type === 'grid');
-            const allGoods = gridSection?.items || [];
+        // 它的第一个 child
+        const targetChild = navItem?.children?.[0];
 
-            // 上面 3 条，下面剩下的
-            this.topList = allGoods.slice(0, 3);
-            this.restList = allGoods.slice(3);
-          }
-        })
-        .finally(() => {
-          this.loading = false;
-        });
-    },
+        // banner
+        this.baners =
+          targetChild?.banner?.[0]?.img ||
+          data.banner?.[0]?.img ||
+          '';
+
+        // 商品
+        const gridSection = (targetChild?.sections || [])
+          .find(s => s.type === 'grid');
+        const allGoods = gridSection?.items || [];
+
+        this.topList = allGoods.slice(0, 3);
+        this.restList = allGoods.slice(3);
+      }
+    })
+    .finally(() => {
+      this.loading = false;
+    });
+},
 
     goBack() {
       this.$router.go(-1);

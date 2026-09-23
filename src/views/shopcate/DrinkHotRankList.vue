@@ -21,9 +21,9 @@
         <!-- 右侧：商品信息 -->
         <div class="item-info">
           <div class="item-title">{{ item.title }}</div>
-           <span class="platform-tag" v-if="getPlatformName(item.platform)">
-                  {{ getPlatformName(item.platform) }}
-                </span>
+          <span class="platform-tag" v-if="getPlatformName(item.platform)">
+            {{ getPlatformName(item.platform) }}
+          </span>
           <div class="item-tags">
             <span class="tag-red" v-if="item.tag">{{ item.tag }}</span>
           </div>
@@ -56,7 +56,7 @@ export default {
     }
   },
   methods: {
- getPlatformName,
+    getPlatformName,
 
     channelDetailIndex() {
       channelDetail({ id: this.$route.query.id }).then(res => {
@@ -79,8 +79,8 @@ export default {
     },
 
     goToDetail(item) {
-
-      this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
+      this.$goDetail(item);
+      // this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
     },
     goBack() {
       this.$router.go(-1);
@@ -90,7 +90,7 @@ export default {
 
   },
   activated() {
-     this.channelDetailIndex()
+    this.channelDetailIndex()
   },
 }
 </script>
@@ -105,8 +105,10 @@ export default {
   font-weight: 400;
   line-height: 14px;
   padding: 1px 4px;
-  margin-top: 3px; margin-bottom:4px;
+  margin-top: 3px;
+  margin-bottom: 4px;
 }
+
 .hot-rank-page {
   min-height: 100vh;
   /* 背景色统一为截图中的蓝色 */

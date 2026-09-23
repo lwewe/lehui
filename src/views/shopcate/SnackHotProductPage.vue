@@ -96,7 +96,8 @@ export default {
   methods: {
     getPlatformName,
      goToDetail(item) {
-      this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
+      this.$goDetail(item);
+      // this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
     },
     // 新增：获取频道详情
      channelDetailIndex() {

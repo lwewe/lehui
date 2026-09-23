@@ -178,13 +178,14 @@ export default {
     },
     
     // 查看商品详情
-    goToDetail(goods) {
-      if (goods.id) {
-        this.$router.push({
-          path: '/ProductDetail',
-          query: { id: goods.id }
-        });
-      }
+    goToDetail(item) {
+      this.$goDetail(item);
+      // if (goods.id) {
+      //   this.$router.push({
+      //     path: '/ProductDetail',
+      //     query: { id: goods.id }
+      //   });
+      // }
     },
     
     // 搜索

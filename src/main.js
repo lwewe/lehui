@@ -11,6 +11,16 @@ Vue.filter('dateFormat',(dateStr,pattern = 'YYYY-DD-MM HH:mm:ss')=>{
 import NProgress from './components/EnterLoging.vue';
 import loading from './components/loding.vue';
 
+
+// tiaozhuan
+
+import { goDetail, registerPlatform } from '@/utils/goDetail';
+Vue.prototype.$goDetail = function (item, options) {
+  return goDetail.call(this, item, options);
+};
+Vue.prototype.$registerPlatformDetail = registerPlatform;
+
+// tiaozhuan
 // vue vant 组件
 // import Vant from 'vant';
 import 'vant/lib/index.css'

@@ -117,7 +117,7 @@
 
 
               <div v-for="(item, index) in leftList" :key="item.id || index" class="shop-item">
-                <div class="product-card" @click="toDetail(item.id)">
+                <div class="product-card" @click="toDetail(item)">
                   <div class="product-img-box">
                     <img :src="item.img" alt="" class="product-img" v-if="item.img">
                     <div class="img-placeholder" v-else>暂无图片</div>
@@ -127,7 +127,7 @@
                     <!-- 左列 -->
                     <span class="platform-tag" :class="getPlatformClass(item.platform)"
                       v-if="getPlatformName(item.platform)">
-                      {{ getPlatformName(item.platform,item.jd_type) }}
+                      {{ getPlatformName(item.platform, item.jd_type) }}
                     </span>
                     <div class="product-price-row">
                       <span class="sell-price">{{ item.sell_price }}</span>
@@ -143,7 +143,7 @@
             <!-- 右列 -->
             <div class="waterfall-column">
               <div v-for="(item, index) in rightList" :key="item.id || index" class="shop-item">
-                <div class="product-card" @click="toDetail(item.id)">
+                <div class="product-card" @click="toDetail(item)">
                   <div class="product-img-box">
                     <img :src="item.img" alt="" class="product-img" v-if="item.img">
                     <div class="img-placeholder" v-else>暂无图片</div>
@@ -182,7 +182,7 @@ import NavigationTab from "@/components/NavigationTab.vue";
 import wx from "weixin-js-sdk";
 import { bindingcard, qrcodeBinging } from "@/api/cart";
 
-import { getPlatformName} from '@/utils/platform'
+import { getPlatformName } from '@/utils/platform'
 
 
 import { userInfo, cardList, productList, editInfo } from "@/api/lhjdtm";
@@ -270,13 +270,16 @@ export default {
       return 'jingd'; // 默认京东（红色）
     },
     // 跳转到商品详情
-    toDetail(id) {
-      if (id) {
-        this.$router.push({
-          path: "/productDetail",
-          query: { id }
-        })
-      }
+    toDetail(item) {
+      this.$goDetail(item);
+      // if (id) {
+      //   this.$router.push({
+      //     path: "/productDetail",
+      //     query: { id }
+      //   })
+      // }
+
+
     },
     // 分割商品列表到左右两列
     splitShopList(list) {
@@ -567,11 +570,11 @@ export default {
     this.token = localStorage.getItem("token")
     this.getUserInfo()
     this.kefu = localStorage.getItem("kefu")
-     
-    
-     console.log('this.kefu' )
-     console.log(this.kefu )
-     
+
+
+    console.log('this.kefu')
+    console.log(this.kefu)
+
     this.getGoodPick();
     this.getCard();
   }

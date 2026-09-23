@@ -132,6 +132,7 @@ export default {
   },
   methods: {
     detail(id) {
+      
       this.$router.push({ path: "/productDetail", query: { id } });
     },
     addToCart(item) {

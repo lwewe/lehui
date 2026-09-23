@@ -75,8 +75,8 @@ export default {
   methods: {
     getPlatformName,
     goToDetail(item) {
-
-      this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
+      this.$goDetail(item);
+      // this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
     },
     // 获取超值推荐数据
     zoneListIndex() {

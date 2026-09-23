@@ -159,7 +159,8 @@ export default {
   methods: {
     getPlatformName,
     goToDetail(item) {
-      this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
+        this.$goDetail(item);
+      // this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
     },
 fetchChannelData() {
   this.loading = true;          // 请求开始

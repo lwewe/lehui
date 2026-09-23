@@ -539,8 +539,9 @@ export default {
       }
     },
     goToDetail(item) {
+      this.$goDetail(item);
 
-      this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
+      // this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
     },
     // 跳转到永辉彩食鲜免密登录
     async goToYonghuiLogin() {

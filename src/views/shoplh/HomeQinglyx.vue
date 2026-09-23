@@ -37,7 +37,7 @@
 
         <!-- 第一个板块（热带）使用纵向列表展示 -->
         <div class="vertical-list" v-if="index === 0">
-          <div class="vertical-item" v-for="item in section.goods" :key="item.id" @click="detail(item.id)">
+          <div class="vertical-item" v-for="item in section.goods" :key="item.id" @click="detail(item)">
             <img :src="item.img" alt="" class="v-img">
             <div class="v-info">
               <div class="v-title">{{ item.title }}</div>
@@ -52,7 +52,7 @@
 
         <!-- 后面两个板块（蜜瓜、西瓜）使用横向滚动展示 -->
         <div class="horizontal-scroll" v-else>
-          <div class="h-card" v-for="item in section.goods" :key="item.id" @click="detail(item.id)">
+          <div class="h-card" v-for="item in section.goods" :key="item.id" @click="detail(item)">
             <img :src="item.img" alt="" class="h-img">
             <div class="h-title">{{ item.title }}</div>
             <!-- <div class="h-spec">{{ getPlatformName(item.platform )}}</div> -->
@@ -128,8 +128,9 @@ export default {
         }
       });
     },
-    detail(id) {
-      this.$router.push({ path: "/productDetail", query: { id } });
+    detail(item) {
+      this.$goDetail(item);
+      // this.$router.push({ path: "/productDetail", query: { id } });
     },
     addToCart(item) {
       this.$toast('已加入购物车');

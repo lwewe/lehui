@@ -9,22 +9,18 @@ module.exports = {
     // 其他配置项
     devServer: {
         proxy: {
-            // '/movie': {
-            //     target: 'https://test-open.xuankua.cn', // 目标服务器地址
-            //     // target: 'https://open.xuankua.cn', // 目标服务器地址
-            //     changeOrigin: true,
-            //     pathRewrite: {
-            //         '^/movie': '', // 将请求路径中的 '/api' 替换为空
-            //     },
-            // },
-            '/api': {
-                // target: 'http://192.168.3.7', // 目标服务器地址
-               // target: 'https://sc.bjyxfl.com', // 目标服务器地址
-                target:'https://scapi.bjyxfl.com',
+             
+            '/movie': {
+                target: 'https://test-open.xuankua.cn',
+                // target: 'https://open.xuankua.cn',   // 正式环境
                 changeOrigin: true,
-                // pathRewrite: {
-                //     '^/api': '', // 将请求路径中的 '/api' 替换为空
-                // },
+                pathRewrite: { '^/movie': '' },
+            },
+            '/api': {
+
+                target: 'https://scapi.bjyxfl.com',
+                changeOrigin: true,
+
             },
         },
         client: {

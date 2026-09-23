@@ -87,11 +87,15 @@ export default {
       }
 
       // 京东/天猫/京造
-      if (item.id) {
-        this.$router.push({
-          path: "/productDetail",
-          query: { id: item.id }
-        });
+      if (item) {
+
+        this.$goDetail(item);
+        // this.$router.push({
+        //   path: "/productDetail",
+        //   query: { id: item.id }
+        // });
+
+
       }
     }
     // toDetail() {

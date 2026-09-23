@@ -34,7 +34,7 @@
 
           <van-checkbox @click="checkOnce(item)" class="checkbox" :label-disabled="true" checked-color="#EC3036"
             :value="item.isCheckout" v-for="(item, index) in group.items" :key="item.id">
-            <div class="shopBox" @click.stop="toDetail2(item.product_id)">
+            <div class="shopBox" @click.stop="toDetail2(item)">
               <div class="shopImg">
                 <img class="img" style="border-radius: 5px;" :src="item.product.img" alt="">
               </div>
@@ -122,7 +122,11 @@ export default {
   },
   methods: {
     getPlatformName,
-    toDetail2(id) { this.$router.push({ path: "/productDetail", query: { id } }) },
+    toDetail2(item) { 
+      this.$goDetail(item);
+      // this.$router.push({ path: "/productDetail", query: { id } }) 
+    
+    },
 
     // 分组逻辑
     groupCartList() {

@@ -35,8 +35,9 @@ export default {
   },
   methods: {
     toDetail() {
+        this.$goDetail(item);
      
-      this.$router.push({path:"/productDetail",query:{id:this.listItem.id}})
+      // this.$router.push({path:"/productDetail",query:{id:this.listItem.id}})
        
     },
     // 价格处理

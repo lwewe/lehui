@@ -2,7 +2,7 @@
   <div class="super-value-page">
 
     <!-- 1. 顶部导航栏 -->
-    
+
 
     <!-- 2. 顶部大 Banner -->
     <div class="banner-area">
@@ -12,7 +12,7 @@
     <!-- 3. 商品列表区域 -->
     <div class="goods-container">
       <div class="goods-list" v-if="goodsList.length > 0">
-        <div class="goods-item" v-for="(item, index) in goodsList" :key="index"  @click="goToDetail(item)">
+        <div class="goods-item" v-for="(item, index) in goodsList" :key="index" @click="goToDetail(item)">
 
           <!-- 商品图片区域 (包含角标) -->
           <div class="img-wrapper">
@@ -23,7 +23,7 @@
           <!-- 商品信息 -->
           <div class="goods-info">
             <div class="goods-name">{{ item.title }}</div>
-            
+
             <div class="goods-subtitle" v-if="item.subtitle">{{ item.subtitle }}</div>
 
             <div class="goods-bottom">
@@ -34,12 +34,12 @@
               </div>
               <div class="add-btn" @click="addToCart(item)">+</div>
             </div>
-            
-             
+
+
           </div>
         </div>
       </div>
-      
+
       <!-- 空状态 -->
       <div class="empty-tip" v-else>
         暂无推荐商品
@@ -50,7 +50,7 @@
 </template>
 
 <script>
-import { home,channelDetail } from "@/api/lhjdtm";
+import { home, channelDetail } from "@/api/lhjdtm";
 
 export default {
   name: "JingzaoSuperValue",
@@ -61,7 +61,7 @@ export default {
     }
   },
   methods: {
-     channelDetailIndex() {
+    channelDetailIndex() {
       channelDetail({ id: 13 }).then(res => {
         if (res.code == 200) {
           const data = res.data;
@@ -85,10 +85,10 @@ export default {
           // 3. sections 里如果有 items，可以在这里处理
           // 目前接口 items 为空，所以 hotList / goodsList 保持空
           if (data.sections && data.sections.length > 0) {
-          
-          this.goodsList = res.data.sections[0].items
+
+            this.goodsList = res.data.sections[0].items
             // data.sections.forEach(section => {
-             
+
             //   // if (section.items && section.items.length > 0) {
             //   //   // 根据 section.type 或 title 区分
             //   //   if (section.title === '超值购') {
@@ -105,7 +105,8 @@ export default {
     goToDetail(item) {
       console.log('查看商品详情:', item);
       // 跳转到详情页
-        this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
+      this.$goDetail(item);
+      // this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
     },
     // 获取超值推荐数据
     getRecommendData() {
@@ -114,11 +115,11 @@ export default {
         console.log('超值推荐数据:', res);
         if (res.code == 200) {
           const data = res.data;
-          
+
           // 优先使用 recommend 数据
           if (data && data.recommend && data.recommend.length > 0) {
             this.goodsList = data.recommend;
-          } 
+          }
           // 如果没有 recommend，使用 hot
           else if (data && data.hot && data.hot.length > 0) {
             this.goodsList = data.hot;
@@ -132,7 +133,7 @@ export default {
         this.loading = false;
       })
     },
-    
+
     // 格式化销量
     formatSaleNum(num) {
       if (num >= 10000) {
@@ -140,25 +141,25 @@ export default {
       }
       return num;
     },
-    
+
     // 加入购物车
     addToCart(item) {
       console.log('加入购物车:', item);
       // 调用加入购物车接口
     },
-    
-    goBack() { 
-      this.$router.go(-1); 
+
+    goBack() {
+      this.$router.go(-1);
     }
   },
-  
+
   mounted() {
-      this.channelDetailIndex();
+    this.channelDetailIndex();
   },
   activated() {
-  // 每次进入都重新请求
-  this.channelDetailIndex();
-},
+    // 每次进入都重新请求
+    this.channelDetailIndex();
+  },
 }
 </script>
 
@@ -211,7 +212,7 @@ export default {
   width: 100%;
   height: 170px;
   position: relative;
- 
+
 
   .banner-img {
     width: 100%;

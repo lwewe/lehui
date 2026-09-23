@@ -159,7 +159,9 @@ export default {
     // 获取平台名称
     getPlatformName,
     goToDetail(item) {
-      this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
+      this.$goDetail(item);
+
+      // this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
     },
     // 获取频道数据
     // fetchChannelData() {
@@ -272,12 +274,14 @@ export default {
 
     // 跳转商品详情
     toProductDetail(item) {
-      if (item.id) {
-        this.$router.push({
-          path: '/productDetail',
-          query: { id: item.id }
-        })
-      }
+      this.$goDetail(item);
+      
+      // if (item.id) {
+      //   this.$router.push({
+      //     path: '/productDetail',
+      //     query: { id: item.id }
+      //   })
+      // }
     },
 
     // 加入购物车

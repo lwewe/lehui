@@ -63,8 +63,8 @@ export default {
  getPlatformName,
     
       goToDetail(item) {
-      
-      this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
+        this.$goDetail(item);
+      // this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
     },
     channelDetailIndex() {
       channelChildrenDetaill({ id: this.$route.query.id, nav_index: this.$route.query.nav, child_index: this.$route.query.index }).then(res => {

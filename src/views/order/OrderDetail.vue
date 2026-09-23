@@ -1,8 +1,8 @@
 <template>
   <div class="location">
-    <NProgress v-if="loadingflag"/>
+    <NProgress v-if="loadingflag" />
     <ReturnBack :rcolor="'#fff'" :bcolor="'#CCCCCC'"></ReturnBack>
-    
+
     <!-- 地址 -->
     <div class="addressBox" v-if="detail.delivery">
       <div class="address">
@@ -15,8 +15,8 @@
               <span class="userName">{{ detail.delivery.name }}</span>
               <span class="phone">{{ detail.delivery.phone }}</span>
             </div>
-           
-            <div class="addressDetail">{{ detail.delivery.addr  ||  detail.delivery.detail}}</div>
+
+            <div class="addressDetail">{{ detail.delivery.addr || detail.delivery.detail }}</div>
           </div>
         </div>
       </div>
@@ -55,8 +55,8 @@
           <div class="price">{{ detail.express_company }}</div>
         </div>
         <div class="shopPrice">
-          <div class="shopPriceText">快递单号</div>
-          <div class="price">{{ detail.express_no }}</div>
+          <div class="shopPriceText" >快递单号</div>
+          <div class="price" @click="copyText(detail.express_no)">{{ detail.express_no }} <span class="copy-icon">复制</span></div>
         </div>
       </div>
     </div>
@@ -67,7 +67,8 @@
       <div class="orderInfo">
         <div class="shopPrice">
           <div class="shopPriceText">订单号</div>
-          <div class="price">{{ detail.order_no }}</div>
+          <div class="price" @click="copyText(detail.order_no)">{{ detail.order_no }} <span class="copy-icon">复制</span>
+          </div>
         </div>
         <div class="shopPrice">
           <div class="shopPriceText">下单时间</div>
@@ -77,7 +78,7 @@
           <div class="shopPriceText">商品金额</div>
           <div class="price"><span style="font-size: 10px;">￥</span>{{ detail.total_price }}</div>
         </div>
-        
+
 
         <div class="shopPrice">
           <div class="shopPriceText">快递费</div>
@@ -118,7 +119,7 @@
 </template>
 
 <script>
-import { orderDetail,orderCancel  } from "@/api/lhjdtm";
+import { orderDetail, orderCancel } from "@/api/lhjdtm";
 
 export default {
   name: "OrderDetail",
@@ -133,6 +134,25 @@ export default {
     }
   },
   methods: {
+    copyText(text) {
+      if (!text) return;
+
+      const showTip = (msg) => {
+        if (this.$toast) {
+          this.$toast(msg);
+        } else {
+          alert(msg);
+        }
+      };
+
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(String(text))
+          .then(() => showTip('复制成功'))
+          .catch(() => this.fallbackCopy(String(text)));
+      } else {
+        this.fallbackCopy(String(text));
+      }
+    },
     toKefu() {
       window.location.href = localStorage.getItem("kefu")
     },
@@ -169,7 +189,7 @@ export default {
     },
 
     // 取消订单
-        // 取消订单
+    // 取消订单
     cancelOrder() {
       this.$dialog.confirm({
         title: '取消订单',
@@ -192,9 +212,9 @@ export default {
     },
 
     // 去支付
-   goPay() {
-  this.$router.push({ path: "/payOrder", query: { id: this.detail.id } })
-},
+    goPay() {
+      this.$router.push({ path: "/payOrder", query: { id: this.detail.id } })
+    },
     // 获取订单详情
     getDetail(id) {
       orderDetail({ id }).then(res => {
@@ -217,6 +237,23 @@ export default {
 </script>
 
 <style scoped lang="less">
+.copy-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.copy-icon {
+  font-size: 11px;
+  color: #DA0200;
+  border: 1px solid #DA0200;
+  border-radius: 3px;
+  padding: 0 3px;
+  line-height: 14px;
+}
+
 .location {
   background-color: #F0F0F0;
   padding: 10px;

@@ -2,7 +2,7 @@
   <div class="drink-zone-page">
     <!-- 1. 顶部导航 -->
 
-<NProgress v-if="loading" />
+    <NProgress v-if="loading" />
     <!-- 2. 顶部大 Banner -->
     <div class="top-banner-area">
       <img class="banner-img"
@@ -151,52 +151,52 @@ export default {
   },
   methods: {
     goToDetail(item) {
-
-      this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
+      this.$goDetail(item);
+      // this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
     },
     channelDetailIndex() {
-  this.pendingCount++;
-  this.loading = true;
+      this.pendingCount++;
+      this.loading = true;
 
-  channelDetail({ id: this.$route.query.id })
-    .then(res => {
-      if (res.code == 200) {
-        this.channelData = res.data
-        this.navList = res.data.nav || []
-        this.superTop1 = res.data.nav[0].children[0].sections[0].items.slice(0, 2) || []
-        this.superTop = res.data.nav[1].children[0].sections[0].items.slice(0, 2) || []
-        this.superList = res.data.sections[0].items || []
-        this.moreList = res.data.sections[1].items || []
-        this.bsyx = res.data.nav[2].children[0].img || []
-      }
-    })
-    .finally(() => {
-      this.pendingCount--;
-      if (this.pendingCount <= 0) {
-        this.pendingCount = 0;
-        this.loading = false;
-      }
-    })
-},
+      channelDetail({ id: this.$route.query.id })
+        .then(res => {
+          if (res.code == 200) {
+            this.channelData = res.data
+            this.navList = res.data.nav || []
+            this.superTop1 = res.data.nav[0].children[0].sections[0].items.slice(0, 2) || []
+            this.superTop = res.data.nav[1].children[0].sections[0].items.slice(0, 2) || []
+            this.superList = res.data.sections[0].items || []
+            this.moreList = res.data.sections[1].items || []
+            this.bsyx = res.data.nav[2].children[0].img || []
+          }
+        })
+        .finally(() => {
+          this.pendingCount--;
+          if (this.pendingCount <= 0) {
+            this.pendingCount = 0;
+            this.loading = false;
+          }
+        })
+    },
 
-productListIndex() {
-  this.pendingCount++;
-  this.loading = true;
+    productListIndex() {
+      this.pendingCount++;
+      this.loading = true;
 
-  productList({ cate_id: this.$route.query.id })
-    .then(res => {
-      if (res.code == 200) {
-        // 你的商品处理逻辑
-      }
-    })
-    .finally(() => {
-      this.pendingCount--;
-      if (this.pendingCount <= 0) {
-        this.pendingCount = 0;
-        this.loading = false;
-      }
-    })
-},
+      productList({ cate_id: this.$route.query.id })
+        .then(res => {
+          if (res.code == 200) {
+            // 你的商品处理逻辑
+          }
+        })
+        .finally(() => {
+          this.pendingCount--;
+          if (this.pendingCount <= 0) {
+            this.pendingCount = 0;
+            this.loading = false;
+          }
+        })
+    },
     // channelDetailIndex() {
     //   channelDetail({ id: this.$route.query.id }).then(res => {
     //     console.log('频道详情:', res);
@@ -238,14 +238,7 @@ productListIndex() {
       }
       return []
     },
-    toProductDetail(id) {
-      if (id) {
-        this.$router.push({
-          path: "/productDetail",
-          query: { id }
-        })
-      }
-    },
+
     handleNavClick(item) {
       console.log('点击家电图标:', item)
 
@@ -384,7 +377,7 @@ productListIndex() {
 
     .left-img {
       width: 100%;
-      height:249px;
+      height: 249px;
       object-fit: cover;
       display: block;
     }
@@ -569,10 +562,11 @@ productListIndex() {
         justify-content: space-between;
         align-items: center;
         width: 100%;
-padding-bottom: 6px;
+        padding-bottom: 6px;
+
         .price-box {
           color: #d32f2f;
- 
+
           .symbol {
             font-size: 10px;
             padding-left: 10px;

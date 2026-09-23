@@ -13,7 +13,7 @@
       <!-- ===== 板块 1：早安食光 ===== -->
       <div class="section-wrapper">
         <div class="section-title-bar">
-          <span class="title-text" :style="pageBgStyle1">{{title1}}</span>
+          <span class="title-text" :style="pageBgStyle1">{{ title1 }}</span>
         </div>
         <div class="goods-grid-3">
           <div class="goods-item" v-for="(item, index) in morningList" :key="index" @click="goToDetail(item)">
@@ -30,7 +30,7 @@
       <!-- ===== 板块 2：悦享时光 ===== -->
       <div class="section-wrapper">
         <div class="section-title-bar">
-          <span class="title-text" :style="pageBgStyle1">{{title2}}</span>
+          <span class="title-text" :style="pageBgStyle1">{{ title2 }}</span>
         </div>
         <div class="goods-grid-3">
           <div class="goods-item" v-for="(item, index) in enjoyList" :key="index" @click="goToDetail(item)">
@@ -47,16 +47,16 @@
       <!-- ===== 板块 3：更多推荐 (双列瀑布流) ===== -->
       <div class="section-wrapper">
         <div class="section-title-bar">
-          <span class="title-text" :style="pageBgStyle1">{{title3}}</span>
+          <span class="title-text" :style="pageBgStyle1">{{ title3 }}</span>
         </div>
         <div class="goods-grid-2">
           <div class="goods-item-2" v-for="(item, index) in moreList" :key="index" @click="goToDetail(item)">
             <img class="goods-img" :src="item.img" alt="" />
             <div class="goods-info">
               <div class="goods-name">{{ item.title }}</div>
-               <span class="platform-tag" v-if="getPlatformName(item.platform)">
-                  {{ getPlatformName(item.platform) }}
-                </span>
+              <span class="platform-tag" v-if="getPlatformName(item.platform)">
+                {{ getPlatformName(item.platform) }}
+              </span>
               <div class="goods-tags">
                 <span class="tag" v-for="(tag, tIndex) in item.tags" :key="tIndex">{{ tag }}</span>
               </div>
@@ -85,11 +85,11 @@ export default {
   name: "LightFoodZone",
   data() {
     return {
-      title3:'',
-      title2:'',
-      title1:'',
-      pageBgStyle:{},
-      pageBgStyle1:{},
+      title3: '',
+      title2: '',
+      title1: '',
+      pageBgStyle: {},
+      pageBgStyle1: {},
       baners: '',
       // 板块 1：早安食光 (6个商品)
       morningList: [
@@ -108,15 +108,16 @@ export default {
   mounted() {
     this.channelDetailIndex()
   },
-   activated() {
-  // 每次进入都重新请求
-  this.channelDetailIndex();
-},
+  activated() {
+    // 每次进入都重新请求
+    this.channelDetailIndex();
+  },
   methods: {
-     // 获取平台名称
+    // 获取平台名称
     getPlatformName,
-     goToDetail(item) {
-      this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
+    goToDetail(item) {
+      this.$goDetail(item);
+      // this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
     },
     // 新增：获取频道详情
     channelDetailIndex() {
@@ -127,21 +128,21 @@ export default {
           this.morningList = res.data.sections[0].items;
           this.enjoyList = res.data.sections[1].items;
           this.moreList = res.data.sections[2].items;
-           
-this.title1 = res.data.sections[0].title;
-this.title2 = res.data.sections[1].title;
-this.title3 = res.data.sections[2].title;
+
+          this.title1 = res.data.sections[0].title;
+          this.title2 = res.data.sections[1].title;
+          this.title3 = res.data.sections[2].title;
 
 
 
-             const bgColorStr = res.data.bg_color || '';
+          const bgColorStr = res.data.bg_color || '';
           const colors = bgColorStr.split(',').map(item => item.trim()).filter(item => item);
- this.pageBgStyle = {
-              backgroundColor: colors[0]
-            };
-            this.pageBgStyle1 = {
-              color: colors[1]
-            };
+          this.pageBgStyle = {
+            backgroundColor: colors[0]
+          };
+          this.pageBgStyle1 = {
+            color: colors[1]
+          };
 
         }
       })
@@ -165,6 +166,7 @@ this.title3 = res.data.sections[2].title;
   padding: 1px 4px;
   margin-top: 4px;
 }
+
 .light-food-page {
   background: #F9D89F;
   min-height: 100vh;
@@ -331,7 +333,9 @@ this.title3 = res.data.sections[2].title;
         display: -webkit-box;
         -webkit-line-clamp: 2;
         overflow: hidden;
-        line-height: 1.4; -webkit-box-orient: vertical;  /* ✅ 新增这一行 */
+        line-height: 1.4;
+        -webkit-box-orient: vertical;
+        /* ✅ 新增这一行 */
       }
 
       .goods-tags {

@@ -159,7 +159,9 @@ export default {
     });
 },
     goToDetail(item) {
-      this.$router.push({ path: '/productDetail', query: { id: item.id } });
+      this.$goDetail(item);
+      
+      // this.$router.push({ path: '/productDetail', query: { id: item.id } });
     },
     goBack() {
       this.$router.go(-1);

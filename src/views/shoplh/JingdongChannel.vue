@@ -298,10 +298,15 @@ export default {
 
     // 查看商品详情
     goToDetail(item) {
-      this.$router.push({
-        path: '/ProductDetail',
-        query: { id: item.id }
-      });
+
+
+      this.$goDetail(item);
+      
+      // this.$router.push({
+      //   path: '/ProductDetail',
+      //   query: { id: item.id }
+      // });
+
     },
 
     goBack() {

@@ -1,3 +1,4 @@
+import filmRoutes from './lehuifilmrouter'
 import Vue from 'vue'
 import Router from 'vue-router'
 import HelloWorld from "@/HelloWorld.vue";
@@ -90,18 +91,18 @@ import BeautyZoneNewList from "@/views/shopcate/BeautyZoneNewList.vue";
 
 import Setting from "@/views/mine/Setting.vue";
 import CityList from "@/views/city/CityList.vue";
-import FlashSale from "@/views/product/FlashSale.vue";
-import HotProduct from "@/views/product/HotProduct.vue";
+// import FlashSale from "@/views/product/FlashSale.vue";
+// import HotProduct from "@/views/product/HotProduct.vue";
 import QuickLogin from "@/views/login/QuickLogin.vue";
 import Login from "@/views/login/Login.vue";
 import DirectCharge from "@/views/service/DirectCharge.vue";
 import NewProduct from "@/views/product/NewProduct.vue";
-import SelectBrand from "@/views/product/SelectBrand.vue";
-import HelpFamer from "@/views/product/HelpFamer.vue";
+// import SelectBrand from "@/views/product/SelectBrand.vue";
+
 import UserGuide from "@/views/mine/UserGuide.vue";
 import ActivityZone from "@/views/product/ActivityZone.vue";
 import orderOrderDetail from "@/views/order/orderOrderDetail.vue";
-import ProductDescription from "@/views/mine/ProductDescription.vue";
+// import ProductDescription from "@/views/mine/ProductDescription.vue";
 import Notification from "@/views/service/Notification.vue";
 
 Vue.use(Router)
@@ -681,23 +682,27 @@ const routes = [
         meta: {
             title: '城市'
         }
-    }, {
-        path: '/flashSale',
-        component: FlashSale,
-        meta: {
-            title: '特卖专区',
-            keepAlive: true,
-            keep: true,
-        }
-    }, {
-        path: '/hotProduct',
-        component: HotProduct,
-        meta: {
-            title: '热门商品',
-            keepAlive: true,
-            keep: true,
-        }
-    }, {
+    },
+    //  {
+    //     path: '/flashSale',
+    //     component: FlashSale,
+    //     meta: {
+    //         title: '特卖专区',
+    //         keepAlive: true,
+    //         keep: true,
+    //     }
+    // },
+    //  {
+    //     path: '/hotProduct',
+    //     component: HotProduct,
+    //     meta: {
+    //         title: '热门商品',
+    //         keepAlive: true,
+    //         keep: true,
+    //     }
+    // },
+    
+    {
         path: '/quickLogin',
         component: QuickLogin,
         meta: {
@@ -723,24 +728,17 @@ const routes = [
             keepAlive: true,
             keep: true,
         }
-    }, {
-        path: '/selectBrand',
-        component: SelectBrand,
-        meta: {
-            title: '甄选品牌',
-            keepAlive: true,
-            keep: true,
-        }
     },
-    {
-        path: '/helpfamer',
-        component: HelpFamer,
-        meta: {
-            title: '爱心助农',
-            keepAlive: true,
-            keep: true,
-        }
-    },
+    //  {
+    //     path: '/selectBrand',
+    //     component: SelectBrand,
+    //     meta: {
+    //         title: '甄选品牌',
+    //         keepAlive: true,
+    //         keep: true,
+    //     }
+    // },
+   
     {
         path: '/userGuide',
         component: UserGuide,
@@ -763,19 +761,23 @@ const routes = [
         meta: {
             title: '订单详情'
         }
-    }, {
-        path: '/productDescription',
-        component: ProductDescription,
-        meta: {
-            title: '产品介绍'
-        }
-    }, {
+    },
+    //  {
+    //     path: '/productDescription',
+    //     component: ProductDescription,
+    //     meta: {
+    //         title: '产品介绍'
+    //     }
+    // },
+     {
         path: '/notification',
         component: Notification,
         meta: {
             title: '春节发货通知'
         }
     },
+       // ==================== 电影模块 ====================
+    ...filmRoutes,
 ]
 
 const router = new Router({
