@@ -18,12 +18,9 @@
       <div class="store-grid">
         <div class="store-item" v-for="(item, index) in onlineList" :key="index">
           <div class="store-img-box">
-            <img class="store-img" :src="item.img" alt="" @click="onlines(index)" />
+            <img class="store-img" :src="item.img" alt="" @click="onlines(item.id)" />
           </div>
-          <!-- <div class="store-info">
-            <img class="store-logo" :src="item.logo" alt="" />
-            <div class="store-name">{{ item.name }}</div>
-          </div> -->
+
         </div>
       </div>
     </div>
@@ -70,10 +67,17 @@ import { getDacheLoginUrl } from "@/api/dache";
 import { getMaidelongLoginUrl } from "@/api/maidelong";
 import { getQuchenshiLoginUrl } from "@/api/quchenshi";
 import { onlineBrand } from "@/api/lhcard";
+
+
+import { getHemaLoginUrlshangcheng } from "@/api/hemashangcheng";
+// import { getDingdongLoginUrl, createDingdongOrder, queryDingdongPayStatus } from "@/api/dingdong";
+import { getXiaoxiangLoginUrl } from "@/api/xiaoxiang";
+import { getMeituanLoginUrl } from "@/api/meituan";
 export default {
   name: "BrandSeasonPage",
   data() {
     return {
+      isGettingLocation: false,
       // 线上商城数据 (注意：请把 img 换成门店实景图，logo 换成品牌圆标)
       onlineList: [
 
@@ -85,6 +89,48 @@ export default {
     }
   },
   methods: {
+    // 获取当前位置
+    getCurrentPosition() {
+      return new Promise((resolve, reject) => {
+        // 默认坐标（北京）
+        const defaultPosition = {
+          latitude: "39.923125",
+          longitude: "116.382997"
+        };
+
+        if (!navigator.geolocation) {
+          console.warn('浏览器不支持定位，使用默认坐标');
+          resolve(defaultPosition);
+          return;
+        }
+
+        // 设置超时
+        const timeout = setTimeout(() => {
+          console.warn('定位超时，使用默认坐标');
+          resolve(defaultPosition);
+        }, 8000);
+
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            clearTimeout(timeout);
+            resolve({
+              latitude: position.coords.latitude.toString(),
+              longitude: position.coords.longitude.toString()
+            });
+          },
+          (error) => {
+            clearTimeout(timeout);
+            console.warn('定位失败，使用默认坐标', error.message);
+            resolve(defaultPosition);
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 8000,
+            maximumAge: 30000
+          }
+        );
+      });
+    },
     // 跳转到东方甄选
     async goToDongfang() {
       if (this.isGettingLocation) return;
@@ -692,9 +738,8 @@ export default {
         this.goToWumei();
         return;
       }
-
       if (item.id == 39) {//yonghui
-        this.goToYonghuiLogin();
+        this.goToYonghuiZhanfuma();
         return;
       }
 
@@ -754,6 +799,64 @@ export default {
         return;
       }
     },
+    // 跳转到叮咚买菜免密登录
+    async goToDingdongLogin() {
+      // 防止重复点击
+      if (this.isGettingLocation) {
+        return;
+      }
+
+      this.isGettingLocation = true;
+
+      try {
+        // 显示加载提示
+        this.$toast.loading({
+          message: '正在获取位置...',
+          forbidClick: true,
+          duration: 0
+        });
+
+        // 获取当前位置
+        const position = await this.getCurrentPosition();
+
+        console.log('获取到的位置:', position);
+
+        // 更新加载提示
+        this.$toast.loading({
+          message: '正在跳转叮咚买菜...',
+          forbidClick: true,
+          duration: 0
+        });
+
+        // 调用免密登录接口
+        const res = await getDingdongLoginUrl({
+          latitude: position.latitude,
+          longitude: position.longitude
+        });
+
+        // 关闭加载提示
+        this.$toast.clear();
+
+        console.log('免密登录接口返回:', res);
+
+        if (res.code === 200 && res.data && res.data.data) {
+          // 获取免密登录URL
+          const loginUrl = res.data.data;
+          console.log('免密登录URL:', loginUrl);
+
+          // 跳转到叮咚买菜
+          window.location.href = loginUrl;
+        } else {
+          this.$toast.fail(res.msg || '获取登录链接失败');
+        }
+      } catch (error) {
+        console.error('免密登录失败:', error);
+        this.$toast.clear();
+        this.$toast.fail('跳转失败，请重试');
+      } finally {
+        this.isGettingLocation = false;
+      }
+    },
     async getIndex() {
       onlineBrand().then(res => {
         if (res.code == 200) {
@@ -763,21 +866,147 @@ export default {
         }
       })
     },
+    async goToXiaoxiang() {
+      if (this.isGettingLocation) return;
+
+      this.isGettingLocation = true;
+
+      try {
+        this.$toast.loading({
+          message: '正在跳转美团小象超市...',
+          forbidClick: true,
+          duration: 0
+        });
+
+        const res = await getXiaoxiangLoginUrl();
+
+        this.$toast.clear();
+
+        console.log('美团小象超市免密登录接口返回:', res);
+
+        // ✅ 和饿了么、美团外卖、美团到店一样，res.data 本身就是 URL 字符串
+        if (res.code === 200 && res.data) {
+          const loginUrl = res.data;
+          console.log('美团小象超市免密登录URL:', loginUrl);
+          window.location.href = loginUrl;
+        } else {
+          this.$toast.fail(res.msg || '获取登录链接失败');
+        }
+      } catch (error) {
+        console.error('美团小象超市免密登录失败:', error);
+        this.$toast.clear();
+        this.$toast.fail('跳转失败，请重试');
+      } finally {
+        this.isGettingLocation = false;
+      }
+    },
+    // 跳转到盒马免密登录
+    async goToHemashangcheng() {
+      if (this.isGettingLocation) return;
+
+      this.isGettingLocation = true;
+
+      try {
+        this.$toast.loading({
+          message: '正在跳转盒马商城...',
+          forbidClick: true,
+          duration: 0
+        });
+
+        const res = await getHemaLoginUrlshangcheng();
+
+        this.$toast.clear();
+
+        console.log('盒马商城免密登录接口返回:', res);
+
+        // ✅ 商城返回的是 data.data
+        if (res.code === 200 && res.data && res.data.data) {
+          const loginUrl = res.data.data;
+          console.log('盒马商城免密登录URL:', loginUrl);
+          window.location.href = loginUrl;
+        } else {
+          this.$toast.fail(res.msg || '获取登录链接失败');
+        }
+      } catch (error) {
+        console.error('盒马商城免密登录失败:', error);
+        this.$toast.clear();
+        this.$toast.fail('跳转失败，请重试');
+      } finally {
+        this.isGettingLocation = false;
+      }
+    },
+    // 跳转到美团外卖免密登录
+    async goToMeituan() {
+      if (this.isGettingLocation) return;
+
+      this.isGettingLocation = true;
+
+      try {
+        this.$toast.loading({
+          message: '正在跳转美团外卖...',
+          forbidClick: true,
+          duration: 0
+        });
+
+        const res = await getMeituanLoginUrl();
+
+        this.$toast.clear();
+
+        console.log('美团外卖免密登录接口返回:', res);
+
+        // ✅ 和饿了么一样，res.data 本身就是 URL 字符串
+        if (res.code === 200 && res.data) {
+          const loginUrl = res.data;
+          console.log('美团外卖免密登录URL:', loginUrl);
+          window.location.href = loginUrl;
+        } else {
+          this.$toast.fail(res.msg || '获取登录链接失败');
+        }
+      } catch (error) {
+        console.error('美团外卖免密登录失败:', error);
+        this.$toast.clear();
+        this.$toast.fail('跳转失败，请重试');
+      } finally {
+        this.isGettingLocation = false;
+      }
+    },
     onlines(ixd) {
-      if (ixd == 5) {
+      console.log(ixd)
+      if (ixd == 16) {
+        this.goToXiaoxiang();
+        return;
+
+      }
+      if (ixd == 17) {
+      
+        this.goToHemashangcheng();
+        return;
+
+      }
+
+      if (ixd == 18) {
+        this.goToYonghuiLogin();
+        return;
+      }
+      if (ixd == 19) {
+        this.goToDingdongLogin();
+        return;
+      }
+      if (ixd == 31) {
         this.$router.push({ path: "/JingzaoHome" }) // 京造
-
+        return;
       }
-      if (ixd == 4) {
+      if (ixd == 32) {
         this.$router.push({ path: "/JingdongChannel" })// 京东自营
-
+        return;
       }
-      if (ixd == 7) {
+      if (ixd == 33) {
         this.$router.push({ path: "/TmallSupermarket" }) //天猫
-
+        return;
       }
-      if (ixd == 1) {
-        this.$router.push({ path: "/HemaFresh" })// 和马
+      if (ixd == 34) {
+        this.goToMeituan();
+        return
 
       }
     },

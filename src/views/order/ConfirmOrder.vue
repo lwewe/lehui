@@ -91,7 +91,7 @@ import { wxPay } from "@/api/cart";
 import { getPlatformName } from '@/utils/platform'
 
 import PayPassword from "@/components/PayPassword.vue";
-import { orderDetail, cardList, cartList, orderBuyNow, orderSubmit, payByCard, addressList, userInfo, orderSettle } from "@/api/lhjdtm";
+import { orderDetail, cardList, cartList, orderBuyNow, orderSubmit, payByCard, addressList, userInfo, orderSettle, orderUpdateAddress } from "@/api/lhjdtm";
 
 export default {
   name: "ConfirmOrder",
@@ -513,7 +513,27 @@ export default {
         }
       })
     },
+
+    orderUpdateAddress1() {
+      const payload = {
+        address_id: this.addrShow.id
+      }
+      if (this.group_id) {
+        payload.group_id = Number(this.group_id)
+      } else {
+        payload.order_id = Number(this.order_id)
+      }
+      orderUpdateAddress(payload).then(res => {
+        if (res.code == 200) {
+        } else {
+        }
+      }).catch(err => {
+        this.$toast('失败，请重试')
+      })
+    },
+
     onInput(key) {
+      this.orderUpdateAddress1()
       this.pass = key
       if (this.pass.length == 6) {
         this.isShow = false
@@ -923,7 +943,8 @@ export default {
   .price {
     color: #C93F3D;
     font-weight: bold;
-    font-size: 16px;display: inline-block;
+    font-size: 16px;
+    display: inline-block;
   }
 }
 

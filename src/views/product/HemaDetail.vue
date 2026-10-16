@@ -24,8 +24,8 @@
       </div>
 
       <div class="shopName">{{ detail.title }}</div>
-      <div class="shopSubtitle" v-if="detail.brand_name">{{ detail.brand_name }}</div>
-      <div class="shopSubtitle" v-if="detail.fuzzy_quantity">{{ detail.fuzzy_quantity }}</div>
+      <!-- <div class="shopSubtitle" v-if="detail.brand_name">{{ detail.brand_name }}</div> -->
+      <!-- <div class="shopSubtitle" v-if="detail.fuzzy_quantity">{{ detail.fuzzy_quantity }}</div> -->
 
       <div class="selectBox">
         <div class="specifications" v-for="item in selectList" :key="item.id" @click="open(item.status, item.id)">
@@ -41,24 +41,72 @@
         </div>
       </div>
     </div>
+    <!-- 收货信息弹窗 -->
+    <van-popup v-model="showAddressPopup" position="bottom" round>
+      <div class="addressCard">
+        <div class="close" @click="showAddressPopup = false">
+          <van-icon size="18px" name="cross" />
+        </div>
+        <div class="addressCard-title">收货信息</div>
 
-    <!-- 商品详情 -->
+        <!-- 收货人 -->
+        <div class="form-row">
+          <div class="form-label">收货人</div>
+          <van-field class="form-field" v-model="consigneeName" placeholder="请输入收货人姓名" maxlength="20" />
+        </div>
+
+        <!-- 电话 -->
+        <div class="form-row">
+          <div class="form-label">联系电话</div>
+          <van-field class="form-field" v-model="consigneePhone" type="tel" placeholder="请输入联系电话" maxlength="11" />
+        </div>
+
+        <!-- 收货区域 -->
+        <div class="form-row">
+          <div class="form-label">收货区域</div>
+          <div class="form-field area-pick" @click="openAreaPicker">
+            <van-icon name="location-o" />
+            <span :class="{ 'time-placeholder': !areaText }">
+              {{ areaText || '点击选择省/市/区/街道（必填）' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- 详细地址 -->
+        <div class="form-row">
+          <div class="form-label">详细地址</div>
+          <van-field class="form-field" v-model="addressDetail" placeholder="如：光谷大道1号" maxlength="50" />
+        </div>
+      </div>
+    </van-popup>
+    <!-- 商品详情：兼容 HTML 片段 和 URL 两种格式 -->
     <div class="shopDetail">
       <div class="shopDetailTextBox">
         <div class="line"></div>
         <div class="shopDetailText">商品详情</div>
         <div class="line"></div>
       </div>
+
       <div v-if="detailImages.length" class="wcontent">
-        <img v-for="(img, i) in detailImages" :key="i" :src="img" style="width:100%;display:block;margin-bottom:4px;" />
+        <img v-for="(img, index) in detailImages" :key="index" :src="img" alt="" class="desc-img" />
       </div>
+
+      <!-- 情况2：description 是 HTML 片段 -->
+      <div v-else-if="detailHtml" class="wcontent" v-html="detailHtml"></div>
+
+      <!-- 情况3：都没有 -->
       <div v-else class="no-content">暂无商品详情</div>
     </div>
 
     <!-- 底部按钮 -->
     <van-goods-action>
+      <van-goods-action-mini-btn @click="toCart" :icon="require('../../assets/tubiao/gc.png')" text="购物车" />
       <van-goods-action-mini-btn @click="toKefu" :icon="require('../../assets/tubiao/kfz.png')" text="客服" />
-      <van-goods-action-big-btn class="toPay" style="width:100%;" primary text="立即购买" @click="open('c', 1)" />
+      <!-- <van-goods-action-big-btn class="toPay" style="width:100%;" primary text="立即购买" @click="open('c', 1)" /> -->
+      <van-goods-action-big-btn class="goCart" :class="{ goCart2: detail.stock == 0 }" text="加入购物车"
+        @click="open('b', 1)" />
+      <van-goods-action-big-btn class="toPay" style="width:100%;" primary text="立即购买" @click="openSelect" />
+
     </van-goods-action>
 
     <!-- 弹窗 -->
@@ -100,16 +148,15 @@
             </div>
 
             <!-- 收货人 -->
-            <div class="form-row">
+            <!-- <div class="form-row">
               <div class="form-label">收货人</div>
               <van-field class="form-field" v-model="consigneeName" placeholder="请输入收货人姓名" maxlength="20" />
             </div>
-
-            <!-- 电话 -->
+ 
             <div class="form-row">
               <div class="form-label">联系电话</div>
               <van-field class="form-field" v-model="consigneePhone" type="tel" placeholder="请输入联系电话" maxlength="11" />
-            </div>
+            </div> -->
 
             <!-- 备注 -->
             <div style="margin-top:15px;" class="hcard">
@@ -119,7 +166,7 @@
             </div>
 
             <!-- 收货区域（逐级选择） -->
-            <div style="margin-top:15px;">
+            <!-- <div style="margin-top:15px;">
               <div class="title">收货区域</div>
               <div class="area-pick" @click="openAreaPicker">
                 <van-icon name="location-o" />
@@ -127,18 +174,26 @@
               </div>
             </div>
 
-            <!-- 详细地址 -->
+            
             <div style="margin-top:15px;" class="hcard">
               <div class="title">详细地址</div>
               <van-field v-model="addressDetail" placeholder="如：光谷大道1号" maxlength="50" />
-            </div>
+            </div> -->
           </div>
+
+          <div v-if="errorMsg" class="global-error">{{ errorMsg }}</div>
 
           <!-- 提交 -->
           <div class="footer">
-            <div class="button" v-if="status == 'c'">
+            <!-- <div class="button" v-if="status == 'c'">
               <div class="resetting complete" style="width:100%;" @click="submitOrder">确认下单</div>
+            </div> -->
+
+
+            <div class="button" v-if="status == 'b'">
+              <div class="resetting" style="width: 100%;" @click="resetting">加入购物车</div>
             </div>
+
           </div>
         </div>
       </van-popup>
@@ -172,13 +227,16 @@ export default {
   name: "HemaDetail",
   data() {
     return {
+      loadedProductId: "",   //    
+      showAddressPopup: false, // 收货信息弹窗
       loadingflag: true,
       onIndex: 1,
       detail: {},
-
+      errorMsg: "",
       selectList: [
         { id: 1, icon: require("../../assets/tubiao/gg.png"), text: "请选择规格", status: "c" },
-        { id: 3, icon: require("../../assets/tubiao/gj.png"), text: "预计48小时发货" }
+        { id: 2, icon: require("../../assets/tubiao/dz.png"), text: "请填写收货信息", status: "address" },
+        { id: 3, icon: require("../../assets/tubiao/gj.png"), text: "预计48小时发货" },
       ],
 
       showAll: false,
@@ -211,37 +269,118 @@ export default {
       localId: ""
     };
   },
- watch: {
-  '$route'(to, from) {
-    if (to.path !== '/HemaDetail') return;
-
-    const newProductId = to.query.product_id || to.query.id;
-    const oldProductId = from.query.product_id || from.query.id;
-    const newLocalId = to.query.local_id;
-    const oldLocalId = from.query.local_id;
-
-    // product_id 或 local_id 任一变化就重拉
-    if (newProductId !== oldProductId || newLocalId !== oldLocalId) {
+  watch: {
+    '$route.query.product_id'(newVal, oldVal) {
+      if (this.$route.path !== '/HemaDetail') return;
+      if (!newVal || newVal === oldVal) return;
       this.initFromRoute();
     }
-  }
-},
+  },
   computed: {
+    detailImages() {
+      const list = this.detail.description_images || [];
+      return Array.isArray(list) ? list.filter(Boolean) : [];
+    },
+
     imgs() {
       const list = this.detail.images || [];
       if (list.length) return list;
       return this.detail.picUrl ? [this.detail.picUrl] : [];
     },
-    detailImages() {
-      if (!this.detail.description) return [];
-      return [`https:${this.detail.description}`];
-    }
+
+    detailHtml() {
+      const d = this.detail.description || "";
+      if (!d) return "";
+      const decoded = d
+        .replace(/&lt;/g, "<")
+        .replace(/&gt;/g, ">")
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&amp;/g, "&");
+      if (decoded.includes("<img") || decoded.includes("<p")) {
+        return decoded;
+      }
+      return "";
+    },
+
   },
   methods: {
+     // 加入购物车（按最新接口调整：POST /jdtmshop/cartAdd）
+    resetting() {
+      // 1. 判断是否必须选规格
+      if (this.detail.specs && this.detail.specs.length > 0 && !this.modelId) {
+        this.$toast("请选择规格");
+        return;
+      }
+
+      // 2. 组装参数
+      let params = {
+        product_id: Number(this.detail.id),     // 商品ID
+        quantity: Number(this.value),           // 数量
+        sku: "",                                // 默认空字符串
+        spec_name: ""                           // 默认空字符串
+      };
+
+      // 3. 如果选了规格，把选中的规格 SKU 和名称带入
+      if (this.modelId) {
+        let selectedSpec = this.detail.specs.find(item => item.id === this.modelId);
+        if (selectedSpec) {
+          params.sku = selectedSpec.sku || '';
+          params.spec_name = selectedSpec.spec_name || selectedSpec.xinghao || '';
+        }
+      }
+
+      // 4. 调用正确的接口
+      cartAdd(params).then(res => {
+        if (res.data) {
+          this.$toast(res.data)
+        }
+        if (res.code == 200) {
+          this.$toast("加入购物车成功");
+          this.showAll = false;
+        } else {
+          this.$toast(res.msg || '加入购物车失败');
+        }
+      }).catch(err => {
+        this.$toast('网络异常，请稍后重试')
+      })
+    },
+    openSelect() {
+      if (!localStorage.getItem("token")) {
+        this.$router.push(this.isWeiXin() ? "/quickLogin" : "/login");
+        return;
+      }
+
+      // 收货信息不完整 → 只提示，不弹窗
+      if (!this.consigneeName.trim()) {
+        this.$toast("请填写收货信息");
+        return;
+      }
+      if (!/^1\d{10}$/.test(this.consigneePhone.trim())) {
+        this.$toast("请填写收货信息");
+        return;
+      }
+      if (!this.divisionCode) {
+        this.$toast("请填写收货信息");
+        return;
+      }
+      if (!this.addressDetail.trim()) {
+        this.$toast("请填写收货信息");
+        return;
+      }
+
+      // 收货信息完整 → 打开下单弹窗
+      this.selectId = 1;
+      this.status = "c";
+      this.showAll = true;
+    },
     async getDetail(product_id) {
+      console.trace('[getDetail] 被调用, product_id =', product_id)   // ← 加这一行
       try {
         const res = await hemaProductsDetail({ product_id });
         this.loadingflag = false;
+        console.log('description 原始:', JSON.stringify(res.data.description).slice(0, 200));
+
         if (res.code === 200 && res.data) {
           this.detail = res.data;
           this.localId = res.data.local_id;
@@ -284,16 +423,28 @@ export default {
     },
 
     onChange(index) { this.onIndex = index + 1 },
-
+    toCart() { this.$router.push("/shopCartHm") },
     open(status, id) {
       if (id == 3) return;
       if (!localStorage.getItem("token")) {
         this.$router.push(this.isWeiXin() ? "/quickLogin" : "/login");
         return;
       }
+
+      // 点「请填写收货信息」→ 弹收货信息弹窗
+      if (status === "address") {
+        this.showAddressPopup = true;
+        return;
+      }
+
+
+
       this.selectId = id;
       this.showAll = true;
       this.status = status;
+
+
+      
     },
 
     isWeiXin() {
@@ -334,12 +485,12 @@ export default {
         await this.fetchAreas(item.division_code);
       } else if (this.areaLevel === 3) {
         this.countyName = item.division_name;
-        this.divisionCode = item.division_code;   // 区县编码
+        this.divisionCode = item.division_code;
         this.areaLevel = 4;
         await this.fetchAreas(item.division_code);
       } else if (this.areaLevel === 4) {
         this.townName = item.division_name;
-        this.townDivisionCode = item.division_code; // 街道编码
+        this.townDivisionCode = item.division_code;
 
         this.areaText = [this.provinceName, this.cityName, this.countyName, this.townName]
           .filter(Boolean).join(" ");
@@ -358,31 +509,32 @@ export default {
     },
 
     async submitOrder() {
+      this.errorMsg = "";
+
       if (!this.consigneeName.trim()) {
-        this.$toast({ message: '请输入收货人', zIndex: 9999 });
+        this.errorMsg = "请输入收货人";
         return;
       }
 
       if (!/^1\d{10}$/.test(this.consigneePhone.trim())) {
-        this.$toast({ message: '请输入正确的手机号', zIndex: 9999 });
+        this.errorMsg = "请输入正确的手机号";
         return;
       }
 
       if (!this.divisionCode) {
-        this.$toast({ message: '请选择收货区域', zIndex: 9999 });
+        this.errorMsg = "请选择收货区域";
         return;
       }
 
       if (!this.addressDetail.trim()) {
-        this.$toast({ message: '请输入详细地址', zIndex: 9999 });
+        this.errorMsg = "请输入详细地址";
         return;
       }
 
       if (!this.modelId) {
-        this.$toast({ message: '请选择规格', zIndex: 9999 });
+        this.errorMsg = "请选择规格";
         return;
       }
-
 
       const params = {
         division_code: this.divisionCode,
@@ -407,7 +559,6 @@ export default {
                 order_id: res.data.order_id,
                 order_no: res.data.order_no || "",
                 total_price: res.data.pay_amount || 0,
-                // 地址带过去，下一页只读展示
                 consignee_name: this.consigneeName.trim(),
                 consignee_phone: this.consigneePhone.trim(),
                 address_detail: `${this.areaText} ${this.addressDetail}`.trim(),
@@ -423,12 +574,21 @@ export default {
         this.$toast("网络异常，请稍后重试");
       });
     },
-    initFromRoute() {
-      const productId = this.$route.query.product_id || this.$route.query.id;
-        console.log('[HemaDetail] initFromRoute productId =', productId, 'query =', JSON.stringify(this.$route.query));
-      this.localId = this.$route.query.local_id || "";
 
-      // 重置一下详情，避免旧数据闪一下
+    initFromRoute() {
+      console.trace('[initFromRoute] 被调用')   // ← 加这一行
+      const productId = this.$route.query.product_id || this.$route.query.id;
+      console.log('[HemaDetail] initFromRoute productId =', productId, 'query =', JSON.stringify(this.$route.query));
+
+      // 关键：同一 productId 不重复请求
+      if (productId && productId === this.loadedProductId) {
+        console.log('[HemaDetail] 相同 productId，跳过重复请求');
+        return;
+      }
+
+      this.loadedProductId = productId || "";
+
+      this.localId = this.$route.query.local_id || "";
       this.detail = {};
       this.selectList[0].text = "请选择规格";
       this.modelId = "";
@@ -446,56 +606,11 @@ export default {
   },
   created() {
     this.initFromRoute();
-
   }
 };
 </script>
 
-
-
 <style scoped lang="less">
-.area-pick {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 12px 0;
-  color: #ED2F35;
-  font-size: 14px;
-}
-
-.area-popup {
-  max-height: 60vh;
-  display: flex;
-  flex-direction: column;
-
-  .area-title {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 15px;
-    font-size: 15px;
-    font-weight: bold;
-    border-bottom: 1px solid #f5f5f5;
-  }
-
-  .area-list {
-    flex: 1;
-    overflow-y: auto;
-  }
-
-  .area-item {
-    padding: 12px 15px;
-    font-size: 14px;
-    color: #333;
-    border-bottom: 1px solid #f5f5f5;
-    cursor: pointer;
-
-    &:active {
-      background: #f5f5f5;
-    }
-  }
-}
-
 .area-pick {
   display: flex;
   align-items: center;
@@ -541,7 +656,7 @@ export default {
 .location {
   background-color: #F0F0F0;
   min-height: 100vh;
-  padding-bottom: 60px;
+  padding-bottom: 80px;
   box-sizing: border-box;
 }
 
@@ -686,7 +801,19 @@ export default {
     width: 100% !important;
     height: auto !important;
     display: block;
+    margin-bottom: 4px;
   }
+
+  /deep/ p {
+    margin: 0;
+  }
+}
+
+.desc-iframe {
+  width: 100%;
+  height: 800px;
+  border: 0;
+  display: block;
 }
 
 .no-content {
@@ -706,7 +833,21 @@ export default {
   height: 24px;
 }
 
+
+.goCart {
+  height: 40px;
+  line-height: 40px;
+  margin-top: 5px;
+  border-bottom-left-radius: 30px;
+  border-top-left-radius: 30px;
+  background-image: linear-gradient(to right, #FFAA73, #FF8330);
+}
+
 .toPay {
+  height: 40px;
+  line-height: 40px;
+  margin-top: 5px;
+  // border-radius: 30px;
   border-bottom-right-radius: 30px;
   border-top-right-radius: 30px;
   background-image: linear-gradient(to right, #E71D1E, #FA0707);
@@ -718,7 +859,7 @@ export default {
     background-color: #FFFFFF !important;
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
-    max-height: 70vh;
+    max-height: 90vh;
   }
 
   .close {
@@ -858,14 +999,41 @@ export default {
   }
 }
 
-.map-pick {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 12px 0;
-  color: #ED2F35;
-  font-size: 14px;
-}
 .hcard .van-cell {
-    padding: 10px 0px !important;}
+  padding: 10px 0px !important;
+}
+
+.global-error {
+  color: #ED2F35;
+  font-size: 13px;
+  text-align: center;
+  margin-top: 15px;
+  padding: 0 15px;
+}
+
+
+.time-placeholder {
+  color: #c8c9cc;
+}
+
+.addressCard {
+  position: relative;
+  background-color: white;
+  padding: 20px 15px 25px;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+
+  .close {
+    position: absolute;
+    top: 13px;
+    right: 13px;
+  }
+
+  .addressCard-title {
+    font-weight: bold;
+    font-size: 16px;
+    margin-bottom: 5px;
+    text-align: center;
+  }
+}
 </style>

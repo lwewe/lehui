@@ -49,6 +49,26 @@
         <div v-if="cardList.length === 0" class="no-card">
           暂无可用福利卡
         </div>
+
+        <div class="card-item wx-pay-item" v-if="wxPayVisible" @click="selectWxPay">
+          <div class="card-info">
+            <div class="card-name wx-name">
+              <img src="../../assets/lh/wxpay.png" class="wx-icon" alt="">
+              <span>微信支付</span>
+            </div>
+            <div class="card-sub">{{ isWxSelected ? '当前使用微信支付' : '点击使用微信支付' }}</div>
+          </div>
+          <div class="card-right">
+            <div class="card-balance wx-balance"><span style="font-size: 10px;">￥</span>{{ wxPayAmount }}</div>
+            <div class="checkbox-wrapper">
+              <div class="checkbox-box" :class="{ 'active': isWxSelected }">
+                <span v-if="isWxSelected" class="check-mark">✓</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
       </div>
 
       <!-- 支付金额信息 -->
@@ -152,6 +172,21 @@ export default {
     };
   },
   computed: {
+    // ✅ 新增：微信支付单选项是否露出
+    wxPayVisible() {
+      return this.allowWechat && !this.cardOnly;   // 物美(2) 不露出，其余都露出
+    },
+    // ✅ 新增：微信支付是否被选中（= 一张卡都没勾）
+    isWxSelected() {
+      return this.wxPayVisible && this.selectedList.length === 0;
+    },
+    // ✅ 新增：单选项右侧金额（取后端值，取不到用订单金额兜底）
+    wxPayAmount() {
+      if (!this.wxPayVisible) return null;
+      const wx = this.payInfo ? parseFloat(this.payInfo.wxprice || 0) : 0;
+      if (wx > 0) return this.payInfo.wxprice;
+      return this.orderInfo.total_fee || '0.00';
+    },
     // 当前订单的支付能力
     payCapability() {
       return PAY_CAPABILITY[this.orderType] || PAY_CAPABILITY.default;
@@ -169,6 +204,13 @@ export default {
       return this.selectedList.map(idx => this.cardList[idx].id);
     },
 
+    // ✅ 新增：已勾选卡的余额合计
+    selectedCardBalance() {
+      return this.selectedList.reduce((sum, idx) => {
+        const card = this.cardList[idx];
+        return sum + parseFloat(card?.price || 0);
+      }, 0);
+    },
     payButtonText() {
       if (this.isPaying) return '支付中...';
       if (this.payInfo) {
@@ -194,6 +236,15 @@ export default {
     }
   },
   methods: {
+    async selectWxPay() {
+      if (!this.wxPayVisible) return;
+      if (this.isWxSelected) {
+        this.$toast('当前已是微信支付');
+        return;
+      }
+      this.selectedList = [];
+      await this.calculatePayInfo();
+    },
     openPasswordDialog() {
       this.password = "";
       this.showPasswordDialog = false;
@@ -345,11 +396,35 @@ export default {
         const res = await calculateZhanfumaPayment(params);
 
         if (res.code === 200 && res.data) {
+
+
           const data = res.data;
-          // 不允许微信时，只忽略微信金额，不篡改原始数据
+          let dkprice = parseFloat(data.dkprice || 0);
+          let wxprice = this.allowWechat ? parseFloat(data.wxprice || 0) : 0;
+
+
+          console.log('=== calculatePayInfo 日志 ===');
+          console.log('selectedList:', JSON.stringify(this.selectedList));
+          console.log('selectedCardIds:', JSON.stringify(this.selectedCardIds));
+          console.log('selectedCardBalance:', this.selectedCardBalance);
+          console.log('接口返回 data:', JSON.stringify(data));
+          console.log('dkprice:', dkprice, 'wxprice:', wxprice);
+
+          if (dkprice <= 0 && this.selectedList.length > 0) {
+            const totalFee = parseFloat(this.orderInfo.total_fee) || 0;
+            const cardBalance = this.selectedCardBalance;
+
+            if (cardBalance > 0) {
+              dkprice = Math.min(cardBalance, totalFee);
+              wxprice = this.allowWechat ? Math.max(0, totalFee - dkprice) : 0;
+              console.log('⚠️ 前端兜底：dkprice =', dkprice, ', wxprice =', wxprice);
+            }
+          }
+
           this.payInfo = {
             ...data,
-            wxprice: this.allowWechat ? (data.wxprice || 0) : 0
+            dkprice,
+            wxprice
           };
         } else {
           this.payInfo = {
@@ -553,6 +628,7 @@ export default {
 
 
 
+
       'gq_pay_interface': '1',           // 锅圈
       'yx_wumei_pay_interface': '2',     // 物美
       'drf_scan_interface': '3',         // 大润发
@@ -560,17 +636,21 @@ export default {
       'union_hdl_interface': '5',        // 海底捞
       'union_sam_interface': '6',        // 山姆
       'union_gas_interface': '7',        // 中石化中石油
-      'mdl_interface': '8',              // 麦德龙
-      'wcs_interface': '9',              // 屈臣氏      ← 原 '10'，改 '9'
-      'hm_zfm_interface': '10',          // 盒马展付码  ← 原 '14'，改 '10'
+      'union_metro_interface': '8',    // 麦德龙
+
+      'watsons_scan_interface': '9',
+
+      'union_hema_interface': '10',      // ✅ 补上这行！
       'lxh_interface': '11',             // 泸溪河      ← 原 '9'，改 '11'
       'mxc_interface': '12',             // 名创优品    ← 原 '11'，改 '12'
       'wyj_interface': '13',             // 无印良品    ← 原 '12'，改 '13'
       'zfb_interface': '14',             // 支付宝      ← 原 '13'，改 '14'
+
       'housing_jd_interface': '20',      // JD上门家政
-      'hotel_interface': '21',           // 特惠酒店
+
       'bestway_hotel_interface': '21',   // 特惠酒店（bestway）  ← 新增
       'taxi_interface': '22',            // 特惠打车
+      'eastbuy_mall_interface': '23',            // 东方甄选
     };
     this.orderType = typeMap[interfaceTypeCode] || '1';
 
@@ -818,5 +898,25 @@ export default {
   box-sizing: border-box;
   display: flex;
   justify-content: center;
+}
+
+.wx-pay-item {
+  border-top: 8px solid #f5f5f5;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.wx-name {
+  display: flex;
+  align-items: center;
+}
+
+.wx-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 6px;
+}
+
+.wx-balance {
+  color: #07c160;
 }
 </style>

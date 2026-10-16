@@ -13,16 +13,14 @@
 
       <!-- ===== 板块 1：爆款双列瀑布流 ===== -->
       <div class="hot-grid-wrapper">
-        <div class="hot-goods-item" v-for="(item, index) in hotGoodsList" :key="index">
+        <div class="hot-goods-item" v-for="(item, index) in hotGoodsList" :key="index"  @click="goToDetail(item)">
           <img class="hot-goods-img" :src="item.img" alt="" />
           <div class="hot-goods-info">
             <div class="hot-goods-name">{{ item.title }}</div>
             <span class="platform-tag" v-if="getPlatformName(item.platform)">
                   {{ getPlatformName(item.platform) }}
                 </span>
-            <!-- <div class="hot-goods-tags">
-              <span class="tag" v-for="(tag, tIndex) in item.tags" :key="tIndex">{{ tag }}</span>
-            </div> -->
+            
             <div class="hot-goods-bottom">
               <div class="price-box">
                 <span class="symbol">¥</span>
@@ -36,7 +34,7 @@
 
       <!-- ===== 板块 2：底部排名列表 (带角标) ===== -->
       <div class="rank-list-wrapper">
-        <div class="rank-item" v-for="(item, index) in rankGoodsList" :key="index">
+        <div class="rank-item" v-for="(item, index) in rankGoodsList" :key="index"  @click="goToDetail(item)">
           
           <!-- 图片 + 角标 -->
           <div class="rank-img-box">
@@ -50,9 +48,7 @@
             <span class="platform-tag" v-if="getPlatformName(item.platform)">
                   {{ getPlatformName(item.platform) }}
                 </span>
-            <!-- <div class="rank-tags">
-              <span class="tag-red" v-if="item.tag">{{ item.tag }}</span>
-            </div> -->
+           
             <div class="rank-bottom">
               <div class="price-box">
                 <span class="symbol">¥</span>

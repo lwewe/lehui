@@ -40,7 +40,8 @@ export default {
     },
     // 城市跳转
     showPopup() {
-      this.$router.push({ path: "/citylist", query: { city: '' + this.city, change: this.change } })
+
+      this.$router.push({ path: "/CityListfilm", query: { city: '' + this.city } })
     },
     // 获取定位
     getLocation() {
@@ -72,17 +73,7 @@ export default {
             sessionStorage.setItem("longitude", res.longitude)
             sessionStorage.setItem("latitude", res.latitude)
           }, fail: () => {
-            // console.log("定位失败")
-            // wx.getLocation({
-            //   type: 'wgs84',
-            //   success: (res) => {
-            //     this.selcity(res.longitude, res.latitude)
-            //     sessionStorage.setItem("longitude",res.longitude)
-            //     sessionStorage.setItem("latitude",res.latitude)
-            //   }, fail: () => {
-            //     this.createMap()
-            //   }
-            // });
+
             this.createMap2()
           }
         });
@@ -114,57 +105,28 @@ export default {
       });
     },
     createMap() {
-  const geolocation = new BMap.Geolocation();
-  var _this = this;
-
-  // 先用缓存城市请求一次
-  const cachedCity = sessionStorage.getItem("cityName");
-  if (cachedCity) {
-    console.log("createMap 用缓存城市:", cachedCity);
-    _this.city = cachedCity;
-    _this.getCity(cachedCity);
-  }
-
-  const fallbackTimer = setTimeout(() => {
-    if (!_this.newCityId) {
-      console.warn("定位超时，走默认城市");
-      _this.getCity(_this.city);
-    }
-  }, 3000);
-
-  geolocation.getCurrentPosition(
-    function getinfo(position) {
-      clearTimeout(fallbackTimer);
-      let latitude = position.latitude;
-      let longitude = position.longitude;
-      let city = position.address.city.substring(0, position.address.city.length - 1);
-      _this.center.lng = longitude;
-      _this.center.lat = latitude;
-
-      // 有缓存城市就不覆盖
-      if (sessionStorage.getItem("cityName")) {
-        console.log("已有缓存城市，跳过定位覆盖:", sessionStorage.getItem("cityName"));
+      const geolocation = new BMap.Geolocation();
+      const _this = this;
+      const cachedCity = sessionStorage.getItem("cityName");
+      if (cachedCity) {
+        _this.city = cachedCity;
+        _this.getCity(cachedCity);
         return;
       }
-
-      _this.city = city;
-      if (_this.isWeiXin()) {
-        _this.getLocation1();
-        _this.getCity(_this.city);
-      } else {
-        _this.getCity(_this.city);
-      }
+      geolocation.getCurrentPosition(
+        function (position) {
+          const city = position.address.city.replace(/市$/, '');
+          _this.city = city;
+          _this.getCity(city);
+        },
+        { enableHighAccuracy: true },
+        function () {
+          _this.getCity(_this.city || '北京');
+        },
+        { provider: "baidu" }
+      );
     },
-    { enableHighAccuracy: true },
-    function (e) {
-      clearTimeout(fallbackTimer);
-      _this.getCity(_this.city);
-    },
-    { provider: "baidu" }
-  );
-},
     //   获取targetId
-    // 获取所有城市
     getCity(keyword) {
       getCityList({ keyword }).then(res => {
         const allCities = res.data || [];
@@ -174,13 +136,15 @@ export default {
           || allCities[0];
 
         if (target) {
-          sessionStorage.setItem("targetId", target.cityid1);
-          sessionStorage.setItem("targetId2", target.cityid2);
-          sessionStorage.setItem("cityName", target.name);
-          sessionStorage.setItem("cityId2", target.id);
-          sessionStorage.setItem("cityItem", JSON.stringify([target]));
-
-          this.$emit('getCity', target.name);   // 通知父组件
+          const cached = sessionStorage.getItem("cityName");
+          // 只在没缓存或名字不一致时才写
+          if (!cached || cached !== target.name) {
+            sessionStorage.setItem("targetId", target.cityid1);
+            sessionStorage.setItem("cityName", target.name);
+            sessionStorage.setItem("cityId2", target.id);
+            sessionStorage.setItem("cityItem", JSON.stringify([target]));
+          }
+          this.$emit('getCity', target.name);
         }
       });
     },
@@ -202,6 +166,10 @@ export default {
 
     },
     getCityName(lng, lat) {
+      const cached = sessionStorage.getItem("cityName");
+      if (cached) {           // 有缓存直接跳过
+        return;
+      }
       // 创建一个坐标点
       let point = new BMap.Point(lng, lat);
 
@@ -225,18 +193,14 @@ export default {
   },
   created() {
     if (sessionStorage.getItem("cityName")) {
-      this.city = sessionStorage.getItem("cityName")
-      // console.log(this.city,"this.city")
+      this.city = sessionStorage.getItem("cityName");
+      // 不要在这里再 getCity 覆盖，显示就行
     } else {
-      this.createMap()
-      sessionStorage.getItem("cityName", this.city)
+      this.createMap();
     }
   },
   updated() {
-    // if(sessionStorage.getItem("cityName")){
-    //   this.city = sessionStorage.getItem("cityName")
-    //   // console.log(this.city,"this.city")
-    // }
+
   }
 }
 </script>

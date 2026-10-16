@@ -1,5 +1,14 @@
 <template>
   <div class="hema-page">
+    <div class="search-bar">
+      <van-icon name="arrow-left" class="back-icon" @click="goBack" />
+      <div class="search-input-box">
+        <van-icon name="search" class="search-icon" />
+        <input class="search-input" v-model="keyword" placeholder="请输入商品名称" @keyup.enter="handleSearch" />
+      </div>
+      <div class="search-btn" @click="handleSearch">搜索</div>
+    </div>
+
     <!-- Banner（本地图，保留） -->
     <div class="banner-area">
       <img class="banner-img" src="../../assets/lh/hm/b1.png" alt="盒马Banner" />
@@ -16,7 +25,7 @@
     </div>
 
     <!-- 每日特惠 -->
-    <div class="daily-special" v-if="dailyList.length">
+    <!-- <div class="daily-special" v-if="dailyList.length">
       <div class="ds-header">
         <span class="ds-title">每日特惠</span>
         <div class="ds-more" @click="HemaFreshnew()">进入频道 ›</div>
@@ -34,19 +43,20 @@
           </div>
         </div>
       </div>
-    </div>
+    </div> -->
 
     <!-- 底部商品瀑布流 -->
     <div class="goods-grid" v-if="goodsList.length">
       <div class="goods-item" v-for="(item, index) in goodsList" :key="index" @click="goDetail(item)">
-        <img class="goods-img" :src="item.img" alt="" />
+        <img class="goods-img" :src="item.picUrl" alt="" />
         <div class="goods-info">
-          <div class="goods-name">{{ item.name }}</div>
+          <div class="goods-name">{{ item.title }}</div>
           <div class="goods-bottom">
             <div class="price-box">
               <span class="symbol">¥</span>
               <span class="price">{{ item.price }}</span>
-              <span v-if="item.market_price" style="color: #9F9D9D;font-size: 10px;text-decoration: line-through;">
+              <span v-if="item.sell_price < item.market_price"
+                style="color: #9F9D9D;font-size: 10px;text-decoration: line-through;">
                 {{ item.market_price }}
               </span>
             </div>
@@ -61,8 +71,8 @@
 </template>
 
 <script>
-import { channelDetail } from "@/api/lhjdtm";
-
+import { channelDetail, categoryList } from "@/api/lhjdtm";
+import { hemaCategoriesList, hemaProductsList } from "@/api/hemaapi";
 export default {
   name: "HemaFresh",
   data() {
@@ -70,10 +80,96 @@ export default {
       bannerImg: "",
       categoryList: [],
       dailyList: [],
-      goodsList: []
+      goodsList: [],
+      page: 1,
+      limit: 10,keyword: "",
+      isLoading: false,
+      isScroll: false,   // true 表示没有更多了
+      timer: null
     };
   },
   methods: {
+    goBack() {
+  this.$router.go(-1);
+},
+
+handleSearch() {
+  // 重置分页，从第 1 页开始
+  this.page = 1;
+  this.isScroll = false;
+  this.goodsList = [];   // 搜索时清空旧列表
+  this.hemaProductsLists(1);
+},
+
+    async hemaProductsLists(page = this.page) {
+      if (this.isLoading) return       // 防止重复请求
+      if (this.isScroll && page > 1) return  // 没有更多了就不请求
+
+      this.isLoading = true
+      try {
+        const res = await hemaProductsList({ page, limit: this.limit,keyword: this.keyword || ""  })
+        this.isLoading = false
+
+        if (res.code === 200 && res.data) {
+          const list = res.data.list || []
+
+          if (list.length === 0) {
+            this.isScroll = true    // 没有更多
+            return
+          }
+
+          if (page === 1) {
+            this.goodsList = []
+          }
+          this.goodsList = [...this.goodsList, ...list]
+
+          // 如果返回数量小于 limit，说明没有下一页
+          if (list.length < this.limit) {
+            this.isScroll = true
+          }
+        }
+      } catch (err) {
+        this.isLoading = false
+        console.error("hemaProductsList 失败:", err)
+      }
+    },
+    handleScroll() {
+      if (this.timer) return
+      this.timer = setTimeout(() => {
+        this.timer = null
+
+        const scrollTop = document.documentElement.scrollTop || document.body.scrollTop
+        const scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight
+        const clientHeight = document.documentElement.clientHeight || document.body.clientHeight
+
+        // ✅ 留 50px 余量，提前触发
+        if (scrollTop + clientHeight >= scrollHeight - 50) {
+          if (this.isScroll || this.isLoading) return
+          this.page++
+          this.hemaProductsLists(this.page)
+        }
+      }, 200)
+    },
+    async categoryLists() {
+      try {
+        const res = await categoryList({ platform: 4 });
+        if (res.code === 200 && res.data) {
+
+        }
+      } catch (err) {
+        console.error("categoryList 失败:", err);
+      }
+    },
+    async fetchHomeData1() {
+      try {
+        const res = await hemaCategoriesList({ parent_id: 15, page: 1, limit: 50 });
+        if (res.code === 200 && res.data) {
+
+        }
+      } catch (err) {
+        console.error("hemaCategoriesList 失败:", err);
+      }
+    },
     async fetchHomeData() {
       try {
         const res = await channelDetail({ id: 15 });
@@ -85,12 +181,7 @@ export default {
             this.bannerImg = data.banner[0].img;
           }
 
-          // 2. 分类图标（nav）
-          this.categoryList = (data.nav || []).map((item, index) => ({
-            id: item.cate_id || item.id || index,
-            name: item.title,
-            img: item.img || ""
-          }));
+
 
           // 3. sections
           if (data.sections && data.sections.length) {
@@ -109,18 +200,7 @@ export default {
             }
 
             // 底部商品瀑布流
-            const goodsSec = data.sections.find(s => s.title === "首页图");
-            if (goodsSec && goodsSec.items) {
-              this.goodsList = goodsSec.items.map(item => ({
-                id: item.product_id,
-                local_id: item.id,
-                name: item.title,
-                img: item.img,
-                price: item.sell_price,
-                market_price: item.market_price || "",
-                platform: 4
-              }));
-            }
+
           }
         }
       } catch (err) {
@@ -140,7 +220,7 @@ export default {
       this.$router.push({
         path: '/HemaDetail',
         query: {
-          product_id: item.id,
+          product_id: item.product_id,
           // local_id: item.local_id
         }
       }).then(() => {
@@ -156,11 +236,21 @@ export default {
   },
   mounted() {
     this.fetchHomeData();
+    this.fetchHomeData1();
+    this.hemaProductsLists(1);   // ✅ 明确传 1
+
+    window.addEventListener('scroll', this.handleScroll);
+    this.categoryLists()
   },
   activated() {
-  // 每次进入都重新请求
-  this.fetchHomeData();
-}
+
+
+    window.addEventListener('scroll', this.handleScroll);
+  },
+  deactivated() {
+
+    window.removeEventListener('scroll', this.handleScroll);
+  },
 };
 </script>
 
@@ -397,6 +487,7 @@ export default {
       color: #333;
       margin-bottom: 2px;
       line-height: 1.4;
+      height: calc(14px * 1.4 * 2);
 
       /* 两行省略 */
       display: -webkit-box;
@@ -447,5 +538,61 @@ export default {
 
 .bottom-safe {
   height: 60px;
+}
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+
+  .back-icon {
+    font-size: 20px;
+    color: #333;
+    flex-shrink: 0;
+  }
+
+  .search-input-box {
+    flex: 1;
+    display: flex;
+    align-items: center;
+     background: #e3e3e3;
+    border-radius: 20px;
+    padding: 6px 12px;
+    gap: 6px;
+
+    .search-icon {
+      font-size: 16px;
+      color: #999;
+      flex-shrink: 0;
+    }
+
+    .search-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-size: 14px;
+      color: #333;
+
+      &::placeholder {
+        color: #bbb;
+      }
+    }
+  }
+
+  .search-btn {
+    flex-shrink: 0;
+    background: #28A2EB;
+    color: #fff;
+    font-size: 14px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+  }
 }
 </style>

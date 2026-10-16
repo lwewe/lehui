@@ -2,7 +2,7 @@
   <!-- 选择电影座位-->
   <div class="sm" style="position: absolute;">
     <ReturnBack :rcolor="'#fff'" :bcolor="'#00000087'"></ReturnBack>
-    <NProgress v-if="loadingflag"/>
+    <NProgress v-if="loadingflag" />
     <!--    提示-->
     <div class="tiplt">
       <div class="sold" style="padding-bottom: 7px;">
@@ -13,14 +13,14 @@
       </div>
       <div class="sold">
         <div class="success">
-          <van-icon color="#fff" name="success" size="12px"/>
+          <van-icon color="#fff" name="success" size="12px" />
         </div>
         <div>选中</div>
       </div>
-      <div class="moneyBox" v-for="(item,index) in arryList" :key="item.area">
+      <div class="moneyBox" v-for="(item, index) in arryList" :key="item.area">
         <div class="sold">
-          <div class="price1 price2" v-if="index==0"></div>
-          <div class="price1" v-if="index!=0" :style="{ boxShadow: item.colorNum }"></div>
+          <div class="price1 price2" v-if="index == 0"></div>
+          <div class="price1" v-if="index != 0" :style="{ boxShadow: item.colorNum }"></div>
         </div>
         <div style="font-size: 10px;padding-left: 5px">{{ (item.price).toFixed(2) }}元</div>
       </div>
@@ -37,43 +37,35 @@
     <!--    座位-->
     <div class="maxBox" id="container">
       <div>
-        <div class="sequence" :class="{amplify2:isamplify}" :style="'height: '+colNoMax*20+'px;'">
-          <div v-for="(item, index) in setList"
-               class="seatClass2"
-               :key="item.id"
-               :style="{
-          height: height + 'rem',
-          width: width + 'rem',
-          top: item.row * positionDistin + 'rem',
-        }">
+        <div class="sequence" :class="{ amplify2: isamplify }" :style="'height: ' + colNoMax * 20 + 'px;'">
+          <div v-for="(item, index) in setList" class="seatClass2" :key="item.id" :style="{
+            height: height + 'rem',
+            width: width + 'rem',
+            top: item.row * positionDistin + 'rem',
+          }">
             <div>{{ item.rowname }}</div>
           </div>
         </div>
       </div>
       <!--      座子-->
       <div class="box1" :style="{ left: boxLeft + 'px', top: boxTop + 'px' }" @touchstart="startMove"
-           @touchmove="onMove"
-           @touchend="endMove">
-        <div class="box" :class="{amplify:isamplify}"
-             :style="'left:calc(40.7% - '+(rowNoMax*16+6)/2+'px)'" ref="ball">
-          <div v-for="(item, index) in setList"
-               class="seatClass2"
-               :class="{price1:item.status==1, price2:item.status==1&&item.change==0||item.status==1&&item.any=='', set:item.status==1,lovers:item.status==1&&item.flag==1||item.flag==2}"
-               :key="item.id"
-               :style="{
-          height: height + 'rem',
-          width: width + 'rem',
-          top: item.row * positionDistin + 'rem',
-          left: item.column * positionDistin + 'rem',
-          boxShadow: item.status==1&&item.change!=0?item.colorNum:'box-shadow: inset 0 0 0 1px #f5dfcd;'
-        }"
-               @click="seatClk(item,index)"
-          >
-            <div v-if="item.status==0" class="setImg" style="width: 16px;height:16px;">
+        @touchmove="onMove" @touchend="endMove">
+        <div class="box" :class="{ amplify: isamplify }" :style="'left:calc(40.7% - ' + (rowNoMax * 16 + 6) / 2 + 'px)'"
+          ref="ball">
+          <div v-for="(item, index) in setList" class="seatClass2"
+            :class="{ price1: item.status == 1, price2: item.status == 1 && item.change == 0 || item.status == 1 && item.any == '', set: item.status == 1, lovers: item.status == 1 && item.flag == 1 || item.flag == 2 }"
+            :key="item.id" :style="{
+              height: height + 'rem',
+              width: width + 'rem',
+              top: item.row * positionDistin + 'rem',
+              left: item.column * positionDistin + 'rem',
+              boxShadow: item.status == 1 && item.change != 0 ? item.colorNum : 'box-shadow: inset 0 0 0 1px #f5dfcd;'
+            }" @click="seatClk(item, index)">
+            <div v-if="item.status == 0" class="setImg" style="width: 16px;height:16px;">
               <img class="img" src="@/assets/zuowei/ys.png" alt="">
             </div>
-            <div class="success set" v-if="item.status==5" style="padding: 0;">
-              <van-icon color="#fff" name="success" size="12px"/>
+            <div class="success set" v-if="item.status == 5" style="padding: 0;">
+              <van-icon color="#fff" name="success" size="12px" />
             </div>
           </div>
         </div>
@@ -87,41 +79,41 @@
           <div class="time" v-if="moveDetail.playtime">
             <span>{{ moveDetail.playtime.split(" ")[0].split("-").splice(1).join("-") }}</span>
             <span class="toleft days">{{
-                moveDetail.playtime.split(" ")[0].split("-").splice(1).join("-") == nowDate ? "今天" : ""
-              }}{{ moveDetail.playtime.split(" ")[0].split("-").splice(1).join("-") == days ? "明天" : "" }}</span>
+              moveDetail.playtime.split(" ")[0].split("-").splice(1).join("-") == nowDate ? "今天" : ""
+            }}{{ moveDetail.playtime.split(" ")[0].split("-").splice(1).join("-") == days ? "明天" : "" }}</span>
             <span class="toleft">{{ moveDetail.playtime.split(" ")[1].split(":").splice(0, 2).join(":") }}</span>
             <span class="toleft">{{ moveDetail.edition }}</span>
           </div>
         </div>
-        <div class="move" v-if="selectedList.length==0">
+        <div class="move" v-if="selectedList.length == 0">
           <div class="moviename">请选座位</div>
           <div class="time">每次最多可选4个座位，再次点击取消</div>
         </div>
         <!--        已选-->
         <div v-else class="selected">
-          <div class="seletedItem" v-for="(item,index) in selectedList" :key="item.seatid">
+          <div class="seletedItem" v-for="(item, index) in selectedList" :key="item.seatid">
             <div>
               <div class="selectedName">{{ item.name }}</div>
               <div class="money">{{ (item.price).toFixed(2) }}元</div>
             </div>
-            <div @click="deleteSeat(item,index)">
-              <van-icon color="#97989A" name="cross" size="12px"/>
+            <div @click="deleteSeat(item, index)">
+              <van-icon color="#97989A" name="cross" size="12px" />
             </div>
           </div>
         </div>
       </div>
-      <van-button class="btnno" type="danger" v-if="selectedList.length==0">请先选座</van-button>
+      <van-button class="btnno" type="danger" v-if="selectedList.length == 0">请先选座</van-button>
       <van-button class="btnno none" type="danger" v-else @click="comfire">{{ fillPrice }}元 确认选座</van-button>
     </div>
     <!--    购票须知-->
     <van-popup class="popup1" v-model="instructions">
       <div class="popupBox">
-        <div class="popupTitle"  v-if="goupiao">购票须知</div>
+        <div class="popupTitle" v-if="goupiao">购票须知</div>
         <div class="popupText" v-if="goupiao">
           <p v-html="goupiao.content"></p>
         </div>
-        <div class="popupTitle" style="padding-top: 20px"  v-if="guanying">观影须知</div>
-        <div class="popupText"  v-if="guanying">
+        <div class="popupTitle" style="padding-top: 20px" v-if="guanying">观影须知</div>
+        <div class="popupText" v-if="guanying">
           <p v-html="guanying.content"></p>
         </div>
         <div class="btnBox">
@@ -133,11 +125,11 @@
 </template>
 
 <script>
-import {getSeatMaps} from "@/api/lehuifilm";
+
 import moment from "moment";
 import 'moment/locale/zh-cn';
-import {lockSeatOrder, unlockseat, unpayorder} from "@/api/lehuifilm";
-import {getCinemaGuide} from "@/api/lehuifilm";
+
+import { getTicketNotice, getOpiSeat, lockSeatOrder, cancelLockOrder, getUnpaidOrder } from "@/api/lehuifilm";
 
 export default {
   name: 'sysIndex',
@@ -184,16 +176,15 @@ export default {
       loadingflag: false,
       arryList: [],
       isql: false,
-      goupiao:"",
-      guanying:""
+      goupiao: "",
+      guanying: ""
     };
   },
   methods: {
     // 购票/观影须知
     getCinemaGuide() {
-      getCinemaGuide().then(res => {
+      getTicketNotice().then(res => {
         if (res.code == 200) {
-          // console.log(res)
           this.goupiao = res.data.goupiao
           this.guanying = res.data.guanying
         }
@@ -207,7 +198,7 @@ export default {
         confirmButtonColor: 'red'
       }).then(() => {
         setTimeout(() => {
-          this.$router.replace({path: "/paymentpage", query: {order: orderid}})
+          this.$router.replace({ path: "/paymentpage", query: { order: orderid } })
         }, 1500)
       }).catch(() => {
         this.cancelOrder(orderid)
@@ -215,36 +206,44 @@ export default {
     },
     // 取消锁座
     cancelOrder(oid) {
-      unlockseat({
-        token: this.token,
-        oid
-      }).then(res => {
+      cancelLockOrder({        oid}).then(res => {
         if (res.code == 200) {
-          this.$toast(res.data)
+          this.$toast(res.msg)
         }
       })
     },
     // 支付（（（（
     goPay() {
+      // 校验排期时间
+      if (!this.moveDetail.playtime) {
+        this.$toast('排期时间缺失')
+        return
+      }
+
       var seatids = ""
       var seatnames = ""
       this.selectedList.forEach(item => {
+         console.log('seat item:', item)
         seatids += item.seatid + "|"
         seatnames += item.name + "|"
       })
-      lockSeatOrder({
-        token: this.token,
-        opiid: this.opiid,
-        seatids:seatids.slice(0, -1),
-        seatnames:seatnames.slice(0, -1),
-        totalSettleAmount: this.fillPrice,
-        playtime: this.moveDetail.playtime,
-        movieid: this.movieid
-      }).then(res2 => {
+
+      const params = {
+        opiid: String(this.opiid),
+        seatids: seatids.slice(0, -1),
+        seatnames: seatnames.slice(0, -1),
+        playtime: moment(this.moveDetail.playtime).format('YYYY-MM-DD HH:mm:ss'),
+        totalSettleAmount: String(this.fillPrice),
+        movieid: String(this.movieid)
+      }
+
+      console.log('lockseat params:', params)
+
+      lockSeatOrder(params).then(res2 => {
         if (res2.code == 200 && res2.data != undefined) {
           this.$toast("锁座成功")
           setTimeout(() => {
-            this.$router.replace({path: "/paymentpage", query: {order: res2.data.orderid}})
+            this.$router.replace({ path: "/paymentpage", query: { order: res2.data.orderid } })
           }, 1000)
         } else {
           this.instructions = false
@@ -274,9 +273,7 @@ export default {
       if (localStorage.getItem("token")) {
         this.token = localStorage.getItem("token")
       }
-      unpayorder({
-        token: this.token
-      }).then(res => {
+      getUnpaidOrder().then(res => {
         if (res.code == 200) {
           if (!res.data) {
           } else {
@@ -310,145 +307,144 @@ export default {
       this.setList = []
       let data = {
         ...this.parameter,
-        method: "xuankua.opi.seat",
         opiid: opiid,
       }
-      let sign = this.$utils.getASCII(data)
-      getSeatMaps({
-        ...data, sign
-      }).then(res => {
-            // console.log(res)
-            if (res.code == 200) {
-              // this.setList = res.data.seatList
-              this.moveDetail = res.data.opi
-              if (this.moveDetail.areaPrice) {
-                var arry3 = []
-                var areaPrice = ""
-                res.data.seatList.forEach(item => {
-                  if (item.flag == 1 || item.flag == 2) {
-                    arry3.push(item)
-                  }
-                })
-                if (arry3.length == 0) {
-                  areaPrice = this.moveDetail.areaPrice.split(";") || this.moveDetail.areaPrice.split(",")
-                  this.isql = false
-                } else {
-                  areaPrice = this.moveDetail.areaPrice.split(";") || this.moveDetail.areaPrice.split(",")
-                  this.isql = true
-                }
-                areaPrice = areaPrice.sort((a, b) => a.split(",")[1].split(":")[1] - b.split(",")[1].split(":")[1])
-                areaPrice.forEach((item, index) => {
-                  this.areaPrice4.push({
-                    area: item.split(",")[0].split(":")[1],
-                    price: Number(item.split(",")[1].split(":")[1]),
-                    change: index
-                  })
-                  this.areaPrice.push({
-                    area: item.split(",")[0].split(":")[1],
-                    price: Number(item.split(",")[1].split(":")[1]),
-                    colorNum: `inset 0 0 0 1px rgb(${255 - (index + 1) * 50}, ${135 - (index + Number(item.split(",")[1].split(":")[1])) / 3}, ${152 - (index + Number(item.split(",")[1].split(":")[1])) / 12.5}, 0.5)`,
-                    change: index
-                  })
-                })
-                // this.areaPrice = this.areaPrice.sort((a, b) => a.price - b.price)
-                this.arryList = this.areaPrice
-                this.arryList = this.unique(this.arryList)
-                // console.log(this.arryList,"1111111111")
-                // this.areaPrice = this.unique(this.areaPrice)
-                for (let i = 0; i < this.areaPrice.length - 1; i++) {
-                  for (let j = 1; j < this.areaPrice.length; j++) {
-                    if (this.arryList.length == 1) {
-                      this.areaPrice[j].colorNum = `inset 0 0 0 1px #f5dfcd`
-                    } else  if (this.areaPrice[j].price == this.areaPrice[i].price) {
-                        this.areaPrice[j].colorNum = this.areaPrice[i].colorNum
-                    }
-                  }
-                }
-                res.data.seatList.forEach(item2 => {
-                  this.areaPrice.forEach(item => {
-                    if (item2.area == item.area) {
-                      this.setList.push({
-                        ...item, ...item2
-                      })
-                    }
-                  })
-                })
-              } else {
-                var isAny = []
-                res.data.seatList.forEach(item => {
-                  if (item.flag == 1 || item.flag == 2) {
-                    isAny.push(item)
-                    this.isql = true
-                  } else {
-                    this.isql = false
-                  }
-                })
-                // if (isAny.length == 0) {
-                this.areaPrice.push({
-                  price: (this.moveDetail.price / 100),
-                  any: ""
-                })
-                // } else {
-                //   this.areaPrice.push(
-                //       {
-                //         price: (this.moveDetail.price / 100),
-                //         any: ""
-                //       }, {
-                //         price: (this.moveDetail.price / 100),
-                //         any: "5200"
-                //       })
-                // }
-                this.arryList = this.areaPrice
-                // console.log(this.arryList)
-                this.areaPrice2.push({
-                  price: (this.moveDetail.price / 100),
-                  any: "5200"
-                })
-                this.areaPrice3.push({
-                  price: (this.moveDetail.price / 100),
-                  any: "",
-                  colorNum: `inset 0 0 0 1px #f5dfcd`
-                })
-                this.areaPrice2.forEach(item => {
-                  res.data.seatList.forEach(item2 => {
-                    if (item2.flag == 1 || item2.flag == 2) {
-                      this.setList.push({
-                        ...item, ...item2
-                      })
-                    }
-                  })
-                })
-                this.areaPrice3.forEach(item => {
-                  res.data.seatList.forEach(item2 => {
-                    if (item2.flag != 1 && item2.flag != 2) {
-                      this.setList.push({
-                        ...item, ...item2
-                      })
-                    }
-                  })
-                })
-              }
-              // console.log(this.setList)
-              this.loadingflag = false
-              // 找到列的最大值
-              const colMax = this.findObjInArrMax(this.setList, 'row', true);
-              const colNoMax = parseInt(colMax.row);
-              this.colNoMax = colNoMax
-              //   找到行的最大值
-              const rowMax = this.findObjInArrMax(this.setList, 'column', true);
-              const rowNoMax = parseInt(rowMax.column);
-              this.rowNoMax = rowNoMax
-            }else{
-              this.loadingflag = false
-            }
-            if(this.setList.length==0){
 
+      getOpiSeat({
+        ...data
+      }).then(res => {
+        // console.log(res)
+        if (res.code == 200) {
+          // this.setList = res.data.seatList
+          this.moveDetail = res.data.opi
+          if (this.moveDetail.areaPrice) {
+            var arry3 = []
+            var areaPrice = ""
+            res.data.seatList.forEach(item => {
+              if (item.flag == 1 || item.flag == 2) {
+                arry3.push(item)
+              }
+            })
+            if (arry3.length == 0) {
+              areaPrice = this.moveDetail.areaPrice.split(";") || this.moveDetail.areaPrice.split(",")
+              this.isql = false
+            } else {
+              areaPrice = this.moveDetail.areaPrice.split(";") || this.moveDetail.areaPrice.split(",")
+              this.isql = true
             }
+            areaPrice = areaPrice.sort((a, b) => a.split(",")[1].split(":")[1] - b.split(",")[1].split(":")[1])
+            areaPrice.forEach((item, index) => {
+              this.areaPrice4.push({
+                area: item.split(",")[0].split(":")[1],
+                price: Number(item.split(",")[1].split(":")[1]),
+                change: index
+              })
+              this.areaPrice.push({
+                area: item.split(",")[0].split(":")[1],
+                price: Number(item.split(",")[1].split(":")[1]),
+                colorNum: `inset 0 0 0 1px rgb(${255 - (index + 1) * 50}, ${135 - (index + Number(item.split(",")[1].split(":")[1])) / 3}, ${152 - (index + Number(item.split(",")[1].split(":")[1])) / 12.5}, 0.5)`,
+                change: index
+              })
+            })
+            // this.areaPrice = this.areaPrice.sort((a, b) => a.price - b.price)
+            this.arryList = this.areaPrice
+            this.arryList = this.unique(this.arryList)
+            // console.log(this.arryList,"1111111111")
+            // this.areaPrice = this.unique(this.areaPrice)
+            for (let i = 0; i < this.areaPrice.length - 1; i++) {
+              for (let j = 1; j < this.areaPrice.length; j++) {
+                if (this.arryList.length == 1) {
+                  this.areaPrice[j].colorNum = `inset 0 0 0 1px #f5dfcd`
+                } else if (this.areaPrice[j].price == this.areaPrice[i].price) {
+                  this.areaPrice[j].colorNum = this.areaPrice[i].colorNum
+                }
+              }
+            }
+            res.data.seatList.forEach(item2 => {
+              this.areaPrice.forEach(item => {
+                if (item2.area == item.area) {
+                  this.setList.push({
+                    ...item, ...item2
+                  })
+                }
+              })
+            })
+          } else {
+            var isAny = []
+            res.data.seatList.forEach(item => {
+              if (item.flag == 1 || item.flag == 2) {
+                isAny.push(item)
+                this.isql = true
+              } else {
+                this.isql = false
+              }
+            })
+            // if (isAny.length == 0) {
+            this.areaPrice.push({
+              price: (this.moveDetail.price / 100),
+              any: ""
+            })
+            // } else {
+            //   this.areaPrice.push(
+            //       {
+            //         price: (this.moveDetail.price / 100),
+            //         any: ""
+            //       }, {
+            //         price: (this.moveDetail.price / 100),
+            //         any: "5200"
+            //       })
+            // }
+            this.arryList = this.areaPrice
+            // console.log(this.arryList)
+            this.areaPrice2.push({
+              price: (this.moveDetail.price / 100),
+              any: "5200"
+            })
+            this.areaPrice3.push({
+              price: (this.moveDetail.price / 100),
+              any: "",
+              colorNum: `inset 0 0 0 1px #f5dfcd`
+            })
+            this.areaPrice2.forEach(item => {
+              res.data.seatList.forEach(item2 => {
+                if (item2.flag == 1 || item2.flag == 2) {
+                  this.setList.push({
+                    ...item, ...item2
+                  })
+                }
+              })
+            })
+            this.areaPrice3.forEach(item => {
+              res.data.seatList.forEach(item2 => {
+                if (item2.flag != 1 && item2.flag != 2) {
+                  this.setList.push({
+                    ...item, ...item2
+                  })
+                }
+              })
+            })
           }
+          // console.log(this.setList)
+          this.loadingflag = false
+          // 找到列的最大值
+          const colMax = this.findObjInArrMax(this.setList, 'row', true);
+          const colNoMax = parseInt(colMax.row);
+          this.colNoMax = colNoMax
+          //   找到行的最大值
+          const rowMax = this.findObjInArrMax(this.setList, 'column', true);
+          const rowNoMax = parseInt(rowMax.column);
+          this.rowNoMax = rowNoMax
+        } else {
+          this.loadingflag = false
+        }
+        if (this.setList.length == 0) {
+
+        }
+      }
       )
     }
     ,
-// 删除座位表
+    // 删除座位表
     deleteSeat(item, index) {
       if (item.flag == 1) {
         this.setList.forEach(item2 => {
@@ -470,8 +466,9 @@ export default {
       this.getfillPrice(this.selectedList)
     }
     ,
-// 点击座位表
+    // 点击座位表
     seatClk(item, index) {
+        console.log('selected seat item:', item)
       if (item.status == 1) {
         if (this.selectedList.length >= 4) {
           this.$toast('每组订单最多选择四个座位');
@@ -517,13 +514,13 @@ export default {
       this.getfillPrice(this.selectedList)
     }
     ,
-// 找到数组对象中的最大值
+    // 找到数组对象中的最大值
     findObjInArrMax(list, atr, returnVal) {
       let res = Math.max.apply(
-          Math,
-          list.map((item) => {
-            return item[atr];
-          })
+        Math,
+        list.map((item) => {
+          return item[atr];
+        })
       );
       if (returnVal) {
         return list.filter((item) => {
@@ -534,13 +531,13 @@ export default {
       }
     }
     ,
-// 找到数组对象中的最小值
+    // 找到数组对象中的最小值
     findObjInArrMin(list, atr, returnVal) {
       let res = Math.min.apply(
-          Math,
-          list.map((item) => {
-            return item[atr];
-          })
+        Math,
+        list.map((item) => {
+          return item[atr];
+        })
       );
       if (returnVal) {
         return list.filter((item) => {
@@ -565,7 +562,7 @@ export default {
     this.toOrder()
   }
 }
-;
+  ;
 </script>
 
 <style scoped lang="less">
@@ -823,9 +820,11 @@ img {
   max-height: 74vh;
   overflow: auto;
 }
+
 /* 隐藏滚动条 */
 .popupBox::-webkit-scrollbar {
-  display: none; /* 对于 WebKit 浏览器 */
+  display: none;
+  /* 对于 WebKit 浏览器 */
 }
 
 /deep/ .popup1 {

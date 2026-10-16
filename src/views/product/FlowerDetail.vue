@@ -29,17 +29,62 @@
       </div>
 
       <div class="selectBox">
-        <!-- 数量选择 -->
-
-
-        <!-- 收货地址选择 -->
-
-
-        <!-- 配送说明 -->
+        <div class="specifications" :style="{ border: item.id == 3 ? 'none' : '' }" v-for="item in selectList"
+          :key="item.id" @click="open(item.status, item.id)">
+          <div class="leftBox">
+            <div class="specificationsImg">
+              <img class="img" :src="item.icon" alt="">
+            </div>
+            <div class="specificationsText" :class="{ specificationsText2: item.id == 3 }"
+              :style="{ width: item.id == 1 ? '67%' : '' }">{{ item.text }}</div>
+          </div>
+          <div class="iconBox" v-if="item.id != 3">
+            <van-icon name="arrow" />
+          </div>
+        </div>
 
       </div>
     </div>
+    <!--  -->
+    <!-- 收货信息弹窗 -->
+    <van-popup v-model="showAddressPopup" position="bottom" round>
+      <div class="addressCard">
+        <div class="close" @click="showAddressPopup = false">
+          <van-icon size="18px" name="cross" />
+        </div>
+        <div class="addressCard-title">收货信息</div>
 
+        <div class="form-row">
+          <div class="form-label">收货人</div>
+          <van-field class="form-field" v-model="receiverName" placeholder="请输入收货人姓名" maxlength="20" />
+        </div>
+
+        <div class="form-row">
+          <div class="form-label">联系电话</div>
+          <van-field class="form-field" v-model="receiverPhone" type="tel" placeholder="请输入联系电话" maxlength="11" />
+        </div>
+
+        <div class="form-row">
+          <div class="form-label">收货地址</div>
+          <div class="form-field map-pick" @click="openMapPicker">
+            <van-icon name="location-o" />
+            <span :class="{ 'time-placeholder': !locationText }">
+              {{ locationText || '点击地图选点（必填）' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-label">门牌楼号</div>
+          <van-field class="form-field" v-model="addressDetail" placeholder="如：XX小区 3号楼 502" maxlength="50" />
+        </div>
+
+
+        <div  @click="showAddressPopup = false">
+           <span style="width: 100%;margin-top: 20px; border-radius: 40px; height: 40px;background-color: #E71D1E;color: #ffffff;font-size: 14px;display: inline-block;line-height: 40px;text-align: center;">确认地址</span> 
+        </div>
+      </div>
+    </van-popup>
     <!-- 3. 商品详情图 -->
     <div class="shopDetail">
       <div class="shopDetailTextBox">
@@ -92,17 +137,7 @@
               </div>
             </div>
 
-            <!-- 姓名 -->
-            <div class="form-row">
-              <div class="form-label">收货人</div>
-              <van-field class="form-field" v-model="receiverName" placeholder="请输入收货人姓名" maxlength="20" />
-            </div>
 
-            <!-- 电话 -->
-            <div class="form-row">
-              <div class="form-label">联系电话</div>
-              <van-field class="form-field" v-model="receiverPhone" type="tel" placeholder="请输入联系电话" maxlength="11" />
-            </div>
             <div class="form-row">
               <div class="form-label">送达时间</div>
               <div class="form-field time-field" @click="openTimePicker">
@@ -115,7 +150,7 @@
             <!-- 贺卡 -->
             <div style="margin-top:15px;" class="hcard">
               <div class="title">贺卡信息（选填）</div>
-              <van-field v-model="cardInfo" rows="2" autosize type="textarea" maxlength="50" placeholder="如：生日快乐"
+              <van-field v-model="cardInfo" rows="1" autosize type="textarea" maxlength="50" placeholder="如：生日快乐"
                 show-word-limit />
             </div>
 
@@ -126,19 +161,9 @@
                 show-word-limit />
             </div>
 
-            <!-- 地图选点 -->
-            <div style="margin-top:15px;">
-              <div class="title">收货地址</div>
-              <div class="map-pick" @click="openMapPicker">
-                <van-icon name="location-o" />
-                <span>{{ locationText || '点击地图选点（必填）' }}</span>
-              </div>
-            </div>
 
-            <div style="margin-top:15px;" class="hcard">
-              <div class="title">门牌楼号</div>
-              <van-field v-model="addressDetail" placeholder="如：XX小区 3号楼 502" maxlength="50" />
-            </div>
+
+
 
 
 
@@ -147,7 +172,7 @@
           <!-- 5.2 地址选择 -->
 
 
-
+          <div v-if="errorMsg" class="global-error">{{ errorMsg }}</div>
           <!-- 5.3 底部按钮 -->
           <div class="footer">
             <div class="button" v-if="selectId == 1">
@@ -181,6 +206,13 @@ export default {
   name: "FlowerDetail",
   data() {
     return {
+      showAddressPopup: false, // 收货信息弹窗
+      selectList: [
+
+        { id: 2, icon: require("../../assets/tubiao/dz.png"), text: "请选择配送地址", status: "d" },
+
+      ],
+      errorMsg: "",
       arriveTime: "",
       arriveTimeText: "",
       showTimePicker: false,
@@ -212,9 +244,12 @@ export default {
   computed: {
     // 轮播图：优先详情图，没有就用首图
     imgs() {
+      if (this.detail.product_image) {
+        return [this.detail.product_image];
+      }
+      // 兜底详情图
       const list = this.detail.detail_images || [];
-      if (list.length) return list;
-      return this.detail.product_image ? [this.detail.product_image] : [];
+      return list;
     },
     // 详情长图
     detailImages() {
@@ -230,44 +265,55 @@ export default {
     }
   },
   methods: {
+    sureBtn(){
+      
+    },
+    open(status, id) {
+      // 点「请选择配送地址」（id=2）时弹收货信息
+      if (id === 2) {
+        this.showAddressPopup = true;
+      }
+    },
     openTimePicker() {
-  const min = new Date(Date.now() + 60 * 60 * 1000);
-  const now = new Date();
+      const min = new Date(Date.now() + 60 * 60 * 1000);
+      const now = new Date();
 
-  // 最小可选日期 = min 所在日期
-  this.minDate = new Date(min.getFullYear(), min.getMonth(), min.getDate());
-  this.maxDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 30);
+      // 最小可选日期 = min 所在日期
+      this.minDate = new Date(min.getFullYear(), min.getMonth(), min.getDate());
+      this.maxDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 30);
 
-  // 若 min 和 now 同一天，限制最小小时
-  if (
-    min.getFullYear() === now.getFullYear() &&
-    min.getMonth() === now.getMonth() &&
-    min.getDate() === now.getDate()
-  ) {
-    this.minHour = min.getHours();
-  } else {
-    this.minHour = 0;
-  }
+      // 若 min 和 now 同一天，限制最小小时
+      if (
+        min.getFullYear() === now.getFullYear() &&
+        min.getMonth() === now.getMonth() &&
+        min.getDate() === now.getDate()
+      ) {
+        this.minHour = min.getHours();
+      } else {
+        this.minHour = 0;
+      }
 
-  // 默认选中值直接给「最小合法时间」，用户一打开就是最早可选时间
-  this.tempArriveTime = min;
-  this.showTimePicker = true;
-},
+      // 默认选中值直接给「最小合法时间」，用户一打开就是最早可选时间
+      this.tempArriveTime = min;
+      this.showTimePicker = true;
+    },
 
-confirmTime(val) {
-  const min = new Date(Date.now() + 60 * 60 * 1000);
+    confirmTime(val) {
+      const min = new Date(Date.now() + 60 * 60 * 1000);
 
-  // 如果用户选的时间 < 当前+1h，自动纠正为 min，并提示
-  if (val.getTime() < min.getTime()) {
-    this.tempArriveTime = min;
-    this.$toast(`送达时间不能早于 ${this.formatTime(min)}`);
-    return; // 不关闭 picker，让用户看到已纠正
-  }
+      // 如果用户选的时间 < 当前+1h，自动纠正为 min，并提示
+      if (val.getTime() < min.getTime()) {
+        this.tempArriveTime = min;
 
-  this.arriveTime = String(Math.floor(val.getTime() / 1000));
-  this.arriveTimeText = this.formatTime(val);
-  this.showTimePicker = false;
-},
+        this.$toast({ message: `送达时间不能早于 ${this.formatTime(min)}`, zIndex: 9999 });
+
+        return; // 不关闭 picker，让用户看到已纠正
+      }
+
+      this.arriveTime = String(Math.floor(val.getTime() / 1000));
+      this.arriveTimeText = this.formatTime(val);
+      this.showTimePicker = false;
+    },
 
     formatTime(date) {
       const m = date.getMonth() + 1;
@@ -290,11 +336,11 @@ confirmTime(val) {
       this.clearFlowerForm()
     },
     restoreFlowerForm() {
-      const showAll = sessionStorage.getItem('flowerShowAll')
-      if (showAll === '1') {
-        this.showAll = true
-        this.selectId = Number(sessionStorage.getItem('flowerSelectId') || 1)
-      }
+      // const showAll = sessionStorage.getItem('flowerShowAll')
+      // if (showAll === '1') {
+      //   this.showAll = true
+      //   this.selectId = Number(sessionStorage.getItem('flowerSelectId') || 1)
+      // }
       const rn = sessionStorage.getItem('flowerReceiverName')
       if (rn) this.receiverName = rn
       const rp = sessionStorage.getItem('flowerReceiverPhone')
@@ -310,6 +356,7 @@ confirmTime(val) {
     clearFlowerForm() {
       sessionStorage.removeItem('flowerShowAll')
       sessionStorage.removeItem('flowerSelectId')
+      sessionStorage.removeItem('flowerShowAddressPopup') // 加这行
       sessionStorage.removeItem('flowerReceiverName')
       sessionStorage.removeItem('flowerReceiverPhone')
       sessionStorage.removeItem('flowerCardInfo')
@@ -318,8 +365,10 @@ confirmTime(val) {
     },
     openMapPicker() {
       // 存弹窗状态和表单
-      sessionStorage.setItem('flowerShowAll', '1')
-      sessionStorage.setItem('flowerSelectId', String(this.selectId))
+      // sessionStorage.setItem('flowerShowAll', '1')
+      // sessionStorage.setItem('flowerSelectId', String(this.selectId))
+      sessionStorage.setItem('flowerShowAddressPopup', '1'); // 加这行
+
       sessionStorage.setItem('flowerReceiverName', this.receiverName || '')
       sessionStorage.setItem('flowerReceiverPhone', this.receiverPhone || '')
       sessionStorage.setItem('flowerCardInfo', this.cardInfo || '')
@@ -391,6 +440,25 @@ confirmTime(val) {
         this.$router.push(this.isWeiXin() ? "/quickLogin" : "/login");
         return;
       }
+
+
+      // 收货信息不完整 → 只提示，不弹窗
+      if (!this.receiverName.trim()) {
+        this.$toast("请先填写收货人姓名");
+        return;
+      }
+      if (!/^1\d{10}$/.test(this.receiverPhone.trim())) {
+        this.$toast("请填写正确的联系电话");
+        return;
+      }
+      if (!this.location || !this.locationText) {
+        this.$toast("请先在地图上选点");
+        return;
+      }
+      if (!this.addressDetail.trim()) {
+        this.$toast("请填写门牌楼号");
+        return;
+      }
       this.selectId = 1;
       this.showAll = true;
       // 存弹窗状态
@@ -447,49 +515,37 @@ confirmTime(val) {
     submitOrder() {
       // 1. 校验
 
+      this.errorMsg = "";
+
       if (!this.receiverName.trim()) {
-        this.$toast({
-          message: '请输入收货人姓名',
-          zIndex: 9999
-        })
+        this.errorMsg = "请输入收货人姓名";
+        this.showAll = false;
+        this.showAddressPopup = true;
         return;
       }
       if (!/^1\d{10}$/.test(this.receiverPhone.trim())) {
-
-        this.$toast({
-          message: '请输入正确的手机号',
-          zIndex: 9999
-        })
+        this.errorMsg = "请输入正确的手机号";
+        this.showAll = false;
+        this.showAddressPopup = true;
         return;
       }
-      if (!this.location) {
-
-        this.$toast({
-          message: '请先在地图上选点',
-          zIndex: 9999
-        })
-        return;
-      }
-      if (!this.locationText) {
-
-        this.$toast({
-          message: '地图选点的地址为空，请重新选点',
-          zIndex: 9999
-        })
+      if (!this.location || !this.locationText) {
+        this.errorMsg = "请先在地图上选点";
+        this.showAll = false;
+        this.showAddressPopup = true;
         return;
       }
       if (!this.addressDetail.trim()) {
-
-        this.$toast({
-          message: '请输入具体地址（小区/门牌/楼号',
-          zIndex: 9999
-        })
+        this.errorMsg = "请输入具体地址（小区/门牌/楼号）";
+        this.showAll = false;
+        this.showAddressPopup = true;
         return;
       }
       if (!this.arriveTime) {
-        this.$toast({ message: '请选择送达时间', zIndex: 9999 });
+        this.errorMsg = "请选择送达时间";
         return;
       }
+
       const name = this.receiverName.trim();
       const phone = this.receiverPhone.trim();
 
@@ -613,6 +669,13 @@ confirmTime(val) {
   activated() {
     this.restoreFlowerForm()   // 加
     this.restoreLocation()
+
+
+    // 从地图页返回，恢复收货信息弹窗
+    if (sessionStorage.getItem("flowerShowAddressPopup") === "1") {
+      this.showAddressPopup = true;
+      sessionStorage.removeItem("flowerShowAddressPopup");
+    }
   },
   mounted() {
     document.body.scrollTop = 0;
@@ -795,8 +858,8 @@ confirmTime(val) {
 }
 
 .toPay {
-  border-bottom-right-radius: 30px;
-  border-top-right-radius: 30px;
+  border-radius: 30px;
+  // border-top-right-radius: 30px;
   background-image: linear-gradient(to right, #E71D1E, #FA0707);
 }
 
@@ -817,7 +880,7 @@ confirmTime(val) {
     background-color: #FFFFFF !important;
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
-    max-height: 70vh;
+    max-height: 90vh;
   }
 
   .close {
@@ -1046,6 +1109,44 @@ confirmTime(val) {
   color: #c8c9cc;
   font-size: 14px;
 }
+
 .hcard .van-cell {
-    padding: 10px 0px !important;}
+  padding: 6px 0px !important;
+}
+
+.global-error {
+  color: #ED2F35;
+  font-size: 13px;
+  text-align: center;
+  margin-top: 15px;
+  padding: 0 15px;
+}
+
+.addressCard {
+  position: relative;
+  /* 加 */
+  background-color: white;
+  padding: 20px 15px 25px;
+  /* 改，给顶部留空间 */
+  border-top-left-radius: 10px;
+  /* 加 */
+  border-top-right-radius: 10px;
+  /* 加 */
+
+  .close {
+    /* 加 */
+    position: absolute;
+    top: 13px;
+    right: 13px;
+  }
+
+  .addressCard-title {
+    font-weight: bold;
+    font-size: 14px;
+    /* 改，稍大一点 */
+    margin-bottom: 5px;
+    text-align: center;
+    /* 加 */
+  }
+}
 </style>

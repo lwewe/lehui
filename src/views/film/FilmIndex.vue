@@ -5,7 +5,7 @@
     <div class="indexCenter">
       <div class="header">
         <div class="headerleft">
-          <City></City>
+          <Cityfilm></Cityfilm>
         </div>
         <div class="headercenter">
           <van-search class="search" shape="round" background="#fff0" v-model="searchtext" @input="inpchange"
@@ -19,11 +19,12 @@
       <!-- 轮播图 -->
       <div class="banner">
         <van-swipe class="my-swipe" indicator-color="red">
-          <van-swipe-item v-for="(item, index) in swiperimg" :key="index" @click="toFDetail(item.url)">
+          <van-swipe-item v-for="(item, index) in swiperimg" :key="index">
             <img class="img" :src="item.img" alt="">
           </van-swipe-item>
         </van-swipe>
       </div>
+      <!-- @click="toFDetail(item.url)" -->
 
       <!-- 文娱会员 -->
       <div class="welfare mt0" v-if="searchtext == '' && (kaquan_list1.length > 0 || kaquan_list2.length > 0)">
@@ -138,7 +139,7 @@
 
     <!--  -->
 
-   <FilmTabbar :active="0"></FilmTabbar>
+    <FilmTabbar :active="0"></FilmTabbar>
     <!--  -->
 
   </div>
@@ -160,14 +161,15 @@ import { getComingMoviesList, getHitFilmList, getCityList, getIndexBannerList } 
 
 // 地图、组件
 import BMap from "BMap"
-import City from "@/components/CityFilm.vue";
+import Cityfilm from "@/components/CityFilm.vue";
 import EnterLoging from "@/components/EnterLoging";
 import wx from "weixin-js-sdk";
 
 export default {
-  components: { City, EnterLoging,FilmTabbar },
+  components: { Cityfilm, EnterLoging, FilmTabbar },
   data() {
-    return {activeTab: 0,  
+    return {
+      activeTab: 0,
       info: "66666",
       swiperimg: [],
       searchtext: "",
@@ -189,18 +191,18 @@ export default {
   },
   methods: {
     goTab(path) {
-  // 「我的」跳商城首页（如果是同一个项目用 router，如果不同项目用 location.href）
-  if (path === '/mine') {
-    // 同一个项目
-    this.$router.push({ path: '/mine' })
-    // 如果是另一个商城项目，改成：
-    // window.location.href = 'http://127.0.0.1:8080/#/mine'
-    return
-  }
-  if (this.$route.path !== path) {
-    this.$router.push({ path })
-  }
-},
+      // 「我的」跳商城首页（如果是同一个项目用 router，如果不同项目用 location.href）
+      if (path === '/mine') {
+        // 同一个项目
+        this.$router.push({ path: '/mine' })
+        // 如果是另一个商城项目，改成：
+        // window.location.href = 'http://127.0.0.1:8080/#/mine'
+        return
+      }
+      if (this.$route.path !== path) {
+        this.$router.push({ path })
+      }
+    },
     getLocation1() {
       let purl = /(Android)/i.test(navigator.userAgent)
         ? location.href.split('#')[0]
@@ -292,7 +294,7 @@ export default {
     getLoginInfo() {
       getLogo().then(res => {
         if (res.code == 200) {
-          this.kefu = res.data.zxkf
+          this.kefu = res.data.zskf
         }
       })
     },
@@ -309,31 +311,42 @@ export default {
       window.location.href = this.kefu
     },
     createMap() {
-      const geolocation = new BMap.Geolocation();
-      var _this = this
-      geolocation.getCurrentPosition(function getinfo(position) {
-        let latitude = position.latitude
-        let longitude = position.longitude
-        let city = position.address.city.substring(0, position.address.city.length - 1);
-        let province = position.address.province;
-        _this.center.lng = longitude;
-        _this.center.lat = latitude;
-        _this.city = city
+      const cachedCity = sessionStorage.getItem("cityName");
+      const userPicked = sessionStorage.getItem("userPicked");
 
-        if (_this.isWeiXin()) {
-          if (sessionStorage.getItem("targetId2")) {
-            _this.getCity(_this.city)
-          } else {
-            _this.getLocation1()
-            _this.getCity(_this.city)
-          }
-        } else {
-          _this.getCity(_this.city)
-        }
-      }, { enableHighAccuracy: true }, function (e) {
-      }, {
-        provider: 'baidu'
-      });
+      // 用户手动选过城市 → 直接用，不定位
+      // 用户手动选过城市 → 直接用，不定位
+      if (cachedCity && userPicked === "1") {
+        const name = cachedCity.replace(/市$/, '')
+        this.city = name
+        this.getCity(name)
+        return;
+      }
+
+      // 有缓存但没手动选过（首次定位存的）→ 也用缓存
+      if (cachedCity) {
+        const name = cachedCity.replace(/市$/, '')
+        this.city = name
+        this.getCity(name)
+        return;
+      }
+
+      // 没有缓存才定位
+      const geolocation = new BMap.Geolocation();
+      const _this = this;
+      geolocation.getCurrentPosition(
+        function (position) {
+
+          const city = position.address.city.replace(/市$/, '');
+          _this.city = city;
+          _this.getCity(city);
+        },
+        { enableHighAccuracy: true },
+        function () {
+          _this.getCity('北京');
+        },
+        { provider: "baidu" }
+      );
     },
     buyticket(item) {
       this.$router.push({
@@ -342,49 +355,104 @@ export default {
       })
     },
     getCity(cityName) {
-      getCityList({ keyword: cityName }).then(res => {
-        this.cityList = res.data || []
-        if (this.cityList.length > 0) {
-          if (!sessionStorage.getItem("cityName")) {
-            sessionStorage.setItem("targetId", this.cityList[0].cityid1)
-            sessionStorage.setItem("targetId2", this.cityList[0].cityid2)
-            sessionStorage.setItem("cityName", this.cityList[0].name)
-            sessionStorage.setItem("cityId2", this.cityList[0].id)
-            sessionStorage.setItem("cityItem", JSON.stringify(this.cityList))
-          }
-          this.city = sessionStorage.getItem("cityName")
-          this.cityid = this.cityList[0].cityid1
-          this.cityid2 = this.cityList[0].cityid1
-          this.getFilm()
+      const keyword = (cityName || '').replace(/市$/, '')
+      console.log('getCity 请求 keyword =', keyword)
+
+      getCityList({ keyword }).then(res => {
+        const arr = res.data || [];
+        const target = arr.find(c => c.name === keyword)
+          || arr.find(c => c.name.includes(keyword))
+          || arr[0];
+
+        if (!target) {
+          console.warn('城市列表为空，走兜底');
+          this.loadingflag = false;
+          this.getFilm();
+          return;
         }
-      })
+
+        const cached = sessionStorage.getItem("cityName");
+        if (!cached || cached !== target.name) {
+          sessionStorage.setItem("targetId", target.cityid1);
+          sessionStorage.setItem("cityName", target.name);
+          sessionStorage.setItem("cityId2", target.id);
+          sessionStorage.setItem("cityItem", JSON.stringify([target]));
+        }
+
+        this.city = target.name;
+        this.cityid = target.cityid1;
+        this.getFilm();
+      }).catch(err => {
+        this.loadingflag = false;
+        console.error('getCityList 失败', err);
+      });
     },
+    // getCity(cityName) {
+    //   const keyword = (cityName || '').replace(/市$/, '')
+    //   getCityList({ keyword }).then(res => {
+    //     const arr = res.data || [];
+    //     const target = arr.find(c => c.name === cityName)
+    //       || arr.find(c => c.name === cityName.replace(/市$/, ''))
+    //       || arr.find(c => c.name.includes(cityName))
+    //       || arr[0];
+    //     // if (!target) return;
+    //     if (!target) {
+    //       console.warn('城市列表为空，走兜底');
+    //       this.loadingflag = false;
+    //       this.getFilm();
+    //       return;
+    //     }
+
+    //     const cached = sessionStorage.getItem("cityName");
+    //     // 只在没缓存或名字不一致时才写
+    //     if (!cached || cached !== target.name) {
+    //       sessionStorage.setItem("targetId", target.cityid1);
+    //       sessionStorage.setItem("cityName", target.name);
+    //       sessionStorage.setItem("cityId2", target.id);
+    //       sessionStorage.setItem("cityItem", JSON.stringify([target]));
+    //     }
+
+    //     this.city = target.name;
+    //     this.cityid = target.cityid1;
+    //     this.getFilm();
+    //   }).catch(err => {
+    //     this.loadingflag = false;   // ✅ 接口失败也关
+    //     console.error('getCityList 失败', err);
+    //   });
+    // },
     getFilm() {
-      getHitFilmList({ citycode: this.cityid2 }).then(res => {
-        this.loadingflag = false
+      getHitFilmList({ citycode: this.cityid }).then(res => {
+        this.loadingflag = false;
         if (res.code == 200) {
-          this.hotfilmList = res.data.movieList || []
-          this.swiperList = (res.data.movieList || []).slice(0, 10)
+          this.hotfilmList = res.data.movieList || [];
+          this.swiperList = (res.data.movieList || []).slice(0, 10);
           if (this.searchtext == "") {
-            setTimeout(() => { this.getSwiper() }, 500)
+            setTimeout(() => { this.getSwiper() }, 500);
           } else {
-            this.hotfilmList = (res.data.movieList || []).filter(item => item.name.includes(this.searchtext))
+            this.hotfilmList = this.hotfilmList.filter(item => item.name.includes(this.searchtext));
           }
         }
-      })
+      }).catch(err => {
+        this.loadingflag = false;   // ✅ 失败也关
+        console.error('getFilm 失败', err);
+      });
     },
+
     getFutureFilm() {
-      getComingMoviesList({ citycode: this.cityid2 }).then(res => {
-        this.loadingflag = false
+      getComingMoviesList({ citycode: this.cityid }).then(res => {
+        this.loadingflag = false;
         if (res.code == 200) {
-          this.hotfilmList = res.data.movieList || []
+          this.hotfilmList = res.data.movieList || [];
           if (this.searchtext == "") {
-            setTimeout(() => { this.getSwiper() }, 500)
+            setTimeout(() => { this.getSwiper() }, 500);
           } else {
-            this.hotfilmList = (res.data.movieList || []).filter(item => item.name.includes(this.searchtext))
+            this.hotfilmList = this.hotfilmList.filter(item => item.name.includes(this.searchtext));
           }
         }
-      })
+      }).catch(err => {
+        this.loadingflag = false;
+        console.error('getFutureFilm 失败', err);
+      });
     },
     getSwiper() {
       this.swiper = new Swiper(".swiper-container", {

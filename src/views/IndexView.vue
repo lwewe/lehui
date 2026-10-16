@@ -171,7 +171,7 @@
       <!--  -->
 
     </div>
-     
+
     <!--    tab切换-->
 
 
@@ -215,7 +215,7 @@
                 <!-- <div class="product-subtitle" v-if="item.subtitle">{{ item.subtitle }}</div> -->
                 <div class="product-price-row">
                   <span class="sell-price">{{ item.sell_price }}</span>
-                  <span class="market-price" v-if="item.market_price">￥{{ item.market_price }}</span>
+                  <span class="market-price" v-if="item.sell_price < item.market_price">￥{{ item.market_price }}</span>
                 </div>
                 <!-- <div class="product-sales" v-if="item.sale_num">
                   已售{{ item.sale_num }}
@@ -242,7 +242,7 @@
                 <!-- <div class="product-subtitle" v-if="item.subtitle">{{ item.subtitle }}</div> -->
                 <div class="product-price-row">
                   <span class="sell-price">{{ item.sell_price }}</span>
-                  <span class="market-price" v-if="item.market_price">￥{{ item.market_price }}</span>
+                  <span class="market-price" v-if="item.sell_price < item.market_price">￥{{ item.market_price }}</span>
                 </div>
                 <!-- <div class="product-sales" v-if="item.sale_num">
                   已售{{ item.sale_num }}
@@ -287,7 +287,7 @@ import { getJuheShangchaoLoginUrl } from "@/api/juheshangchao";
 import { getMeituanLoginUrl } from "@/api/meituan";
 import { getTuangouLoginUrl } from "@/api/meituantuangou";
 import { getXiaoxiangLoginUrl } from "@/api/xiaoxiang";
-
+import { getHemaLoginUrlshangcheng } from "@/api/hemashangcheng";
 export default {
   name: "IndexView",
   components: {
@@ -330,14 +330,9 @@ export default {
       classList: [],
       sortList: [],
       backColor: "",
-     
+
       active: 0,
-      // tabList: [{
-      //   flag: "1",
-      //   id: "0",
-      //   syname: "热门推荐",
-      //   tag: "精选好物",
-      // }],
+
       shopSwiper: [],
       itemHeight: 0,
       swiperHeight: 0,
@@ -369,6 +364,8 @@ export default {
 
       currentTabs: [],     // 存放过滤后的 Tab (id为 10,11,12,13 的板块)
       zoneTabGoods: {},    // 存放各个板块的商品数据 (按 id 索引)
+
+      hasMore: true,   // ✅ 新增
     }
   },
   methods: {
@@ -1109,7 +1106,7 @@ export default {
             return (a.sort || 0) - (b.sort || 0)
           })
 
-          this.classList = tubiaoData.slice(0, 9)  // 前8个作为主分类
+          this.classList = tubiaoData.slice(0, 11)  // 前8个作为主分类
 
         }
       })
@@ -1156,10 +1153,13 @@ export default {
 
           // 默认选中第一个 Tab (id = 10)
           if (this.currentTabs.length > 0) {
-            this.active = this.currentTabs[0].id;
+            // this.active = this.currentTabs[0].id;
+            // this.getGoodPickByCategory(this.active, 1);
 
-            // 这里直接调用请求方法，不要用 changeTab！因为DOM还没渲染好
+            const defaultTab = this.currentTabs.find(item => item.id == 13);
+            this.active = defaultTab ? defaultTab.id : this.currentTabs[0].id;
             this.getGoodPickByCategory(this.active, 1);
+
           }
         }
       });
@@ -1393,7 +1393,8 @@ export default {
         return;
       }
       if (item.id == 13) {
-        this.goToHemashangcheng();
+        // this.goToHemashangcheng();
+        this.$router.push({ path: "/HemaFresh" })  
         return;
       }
       if (item.id == 80) {
@@ -1478,7 +1479,7 @@ export default {
 
     toClass(item, index) {
       console.log(item)
-        console.log('点击分类', item.title, 'index=', index, 'ixd=', index + 1)   // ← 加这行
+      console.log('点击分类', item.title, 'index=', index, 'ixd=', index + 1)   // ← 加这行
       const ixd = index + 1;
       if (ixd == 1) this.$router.push({ path: "/FoodDelivery", query: { id: item.id } })
       if (ixd == 6) this.$router.push({ path: "/ApplianceChannel", query: { id: item.id } })
@@ -1486,7 +1487,8 @@ export default {
       if (ixd == 5) this.$router.push({ path: "/BeautyZone", query: { id: item.id } })
       if (ixd == 7) this.$router.push({ path: "/TissueZone", query: { id: item.id } })
       if (ixd == 3) this.$router.push({ path: "/SnackZone", query: { id: item.id } })
-        if (ixd == 8) this.$router.push({ path: "/filmindex" })   // ← 加这行
+      if (ixd == 8) this.$router.push({ path: "/filmindex" })   // ← 加这行
+      if (ixd == 9) this.$router.push({ path: "/yanchuIndex" })   // ← 加这行
     },
 
     toCustomer() {
@@ -1514,7 +1516,12 @@ export default {
           }
           if (productData.length === 0) {
             this.isScroll = true
+            this.hasMore = false   // ✅ 没有更多数据
             return
+          }
+          // ✅ 返回数量小于 pagesize，说明是最后一页
+          if (productData.length < 10) {
+            this.hasMore = false
           }
           if (page === 1) {
             this.shopList = []
@@ -1535,27 +1542,18 @@ export default {
     },
 
     changeTab(id, index) {
-      // this.isHeight = true
+
       this.loadingflag = false
       this.isScroll = false
-      // this.shopList = []
-      // this.leftList = []
-      // this.rightList = []
+      this.hasMore = true      // ✅ 重置
       this.page = 1
       this.active = id
-      // this.isTab = true
-
-      // document.documentElement.scrollTop += this.$refs.topScroll.getBoundingClientRect().top + 5
-
-      // 调用 productList 接口（关键改动）
+      // this.shopList = []       // ✅ 切换 tab 时先清空
+      // this.leftList = []
+      // this.rightList = []
       this.getGoodPickByCategory(id, 1)
 
-      // this.timer2 = null
-      // if ((index + 1) >= 3) {
-      //   this.$refs.topScroll.scrollLeft = 60 * (index + 1)
-      // } else {
-      //   this.$refs.topScroll.scrollLeft = 0
-      // }
+
     },
 
 
@@ -1646,8 +1644,13 @@ export default {
     },
     schengWeb(items) {
       console.log(items)
+      if (items.id == 16) {
+        this.goToXiaoxiang();
+        return;
+      }
       if (items.id == 17) {
-        this.$router.push({ path: "/HemaFresh" })// 和马
+        // this.$router.push({ path: "/HemaFresh" })// 和马
+        this.goToHemashangcheng();
         return;
       }
 
@@ -1794,6 +1797,7 @@ export default {
     },
 
     handleScroll(e) {
+      if (!this.hasLoaded) return;
       let scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
       let scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
       let clientHeight = document.documentElement.clientHeight || document.body.clientHeight;
@@ -1804,12 +1808,12 @@ export default {
     },
 
     onMost() {
-      if (!this.isScroll) {
+      if (!this.isScroll && this.hasMore) {
         this.page++
         if (this.active == 0) {
           this.getGoodPick(this.page)
         } else {
-
+          this.getGoodPickByCategory(this.active, this.page)   // ✅ 加这一行
         }
       }
     },
@@ -1992,12 +1996,17 @@ export default {
     this.IndexcategoryList();
     this.indexFourImg()
     this.zoneListIndex()
-    window.addEventListener('scroll', this.handleScroll);
-    // window.addEventListener('scroll', this.showSearch);
+    // window.addEventListener('scroll', this.handleScroll);
+    this.$nextTick(() => {
+      setTimeout(() => {
+        window.addEventListener('scroll', this.handleScroll);
+      }, 500);
+    });
+
   },
   beforeDestroy() {
     window.removeEventListener('scroll', this.handleScroll, false);
-    // window.removeEventListener('scroll', this.showSearch, false);
+
   },
 }
 </script>
@@ -2211,7 +2220,7 @@ export default {
     }
   }
 
- 
+
 
   .flexBox {
     width: 100%;

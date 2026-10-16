@@ -75,9 +75,15 @@
                   <button class="btn" @click="handleAction('cancelOrder', item, $event)">取消订单</button>
                   <button class="btn-red" @click="handleAction('payOrder', item, $event)">立即支付</button>
                 </template>
+                <template v-else-if="item.status === 1">
+
+                  <button class="btn-cl6" @click="handleAction('confirmReceive', item, $event)">申请售后</button>
+
+                </template>
                 <template v-else-if="item.status === 2">
                   <button class="btn" @click="handleAction('viewLogistics', item, $event)">查看物流</button>
-                  <button class="btn-red" @click="handleAction('confirmReceive', item, $event)">确认收货</button>
+                  <button class="btn-cl6" @click="handleAction('confirmReceive', item, $event)">申请售后</button>
+                  <!-- <button class="btn-red" @click="handleAction('confirmReceive', item, $event)">确认收货</button> -->
                 </template>
                 <template v-else-if="item.status === 7 || item.status === 'used'">
                   <button class="btn" @click="handleAction('viewDetail', item, $event)">查看详情</button>
@@ -328,6 +334,11 @@ export default {
             }
           })
         }).catch(() => { })
+      }
+      else if (action === 'confirmReceive') {
+
+        window.location.href = localStorage.getItem("kefu")
+
       }
       else if (action === 'viewLogistics') {
         // 待收货 - 查看物流
@@ -632,6 +643,24 @@ export default {
 .btn-red:active {
   opacity: 0.8;
 }
+
+.btn-cl6 {
+  border: none;
+  background: #e3e1e1;
+  border-radius: 20px;
+  padding: 6px 16px;
+  font-size: 12px;
+  color:  #717070;
+  cursor: pointer;
+  outline: none;
+}
+
+.btn-cl6:active {
+  opacity: 0.8;
+}
+
+
+
 
 .state-box {
   text-align: center;

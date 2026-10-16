@@ -1,39 +1,42 @@
 <template>
   <div class="hotlist" style="background-color: #f0f0f0;">
     <ReturnBack :rcolor="'#000'" :bcolor="'#fff0'"></ReturnBack>
-    <NProgress v-if="loadingflag"/>
+    <NProgress v-if="loadingflag" />
     <div class="title" style="display: flex;background-color: #fff;margin-bottom: 10px">
-        <div style="color: red;font-weight: 600;width: 100%;display: flex;justify-content: center;align-items: center;margin: 9px 0;">
-          <img style="width: 4vw;justify-self: center;margin-right: 1vw;" src="@/assets/number/logo.png" alt="">
-          <span>热映榜单</span>
-        </div>
+      <div
+        style="color: red;font-weight: 600;width: 100%;display: flex;justify-content: center;align-items: center;margin: 9px 0;">
+        <img style="width: 4vw;justify-self: center;margin-right: 1vw;" src="@/assets/number/logo.png" alt="">
+        <span>热映榜单</span>
+      </div>
     </div>
     <div class="filmboxMax">
-      <div class="filmbox" v-for="(item,index) in hotfilmList" :key="index" @click="filmdetail(item.movieCode)">
+      <div class="filmbox" v-for="(item, index) in hotfilmList" :key="index" @click="filmdetail(item)">
         <div class="filmleft">
           <div class="posterUrl">
-            <img class="img" :src="item.posterUrl" alt="" style="">
-            <div class="score">评分 {{ item.score }}</div>
-            <img class="logonum" v-if="index<10" :src="require('@/assets/number/'+(index+1)+'.png')" alt="">
+            <img class="img" :src="item.logo" alt="" style="">
+            <div class="score">评分 {{ item.rating }}</div>
+            <img class="logonum" v-if="index < 10" :src="require('@/assets/number/' + (index + 1) + '.png')" alt="">
           </div>
           <div class="nameBox">
             <div class="elips1 itemName">{{ item.name }}</div>
-            <div class="starBox" v-if="item.star">
+            <div class="starBox" v-if="item.actors">
               <div class="font1">主演:</div>
-              <div class="font2 elips1">{{ item.star.split(" ").join("/") }}</div>
+              <div class="font2 elips1">{{ item.actors.split(",").join("/") }}</div>
             </div>
             <div class="starBox" v-if="item.director">
               <div class="font1">导演:</div>
               <div class="font2 elips1">{{ item.director }}</div>
             </div>
             <div class="starBox categoryBox ">
-              <div v-if="item.category" class="category elips1">{{ item.category.split("|").join("/") }}</div>
-              <div v-if="item.version" class="category elips1">{{ item.version }}</div>
+
+              <div v-if="item.type" class="category elips1">{{ item.type.split(",").join("/") }}</div>
+
+              <div v-if="item.showmark" class="category elips1">{{ item.showmark }}</div>
             </div>
           </div>
         </div>
         <div class="filmright">
-          <div class="pap"  @click.stop="buyticket(item)">购 票</div>
+          <div class="pap" @click.stop="buyticket(item)">购 票</div>
         </div>
       </div>
     </div>
@@ -43,51 +46,55 @@
 
 <script>
 //调用热映电影列表
-import {getFilmList} from "@/api/lehuifilm";
+import { getFilmList } from "@/api/lehuifilm";
 //引入
 import moment from 'moment';
 import 'moment/locale/zh-cn';
-import {getHitFilmList} from "@/api/lehuifilm";
+import { getHitFilmList } from "@/api/lehuifilm";
 moment.locale('zh-cn');
 export default {
   data() {
     return {
-        hotfilmList:[],
-        cityid:null,
-        loadingflag:true
+      hotfilmList: [],
+      cityid: null,
+      loadingflag: true
     }
   },
 
   mounted() {
   },
   created() {
-    this.cityid = Number(sessionStorage.getItem("targetId2"))
+    this.cityid = Number(sessionStorage.getItem("targetId"))
+    console.log('cityid =', this.cityid)
     this.getFilm()
   },
 
   methods: {
     getFilm() {
       getHitFilmList({
-        cityId: this.cityid,
+        citycode: this.cityid,
+        // cityId: this.cityid,
         pageSize: 99999999
       }).then(res => {
         // console.log(res)
         this.loadingflag = false
-        if (res.code == 0) {
-          this.hotfilmList = res.data.movies
+        if (res.code == 200) {
+          this.hotfilmList = res.data.movieList
         }
       })
     },
-    filmdetail(id){
-      this.$router.push({path: "/filmdetail", query: {id}})
+    filmdetail(item) {
+      this.$router.push({ path: "/filmdetail", query: { id: item.id, cityid: this.cityid, showSt: 1 } })
     },
     buyticket(item) {
       this.$router.push({
         path: "/multiplex",
-        query: {movieId: item.movieId,movieCode:item.movieCode,moveName:item.name}
+        query: { movieId: item.id, movieCode: item.standardid, movieName: item.name }
+        // query: { movieId: item.movieId, movieCode: item.movieCode, moveName: item.name }
+
       })
     },
-    },
+  },
 };
 </script>
 
@@ -95,6 +102,7 @@ export default {
 /deep/.ReturnBack {
   top: 5px !important;
 }
+
 .filmboxMax {
   padding: 0px 11px 11px;
   margin-top: 2px;
@@ -135,12 +143,14 @@ export default {
       left: 5px;
       width: 18px;
     }
+
     .posterUrl {
       min-width: 90px;
       width: 90px;
       overflow: hidden;
       border-radius: 7px;
       position: relative;
+
       img {
         display: flex;
       }
@@ -212,6 +222,7 @@ export default {
     }
   }
 }
+
 .elips1 {
   text-overflow: ellipsis;
   overflow: hidden;
@@ -219,5 +230,4 @@ export default {
   font-weight: 500;
   //width: 100% !important;
 }
-
 </style>

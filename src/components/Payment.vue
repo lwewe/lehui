@@ -18,11 +18,19 @@
 
           <van-cell title="" clickable @click="chooseCard(item, index)" v-for="(item, index) in cardList" :key="item.id">
             <!-- 卡种名 -->
-            <p>{{ item.title }}</p>
+            <p>乐汇卡</p>
             <!-- 余额 -->
-            <p>{{ item.balance }}点</p>
+            
+            <p>{{ item.balance !== undefined ? item.balance : item.price }}</p>
             <!-- 卡号 + 到期时间 -->
-            <p>{{ item.num }} / {{ item.expire_time_text ? item.expire_time_text + '到期' : '长期有效' }}</p>
+            <p>
+              <!-- {{ item.num }} / {{ item.expire_time_text ? item.expire_time_text + '到期' : '长期有效' }} -->
+ {{ item.num }} /
+  <template v-if="item.expire_time_text">{{ item.expire_time_text }}到期</template>
+  <template v-else-if="item.end_time">{{ timestampToTime(item.end_time) }}到期</template>
+  <template v-else>长期有效</template>
+
+            </p>
             <template #right-icon>
               <van-checkbox checked-color="#ee0a24" :name="item.id" />
             </template>
@@ -67,22 +75,37 @@ export default {
       // this.$router.push("/securitycards")
       window.location.href = this.$store.state.freea + localStorage.getItem("token") + "&cityName=" + sessionStorage.getItem("cityName") + "&isFirst=" + sessionStorage.getItem("isFirst")
     },
-    chooseCard(item, index) {
-      // 如果卡已过期或不可用，直接拦截！
-      if (item.is_expired == 1 || item.disabled == 1) {
-        this.$toast('该福利卡不可用');
-        return;
-      }
+    // chooseCard(item, index) {
+    //   // 如果卡已过期或不可用，直接拦截！
+    //   if (item.is_expired == 1 || item.disabled == 1) {
+    //     this.$toast('该福利卡不可用');
+    //     return;
+    //   }
 
-      let ind = this.result.includes(item.id);
-      if (!ind) {
-        this.result.push(item.id)
-      } else {
-        this.result = this.result.filter(item2 => item2 != item.id)
-      }
-      this.checked = ""
-      this.$emit("getResult", this.result, this.checked)
-    },
+    //   let ind = this.result.includes(item.id);
+    //   if (!ind) {
+    //     this.result.push(item.id)
+    //   } else {
+    //     this.result = this.result.filter(item2 => item2 != item.id)
+    //   }
+    //   this.checked = ""
+    //   this.$emit("getResult", this.result, this.checked)
+    // },
+    chooseCard(item, index) {
+  // 兼容两套不可用字段
+  if (item.is_expired == 1 || item.disabled == 1 || item.state == 2) {
+    this.$toast('该福利卡不可用');
+    return;
+  }
+  let ind = this.result.includes(item.id);
+  if (!ind) {
+    this.result.push(item.id)
+  } else {
+    this.result = this.result.filter(item2 => item2 != item.id)
+  }
+  this.checked = ""
+  this.$emit("getResult", this.result, this.checked)
+},
     wxPay() {
       this.result = []
       this.$emit("getResult", this.result, this.checked)

@@ -3,70 +3,63 @@
     <NProgress v-if="loadingflag" />
     <ReturnBack :rcolor="'#fff'" :bcolor="'#CCCCCC'"></ReturnBack>
 
-    <!-- 顶部快递信息 -->
-    <div class="express-card">
-      <div class="express-header">
-        <div class="express-name">
-          <!-- <span class="express-icon">京</span> -->
-          <span>{{ expressCompany || '暂无快递公司' }}</span>
-        </div>
-
-        <!-- 有单号 -->
-        <div
-          class="express-no"
-          v-if="logisticsNo"
-          @click="copyLogisticsNo"
-        >
-          {{ logisticsNo }}
-          <span class="copy-btn" @click.stop="copyLogisticsNo">复制</span>
-        </div>
-        <!-- 无单号 -->
-        <div class="express-no empty" v-else>
-          暂无快递单号
-        </div>
-      </div>
-      <!-- <div class="remind-btn" @click="remindShip">我要催单</div> -->
+    <!-- ★ 加载中提示 -->
+    <div class="loading-tip" v-if="loadingflag">
+      <van-loading size="20" vertical>加载中...</van-loading>
     </div>
 
-    <!-- 收货地址 -->
-    <div class="address-card">
-      <div class="address-icon">收</div>
-      <div class="address-content">
-        <div class="address-title">收货地址:{{this.address.addr}} </div>
-        <div class="address-detail">{{this.address.name}}  {{ this.address.phone  }}</div>
-      </div>
-    </div>
-
-    <!-- 物流轨迹 -->
-    <div class="logistics-timeline">
-      <!-- 有物流信息 -->
-      <template v-if="logisticsList.length">
-        <div
-          class="timeline-item"
-          v-for="(item, index) in logisticsList"
-          :key="index"
-          :class="{ 'is-first': index === 0 }"
-        >
-          <!-- 时间线左侧圆圈和线 -->
-          <div class="timeline-line">
-            <div class="timeline-dot" :class="{ active: index === 0 }"></div>
-            <div class="timeline-bar" v-if="index !== logisticsList.length - 1"></div>
+    <!-- ★ 内容区域：加载完成后才显示 -->
+    <template v-else>
+      <!-- 顶部快递信息 -->
+      <div class="express-card">
+        <div class="express-header">
+          <div class="express-name">
+            <span>{{ expressCompany || '暂无快递公司' }}</span>
           </div>
 
-          <!-- 时间线内容 -->
-          <div class="timeline-content">
-            <div class="content-text">{{ item.context }}</div>
-            <div class="content-time">{{ item.time }}</div>
+          <div class="express-no" v-if="logisticsNo" @click="copyLogisticsNo">
+            {{ logisticsNo }}
+            <span class="copy-btn" @click.stop="copyLogisticsNo">复制</span>
+          </div>
+          <div class="express-no empty" v-else>暂无快递单号</div>
+        </div>
+      </div>
+
+      <!-- 收货地址 -->
+      <div class="address-card">
+        <div class="address-icon">收</div>
+        <div class="address-content">
+          <div class="address-title">收货地址:{{ deliveryInfo.detail || address.addr || '暂无地址' }} </div>
+          <div class="address-detail">
+            {{ deliveryInfo.name || address.name || '' }}
+            {{ deliveryInfo.phone || address.phone || '' }}
           </div>
         </div>
-      </template>
-
-      <!-- 无物流信息 -->
-      <div class="timeline-empty" v-else>
-        <van-icon name="logistics" size="40" color="#ddd" />
-        <p>暂无物流信息</p>
       </div>
-    </div>
+
+      <!-- 物流轨迹 -->
+      <div class="logistics-timeline">
+        <template v-if="logisticsList.length">
+          <div class="timeline-item" v-for="(item, index) in logisticsList" :key="index"
+            :class="{ 'is-first': index === 0 }">
+            <div class="timeline-line">
+              <div class="timeline-dot" :class="{ active: index === 0 }"></div>
+              <div class="timeline-bar" v-if="index !== logisticsList.length - 1"></div>
+            </div>
+
+            <div class="timeline-content">
+              <div class="content-text">{{ item.context }}</div>
+              <div class="content-time">{{ item.time }}</div>
+            </div>
+          </div>
+        </template>
+
+        <div class="timeline-empty" v-else>
+          <van-icon name="logistics" size="40" color="#ddd" />
+          <p>暂无物流信息</p>
+        </div>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -76,55 +69,73 @@ import { shipLogistics, shipTrace } from "@/api/lhjdtm";
 export default {
   name: "ShippingDetail",
   data() {
-    return {address:'',
+    return {
+      address: {},
       expressCompany: "",
+      deliveryInfo: {},
       loadingflag: true,
-      logisticsNo: "", // 物流单号
+      logisticsNo: "",
       logisticsList: []
     };
   },
   mounted() {
-    this.address = JSON.parse(this.$route.query.address) 
-    console.log(this.address)
-    this.getShipLogistics();
-    this.getShipTrace();
+      window.scrollTo(0, 0); 
+    this.address = JSON.parse(this.$route.query.address || '{}');
+    this.loadAll();
   },
   methods: {
-    // 物流信息
-    getShipLogistics() {
-      shipLogistics({
-        id: this.$route.query.id
-      })
-        .then(res => {
-          const data = res.data || {};
-          // 没有就保持空字符串，交给模板判断
-          this.logisticsNo = data.express_no || "";
-          this.expressCompany = data.express_company || "";
-        })
-        .catch(() => {
-          this.logisticsNo = "";
-          this.expressCompany = "";
-        });
+    // ★ 统一管理加载状态
+    async loadAll() {
+      this.loadingflag = true;
+      try {
+        await Promise.all([
+          this.getShipLogistics(),
+          this.getShipTrace()
+        ]);
+      } finally {
+        this.loadingflag = false;
+      }
     },
 
-    // 物流轨迹
-    getShipTrace() {
-      shipTrace({
-        id: this.$route.query.id
-      })
-        .then(res => {
-          const data = res.data || {};
-          this.logisticsList = data.items || [];
-          // 若轨迹接口也返回了快递公司/单号，可在此覆盖，保证数据一致
-          if (data.express_no) this.logisticsNo = data.express_no;
-          if (data.express_company) this.expressCompany = data.express_company;
-        })
-        .catch(() => {
-          this.logisticsList = [];
-        });
+    async getShipLogistics() {
+      try {
+        const res = await shipLogistics({ id: this.$route.query.id });
+        const data = res.data || {};
+        this.logisticsNo = data.express_no || "";
+        this.expressCompany = data.express_company || "";
+        if (data.delivery) this.deliveryInfo = data.delivery;
+      } catch (e) {
+        console.error("shipLogistics 失败:", e);
+      }
     },
 
-    // 复制物流单号
+    async getShipTrace() {
+      try {
+        const res = await shipTrace({ id: this.$route.query.id });
+        const data = res.data || {};
+        const traces = data.traces || data.items || [];
+        this.logisticsList = traces.map(item => ({
+          context: item.content || item.context || "",
+          time: this.formatTime(item.time)
+        }));
+        if (data.express_no) this.logisticsNo = data.express_no;
+        if (data.express_company) this.expressCompany = data.express_company;
+        if (data.delivery) this.deliveryInfo = data.delivery;
+      } catch (e) {
+        console.error("shipTrace 失败:", e);
+        this.logisticsList = [];
+      }
+    },
+
+    // ★ 时间格式化：2026-09-22T12:23:06.000+08:00 → 2026-09-22 12:23
+    formatTime(str) {
+      if (!str) return "";
+      const d = new Date(str);
+      if (isNaN(d.getTime())) return str;
+      const pad = n => (n < 10 ? "0" + n : n);
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    },
+
     copyLogisticsNo() {
       if (!this.logisticsNo) {
         this.$toast("暂无快递单号");
@@ -139,13 +150,9 @@ export default {
       this.$toast("复制成功");
     },
 
-    // 催单
     remindShip() {
       this.$toast("已催单，请耐心等待");
     }
-  },
-  created() {
-    this.loadingflag = false;
   }
 };
 </script>
@@ -157,6 +164,16 @@ export default {
   padding: 10px;
   padding-bottom: 80px;
   box-sizing: border-box;
+}
+
+/* ★ 加载中提示 */
+.loading-tip {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 100px 0;
+  color: #999;
+  font-size: 13px;
 }
 
 /* 顶部快递信息 */
@@ -346,7 +363,6 @@ export default {
     }
   }
 
-  /* 空状态 */
   .timeline-empty {
     padding: 30px 0;
     text-align: center;

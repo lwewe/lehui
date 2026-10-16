@@ -31,7 +31,7 @@
                 <span class="price-label">到手价</span>
                 <span class="symbol">¥</span>
                 <span class="price">{{ item.sell_price }}</span>
-                <span class="original-price" v-if="item.market_price">
+                <span class="original-price" v-if="item.sell_price < item.market_price">
                   ¥{{ item.market_price }}
                 </span>
               </div>

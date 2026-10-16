@@ -160,46 +160,9 @@ export default {
     getPlatformName,
     goToDetail(item) {
       this.$goDetail(item);
-
       // this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
     },
-    // 获取频道数据
-    // fetchChannelData() {
-    //   channelDetail({ id: this.$route.query.id || 5 }).then(res => {
-    //     if (res.code == 200) {
-    //       this.channelData = res.data
-
-    //       this.topTis1 = res.data.nav[0].children[0].sections[0].items.slice(0, 2) || []
-    //       this.topTis2 = res.data.nav[0].children[0].sections[0].items.slice(0, 2) || []
-
-
-
-    //       // ✅ 取前10个作为分类图标
-    //       this.navList = (res.data.nav || []).slice(0, 10)
-
-    //       // ✅ 提取 sections 数据
-    //       const sections = res.data.sections || []
-
-    //       // ✅ 提取 grid 类型的商品数据（3列x2行）
-    //       const gridSection = sections.find(section => section.type === 'grid')
-    //       if (gridSection && gridSection.items) {
-    //         this.tissueGoodsList = gridSection.items.slice(0, 6) // 最多显示6个
-    //       }
-
-    //       // ✅ 提取 tabs 数据
-    //       const tabsSection = sections.find(section => section.type === 'tabs')
-    //       if (tabsSection && tabsSection.tabs) {
-    //         this.tabList = tabsSection.tabs
-    //         // ✅ 将每个 tab 的 items 提取到 tabGoodsList
-    //         this.tabGoodsList = tabsSection.tabs.map(tab => tab.items || [])
-    //       }
-    //     }
-    //   }).catch(err => {
-    //     console.error('获取频道数据失败:', err)
-    //     // 可以设置兜底数据
-    //     this.setDefaultData()
-    //   })
-    // },
+    
     fetchChannelData() {
   this.loading = true;          // 请求开始
 
@@ -209,7 +172,7 @@ export default {
         this.channelData = res.data
 
         this.topTis1 = res.data.nav[0].children[0].sections[0].items.slice(0, 2) || []
-        this.topTis2 = res.data.nav[0].children[0].sections[0].items.slice(0, 2) || []
+        this.topTis2 = res.data.nav[3].children[0].sections[0].items.slice(0, 2) || []
 
         this.navList = (res.data.nav || []).slice(0, 10)
 

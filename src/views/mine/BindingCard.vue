@@ -135,7 +135,8 @@ export default {
             if (res.code == 200) {
               _that.$toast.success(res.data || "绑定成功");
               setTimeout(() => {
-                _that.$router.go(-1);
+                // _that.$router.go(-1);
+                 _that.$router.replace('/AddCard');
               }, 1000);
             } else {
               _that.$toast.fail(res.msg || "绑定失败");

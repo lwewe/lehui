@@ -30,9 +30,11 @@
     <div class="centerBox">
       <div class="address" :class="{ chooseAddress: show }">
         <div class="choose" @click="chooseAddress">{{ region }}</div>
-        <div class="pull-down" @click="chooseAddress">
+        <img src="../../../assets/pull1.png" alt="" style="width: 14px;" @click="chooseAddress">
+        <!-- <div class="pull-down" >
+          
           <van-icon class="" color="#564A3F" name="arrow-down" size="13px" />
-        </div>
+        </div> -->
       </div>
       <!--      区域选择-->
       <div>
@@ -69,7 +71,10 @@
           <div class="form">{{ Number(item.juli).toFixed(2) }}km</div>
         </div>
       </div>
-      <div v-else class="noneList">暂无影院</div>
+      <div v-else class="noneList">
+        <img src="../../../assets/nofilm.png" alt="" style="width: 60px;height: 60px;padding-top: 80px;">
+        <div>暂无影院</div>
+      </div>
     </div>
 
     <div ref="bottom" style="height: 10px;"></div>
@@ -118,14 +123,7 @@ export default {
       movieCode: ""
     };
   },
-  activated() {
-    const cached = sessionStorage.getItem("cityName");
-    if (cached && cached !== this.city) {
-      console.log("activated 城市变化:", cached);
-      this.city = cached;
-      this.getCity(cached);
-    }
-  },
+
   methods: {
     handleCityChange(cityName) {
       console.log("城市切换为:", cityName);
@@ -228,69 +226,45 @@ export default {
       }
     },
     createMap() {
-      const geolocation = new BMap.Geolocation();
-      var _this = this;
-
-      // 1. 先用缓存城市请求
       const cachedCity = sessionStorage.getItem("cityName");
+
+      // 有缓存城市：直接用，不再定位，避免任何覆盖
       if (cachedCity) {
-        console.log("createMap 用缓存城市:", cachedCity);
-        _this.city = cachedCity;
-        _this.getCity(cachedCity);
+        this.city = cachedCity;
+        this.getCity(cachedCity);
+        return;
       }
 
-      const fallbackTimer = setTimeout(() => {
-        if (!_this.newCityId) {
-          console.warn("定位超时，走默认城市");
-          _this.getCity(_this.city);
-        }
-      }, 3000);
-
+      // 没有缓存才定位
+      const geolocation = new BMap.Geolocation();
+      const _this = this;
       geolocation.getCurrentPosition(
-        function getinfo(position) {
-          clearTimeout(fallbackTimer);
-          let latitude = position.latitude;
-          let longitude = position.longitude;
-          let city = position.address.city.substring(0, position.address.city.length - 1);
-          _this.center.lng = longitude;
-          _this.center.lat = latitude;
-
-          // 2. 有缓存城市，定位就不覆盖
-          if (sessionStorage.getItem("cityName")) {
-            console.log("已有缓存城市，跳过定位覆盖");
-            return;
-          }
-
+        function (position) {
+          let city = position.address.city.replace(/市$/, "");
+          _this.center.lng = position.longitude;
+          _this.center.lat = position.latitude;
           _this.city = city;
+
           if (_this.isWeiXin()) {
             _this.getLocation1();
-            _this.getCity(_this.city);
-          } else {
-            _this.getCity(_this.city);
           }
+          _this.getCity(city);
         },
         { enableHighAccuracy: true },
-        function (e) {
-          clearTimeout(fallbackTimer);
-          _this.getCity(_this.city);
+        function () {
+          _this.getCity(_this.city || "北京");
         },
         { provider: "baidu" }
       );
     },
-    // -------- 城市（完全按首页） --------
+
     getCity(cityName) {
-      console.log("getCity 传入的城市名:", cityName);
       getCityList({ keyword: cityName }).then(res => {
         const allCities = res.data || [];
-        console.log("城市总数:", allCities.length);
-
-        // 本地按名字匹配
         const target = allCities.find(c => c.name === cityName)
           || allCities.find(c => c.name === cityName + "市")
           || allCities.find(c => c.name.includes(cityName))
           || allCities[0];
-
-        console.log("匹配到的城市:", target);
 
         if (target) {
           this.cityList = [target];
@@ -298,11 +272,14 @@ export default {
           this.newCityId = target.id;
           this.targetId = target.cityid1;
 
-          sessionStorage.setItem("targetId", target.cityid1);
-          sessionStorage.setItem("targetId2", target.cityid2);
-          sessionStorage.setItem("cityName", target.name);
-          sessionStorage.setItem("cityId2", target.id);
-          sessionStorage.setItem("cityItem", JSON.stringify([target]));
+          // 只有缓存和当前不一致才写（基本不会写）
+          const cached = sessionStorage.getItem("cityName");
+          if (!cached || cached !== target.name) {
+            sessionStorage.setItem("targetId", target.cityid1);
+            sessionStorage.setItem("cityName", target.name);
+            sessionStorage.setItem("cityId2", target.id);
+            sessionStorage.setItem("cityItem", JSON.stringify([target]));
+          }
 
           this.getFilmCinemasList();
         }
@@ -366,13 +343,24 @@ export default {
   created() {
     this.loadingflag = true;
     this.getBanner();
-
     this.urlid = Number(this.$route.query.movieId) || "";
     this.movieCode = this.$route.query.movieCode || "";
-    this.moveName = this.$route.query.moveName || "";
+    this.moveName = this.$route.query.moveName || "" || this.$route.query.movieName;
 
-    // 完全按首页：只调 createMap
-    this.createMap();
+    const cached = sessionStorage.getItem("cityName");
+    if (cached) {
+      this.city = cached;
+      this.getCity(cached);
+    } else {
+      this.createMap();
+    }
+  },
+  activated() {
+    const cached = sessionStorage.getItem("cityName");
+    if (cached && cached !== this.city) {
+      this.city = cached;
+      this.getCity(cached);
+    }
   },
   mounted() {
     this.page_no = 0;
@@ -455,11 +443,12 @@ export default {
   .choose {
     font-weight: bold;
     color: #564A3F;
+    font-size: 16px;
   }
 
   .pull-down {
-    width: 12px;
-    height: 13px;
+    // width: 12px;
+    // height: 13px;
   }
 
   .listMax {
@@ -578,5 +567,7 @@ export default {
 .noneList {
   text-align: center;
   padding: 10px 0;
+  font-size: 14px;
+  color: #727272;
 }
 </style>

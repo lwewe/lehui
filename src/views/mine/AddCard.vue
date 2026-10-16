@@ -11,7 +11,7 @@
     </van-tabs>
 
     <div class="main-wrapper">
-      
+
       <!-- 卡合并提示区 -->
       <div v-if="active == 2" class="merge-notice">
         <div class="notice-icon">!</div>
@@ -30,14 +30,15 @@
 
         <!-- 卡片渲染 -->
         <div class="card-item-wrap" v-for="(item, index) in list" :key="index">
-          
+
           <!-- 合并模式：右上角选择按钮 -->
           <div v-if="active == 2" class="select-btn" :class="{ selected: item.isCheckout }" @click="toggleCard(item)">
             {{ item.isCheckout ? '已选择' : '选择' }}
           </div>
 
           <!-- 卡片主体 -->
-          <div class="card-main" :class="{ 'card-disabled': active == 1 || (item.disabled && active != 0) }" @click="gocardinfo(item)">
+          <div class="card-main" :class="{ 'card-disabled': active == 1 || (item.disabled && active != 0) }"
+            @click="gocardinfo(item)">
             <div class="card-left">
               <div class="card-name">
                 乐汇卡
@@ -56,7 +57,8 @@
               </div>
             </div>
             <div class="card-right">
-              <button class="use-btn" :class="{ 'btn-disabled': active == 1 }" @click.stop="go(item.pid)" :disabled="active == 1">
+              <button class="use-btn" :class="{ 'btn-disabled': active == 1 }" @click.stop="go(item)"
+                :disabled="active == 1">
                 {{ active == 1 ? '已失效' : '立即使用' }}
               </button>
               <div class="rights-link" @click.stop="RightsRecord(item)">
@@ -80,7 +82,11 @@
         合并 <span v-if="selectedCount > 0">({{ selectedCount }})</span>
       </div>
     </div>
-
+    <div v-if="list.length == 0" style="position: fixed;bottom: 60px;left: 0;width: 100%;" @click="loginOut()">
+      <div style="padding: 0 20px;" >
+<span class="btnTc">退出登录</span>
+      </div>
+    </div>
     <NProgress v-if="loadingflag" />
   </div>
 </template>
@@ -125,7 +131,32 @@ export default {
     this.fetchData();
   },
   methods: {
-     gobindingCard() {
+    loginOut(){
+       this.$dialog.confirm({
+          title: '退出',
+          message: '是否退出登录？',
+          confirmButtonColor: 'red'
+        }).then(() => {
+          localStorage.removeItem('cardId')      // ★ 加这行
+          localStorage.removeItem('cardInfo')    // 如果存过卡信息也清
+          localStorage.removeItem("token")
+          localStorage.removeItem("uid")
+          this.$store.commit("settoken", "")
+          this.$toast("退出登录成功")
+          this.$router.options.routes.forEach(item => {
+            if (item.meta) {
+              if (item.meta.keep) {
+                item.meta.keepAlive = false
+              }
+            }
+          })
+          setTimeout(() => {
+            this.$router.replace({ path: "/login" })
+          }, 1000)
+        }).catch(() => {
+        })
+    },
+    gobindingCard() {
       this.$router.push({ path: "/BindingCard" });
     },
     // 获取数据
@@ -202,7 +233,7 @@ export default {
       }
     },
     // 执行合并
-        // 执行合并
+    // 执行合并
     async mergecards() {
       try {
         if (this.selectedCount < 2) {
@@ -212,10 +243,10 @@ export default {
         const ids = this.list.filter(i => i.isCheckout).map(i => i.id).join(",");
         const res = await CheckmerGecards({ fulika: ids, pid: this.npid });
         if (res.code == 200 && res.data) {
-          
+
           // 1. 先计算合并后的总金额
           // const totalAmount = Number(res.data.del_ka_price) + Number(res.data.hb_ka_price);
-const totalAmount = (Number(res.data.del_ka_price) + Number(res.data.hb_ka_price)).toFixed(2);
+          const totalAmount = (Number(res.data.del_ka_price) + Number(res.data.hb_ka_price)).toFixed(2);
           // 2. 简单明了的原生纯文本弹窗提示
           this.$dialog.confirm({
             message: `即将删除 ${res.data.del_ka_str}, 金额合并到 ${res.data.hb_ka_str}, 合并之后的金额为 ${totalAmount}`,
@@ -228,7 +259,7 @@ const totalAmount = (Number(res.data.del_ka_price) + Number(res.data.hb_ka_price
               this.fetchData(); // 刷新列表
               this.pidsList = [];
             }
-          }).catch(() => {});
+          }).catch(() => { });
         } else {
           this.$toast(res.msg);
         }
@@ -248,7 +279,9 @@ const totalAmount = (Number(res.data.del_ka_price) + Number(res.data.hb_ka_price
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     },
     // 跳转使用
-    go(pid) {
+    go(item) {
+      localStorage.setItem('cardId', item.id)
+      // window.location.href = '/webIndex/#/index'
       this.$router.push({ path: "/index" });
       // window.location.href = this.$store.state.shopUrl + "/index?token=" + localStorage.getItem("token") + "&full=0";
     }
@@ -266,6 +299,7 @@ const totalAmount = (Number(res.data.del_ka_price) + Number(res.data.hb_ka_price
 .securitycards ::v-deep .van-tabs__line {
   background-color: #ed3036;
 }
+
 .securitycards ::v-deep .van-tab--active {
   font-weight: bold;
   font-size: 15px;
@@ -286,6 +320,7 @@ const totalAmount = (Number(res.data.del_ka_price) + Number(res.data.hb_ka_price
   margin-bottom: 12px;
   border: 1px solid #ffe0b2;
 }
+
 .notice-icon {
   width: 18px;
   height: 18px;
@@ -298,6 +333,7 @@ const totalAmount = (Number(res.data.del_ka_price) + Number(res.data.hb_ka_price
   font-weight: bold;
   flex-shrink: 0;
 }
+
 .notice-text {
   font-size: 13px;
   color: #666;
@@ -331,9 +367,10 @@ const totalAmount = (Number(res.data.del_ka_price) + Number(res.data.hb_ka_price
   font-size: 13px;
   z-index: 10;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   transition: all 0.2s;
 }
+
 .select-btn.selected {
   background: #dc2626;
 }
@@ -344,15 +381,16 @@ const totalAmount = (Number(res.data.del_ka_price) + Number(res.data.hb_ka_price
   border-radius: 12px;
   padding: 16px;
   height: 130px;
-  background:url(../../assets/lhbg.png) no-repeat; 
+  background: url(../../assets/lhbg.png) no-repeat;
   background-size: cover;
   /* 统一粉色乐汇卡 */
   color: #333;
   overflow: hidden;
   position: relative;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   cursor: pointer;
 }
+
 .card-main::after {
   content: '';
   position: absolute;
@@ -361,7 +399,7 @@ const totalAmount = (Number(res.data.del_ka_price) + Number(res.data.hb_ka_price
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.15);
+  background: rgba(255, 255, 255, 0.15);
   pointer-events: none;
 }
 
@@ -373,22 +411,64 @@ const totalAmount = (Number(res.data.del_ka_price) + Number(res.data.hb_ka_price
 
 .status-tag {
   font-size: 11px;
-  background: rgba(0,0,0,0.08);
+  background: rgba(0, 0, 0, 0.08);
   padding: 1px 6px;
   border-radius: 4px;
   margin-left: 6px;
   color: #666;
 }
 
-.card-left { flex: 2; display: flex; flex-direction: column; justify-content: space-between; z-index: 2; }
-.card-name { font-size: 20px; font-weight: bold; letter-spacing: 1px; }
-.card-number { font-size: 12px; opacity: 0.7; margin-top: 2px; }
-.card-info-row { display: flex; gap: 20px; margin-top: 10px; }
-.info-col { display: flex; flex-direction: column; }
-.info-label { font-size: 10px; opacity: 0.7; }
-.info-val { font-size: 15px; font-weight: bold; margin-top: 2px; }
+.card-left {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  z-index: 2;
+}
 
-.card-right { flex: 1; display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between; z-index: 2; }
+.card-name {
+  font-size: 20px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.card-number {
+  font-size: 12px;
+  opacity: 0.7;
+  margin-top: 2px;
+}
+
+.card-info-row {
+  display: flex;
+  gap: 20px;
+  margin-top: 10px;
+}
+
+.info-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-label {
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+.info-val {
+  font-size: 15px;
+  font-weight: bold;
+  margin-top: 2px;
+}
+
+.card-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  z-index: 2;
+}
+
 .use-btn {
   background: #eab978;
   border: none;
@@ -396,20 +476,24 @@ const totalAmount = (Number(res.data.del_ka_price) + Number(res.data.hb_ka_price
   border-radius: 20px;
   font-size: 12px;
   font-weight: bold;
-  color: #1c1c1e;;
+  color: #1c1c1e;
+  ;
   cursor: pointer;
   position: relative;
-    top: 19px;
+  top: 19px;
 }
+
 .btn-disabled {
   background: #e0e0e0 !important;
   color: #999 !important;
   cursor: not-allowed;
 }
+
 .use-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
 .rights-link {
   display: flex;
   align-items: center;
@@ -435,11 +519,12 @@ const totalAmount = (Number(res.data.del_ka_price) + Number(res.data.hb_ka_price
   width: 100%;
   padding: 12px 0;
   background: #fff;
-  box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
   display: flex;
   justify-content: center;
   z-index: 99;
 }
+
 .merge-btn {
   background: #fca5a5;
   color: #fff;
@@ -450,6 +535,7 @@ const totalAmount = (Number(res.data.del_ka_price) + Number(res.data.hb_ka_price
   cursor: pointer;
   transition: all 0.2s;
 }
+
 .merge-btn.can-merge {
   background: #dc2626;
 }
@@ -481,11 +567,12 @@ const totalAmount = (Number(res.data.del_ka_price) + Number(res.data.hb_ka_price
   justify-content: center;
   gap: 6px;
 }
+
 .bind-new-card-btn .plus-icon {
   font-size: 22px;
   line-height: 1;
 }
-
+.btnTc{border-radius: 50px; width: 100%;font-size: 14px;background-color: #ed3036;color: #ffffff;
+        display: inline-block;line-height:50px;text-align: center;}
 /*  */
-
 </style>

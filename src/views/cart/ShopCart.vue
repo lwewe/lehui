@@ -23,9 +23,12 @@
           <van-checkbox :value="group.allChecked" @click="checkGroup(group)" checked-color="#EC3036"
             :label-disabled="true" style="display: flex;">
             <span class="platform-tag" :class="'platform-' + group.platform">
-              <!-- {{ group.source_name || getPlatformName(group.platform, group.jd_type) }} -->
-              {{ Number(group.platform) === 1 ? '京东' : getPlatformName(group.platform, group.jd_type) }}
+              {{ getPlatformName(group.platform, group.jd_type) }}
             </span>
+            <!-- <span class="platform-tag" :class="'platform-' + group.platform">
+              
+              {{ Number(group.platform) === 1 ? '京东' : getPlatformName(group.platform, group.jd_type) }}
+            </span> -->
           </van-checkbox>
         </div>
 
@@ -103,8 +106,8 @@
 <script>
 import NavigationTab from "@/components/NavigationTab.vue";
 import { cartList, cartCheck, cartUpdateQuantity, cartDelete } from "@/api/lhjdtm";
-import { getPlatformName } from '@/utils/platform'
-
+// import { getPlatformName } from '@/utils/platform'
+import { getPlatformName, PLATFORM } from '@/utils/platform'
 export default {
   name: "ShopCart",
   components: { NavigationTab },
@@ -122,26 +125,52 @@ export default {
   },
   methods: {
     getPlatformName,
-    toDetail2(item) { 
+    toDetail2(item) {
       this.$goDetail(item);
       // this.$router.push({ path: "/productDetail", query: { id } }) 
-    
-    },
 
+    },
+    // 分组逻辑
+    // groupCartList() {
+    //   const groups = {};
+    //   this.cartList.forEach(item => {
+    //     const platform = Number(item.product.platform);
+    //     const jdType = Number(item.product.jd_type || 0);
+    //     const key = platform === 1 ? `jd_${jdType}` : `p_${platform}`;
+
+    //     if (!groups[key]) {
+    //       groups[key] = {
+    //         key: key,
+    //         platform: platform,
+    //         jd_type: jdType,
+    //         source_name: item.source_name || '',
+    //         items: [],
+    //         allChecked: false
+    //       };
+    //     }
+    //     groups[key].items.push(item);
+    //   });
+    //   this.groupedCartList = Object.values(groups);
+    //   this.updateGroupCheckedState();
+    // },
     // 分组逻辑
     groupCartList() {
       const groups = {};
       this.cartList.forEach(item => {
+        // 用 product 里的真实平台字段，不要用外层 item.platform
         const platform = Number(item.product.platform);
         const jdType = Number(item.product.jd_type || 0);
-        const key = platform === 1 ? `jd_${jdType}` : `p_${platform}`;
+
+        // 京东系按 jd_type 细分，其他平台一个组
+        const key = platform === PLATFORM.JD ? `jd_${jdType}` : `p_${platform}`;
 
         if (!groups[key]) {
           groups[key] = {
-            key: key,
-            platform: platform,
+            key,
+            platform,
             jd_type: jdType,
-            source_name: item.source_name || '',
+            // 直接由工具函数生成，不依赖后端 source_name
+            source_name: getPlatformName(platform, jdType),
             items: [],
             allChecked: false
           };
@@ -151,7 +180,6 @@ export default {
       this.groupedCartList = Object.values(groups);
       this.updateGroupCheckedState();
     },
-
     // 更新每个分组的全选状态
     updateGroupCheckedState() {
       this.groupedCartList.forEach(group => {
@@ -302,7 +330,6 @@ export default {
     },
 
     toStrolling() { this.$router.replace('/index') },
-
     getCart() {
       cartList().then(res => {
         this.loadingflag = false
@@ -312,28 +339,44 @@ export default {
             isCheckout: item.checked == 1 ? true : false
           }))
 
-          // 优先用后端 groups
-          if (res.data.groups && res.data.groups.length > 0) {
-            this.groupedCartList = res.data.groups.map(g => ({
-              platform: g.platform,
-              jd_type: g.jd_type || 0,
-              source_name: g.source_name || '',
-              // ✅ 按 id 从 cartList 里拿同一对象，保证引用一致
-              items: (g.items || [])
-                .map(git => this.cartList.find(c => c.id === git.id))
-                .filter(Boolean),
-              allChecked: false
-            }))
-            this.updateGroupCheckedState()
-          }
-          else {
-            this.groupCartList()
-          }
+          // ✅ 永远用前端分组，按 product.platform + product.jd_type 分
+          this.groupCartList()
 
           this.getFullPrice()
         }
       })
     }
+    // getCart() {
+    //   cartList().then(res => {
+    //     this.loadingflag = false
+    //     if (res.code == 200 && res.data.list) {
+    //       this.cartList = res.data.list.map(item => ({
+    //         ...item,
+    //         isCheckout: item.checked == 1 ? true : false
+    //       }))
+
+    //       // 优先用后端 groups
+    //       if (res.data.groups && res.data.groups.length > 0) {
+    //         this.groupedCartList = res.data.groups.map(g => ({
+    //           platform: g.platform,
+    //           jd_type: g.jd_type || 0,
+    //           source_name: g.source_name || '',
+    //           // ✅ 按 id 从 cartList 里拿同一对象，保证引用一致
+    //           items: (g.items || [])
+    //             .map(git => this.cartList.find(c => c.id === git.id))
+    //             .filter(Boolean),
+    //           allChecked: false
+    //         }))
+    //         this.updateGroupCheckedState()
+    //       }
+    //       else {
+    //         this.groupCartList()
+    //       }
+
+    //       this.getFullPrice()
+    //     }
+    //   })
+    // }
   },
   created() { this.getCart() }
 }

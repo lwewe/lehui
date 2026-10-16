@@ -339,6 +339,14 @@ export function orderSettle(data) {
         ...data
     });
 }
+export function orderUpdateAddress(data) {
+    return setaxios.post("/jdtmshop/orderUpdateAddress", {
+        channel_no: store.state.channel_no,
+        token: localStorage.getItem("token"),
+        ...data
+    });
+}
+
 // 取消订单
 export function orderCancel(data) {
     return setaxios.post("/jdtmshop/orderCancel", {

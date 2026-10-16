@@ -24,6 +24,7 @@
     "vue-masonry": "^0.16.0",
     "vue-router": "^3.5.2",
     "vue-scroller": "^2.2.4",
+    "vue-simple-mobile-calendar": "^1.0.7",
     "vuex": "^3.6.2",
     "weixin-js-sdk": "^1.6.5"
   },

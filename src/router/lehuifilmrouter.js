@@ -38,7 +38,7 @@ const filmRoutes = [
     { path: '/filmCityList', component: FilmCityList, meta: { title: '城市列表' } },
     { path: '/filmOrderPage', component: FilmOrderPage, meta: { title: '订单详情' } },
     { path: '/filmOrderInfo', component: FilmOrderInfo, meta: { title: '订单' } },
-    { path: '/filmPaymentPage', component: FilmPaymentPage, meta: { title: '支付' } },
+    { path: '/paymentpage', component: FilmPaymentPage, meta: { title: '支付' } },
     { path: '/filmCardorderInfo', component: FilmCardorderInfo, meta: { title: '福利卡订单详情' } },
     { path: '/filmConsumptionRecords', component: FilmConsumptionRecords, meta: { title: '消费记录' } },
     { path: '/filmRechargeRecords', component: FilmRechargeRecords, meta: { title: '充值记录' } },

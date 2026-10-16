@@ -1,7 +1,7 @@
 import setaxios from '@/utils/setaxios'
 
 // ==================== 通用入口 ====================
- export function filmApi(method, data = {}) {
+export function filmApi(method, data = {}) {
     return setaxios.post('/film/getList', {
         method: method,
         data: JSON.stringify(data)
@@ -36,10 +36,9 @@ export function getOpiSeat(data) {
 // ==================== 独立接口 ====================
 
 // 城市列表
-export function getCityList(data = {}) {
-    const formData = new FormData()
-    formData.append('keyword', data.keyword || '')
-    return setaxios.post('/film/citylist', formData)
+export function getCityList(data) {
+
+    return setaxios.post('/film/citylist', data)
 }
 
 // 热门城市查询
@@ -95,24 +94,18 @@ export function getUnpaidOrder() {
     return setaxios.post('/film/unpayorder')
 }
 export function lockSeatOrder(data) {
-    const formData = new FormData()
-    Object.keys(data).forEach(k => formData.append(k, data[k]))
-    return setaxios.post('/film/lockseat', formData)
+    return setaxios.post('/film/lockseat', data)
 }
 export function cancelLockOrder(data) {
-    const formData = new FormData()
-    Object.keys(data).forEach(k => formData.append(k, data[k]))
-    return setaxios.post('/film/unlockseat', formData)
+
+
+    return setaxios.post('/film/unlockseat', data)
 }
 export function getSettleOrderDetail(data) {
-    const formData = new FormData()
-    Object.keys(data).forEach(k => formData.append(k, data[k]))
-    return setaxios.post('/film/jsordershow', formData)
+    return setaxios.post('/film/jsordershow', data)
 }
 export function getOrderDetail(data) {
-    const formData = new FormData()
-    Object.keys(data).forEach(k => formData.append(k, data[k]))
-    return setaxios.post('/film/orderdetail', formData)
+    return setaxios.post('/film/orderdetail', data)
 }
 
 // ==================== 福利卡 / 支付 ====================
@@ -120,24 +113,17 @@ export function getWelfareCardList() {
     return setaxios.post('/film/card')
 }
 export function checkCardBalance(data) {
-    const formData = new FormData()
-    Object.keys(data).forEach(k => formData.append(k, data[k]))
-    return setaxios.post('/film/pay_date', formData)
+    return setaxios.post('/film/pay_date', data)
 }
 export function payByWelfareCard(data) {
-    const formData = new FormData()
-    Object.keys(data).forEach(k => formData.append(k, data[k]))
-    return setaxios.post('/film/pay_date', formData)
+    return setaxios.post('/film/flkpay', data)
 }
+
 export function wxPay(data) {
-    const formData = new FormData()
-    Object.keys(data).forEach(k => formData.append(k, data[k]))
-    return setaxios.post('/film/wxpay', formData)
+    return setaxios.post('/film/wxpay', data)
 }
 export function paySuccess(data) {
-    const formData = new FormData()
-    Object.keys(data).forEach(k => formData.append(k, data[k]))
-    return setaxios.post('/film/pay_success', formData)
+    return setaxios.post('/film/pay_success', data)
 }
 export function wxPayNotify(data) {
     return setaxios.post('/film/dy_notify', data)

@@ -131,7 +131,7 @@
                     </span>
                     <div class="product-price-row">
                       <span class="sell-price">{{ item.sell_price }}</span>
-                      <span class="market-price" v-if="item.market_price"><span
+                      <span class="market-price" v-if="item.sell_price < item.market_price"><span
                           style="font-size: 10px; font-weight: bold;">￥</span>{{ item.market_price }}</span>
                     </div>
 
@@ -156,7 +156,7 @@
                     </span>
                     <div class="product-price-row">
                       <span class="sell-price">{{ item.sell_price }}</span>
-                      <span class="market-price" v-if="item.market_price"><span
+                      <span class="market-price" v-if="item.sell_price < item.market_price"><span
                           style="font-size: 10px; font-weight: bold;">￥</span>{{ item.market_price }}</span>
                     </div>
 
@@ -534,6 +534,8 @@ export default {
           message: '是否退出登录？',
           confirmButtonColor: 'red'
         }).then(() => {
+          localStorage.removeItem('cardId')      // ★ 加这行
+          localStorage.removeItem('cardInfo')    // 如果存过卡信息也清
           localStorage.removeItem("token")
           localStorage.removeItem("uid")
           this.$store.commit("settoken", "")
@@ -546,7 +548,7 @@ export default {
             }
           })
           setTimeout(() => {
-            this.$router.replace({ path: "/index" })
+            this.$router.replace({ path: "/login" })
           }, 1000)
         }).catch(() => {
         })

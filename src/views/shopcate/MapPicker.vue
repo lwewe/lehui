@@ -7,13 +7,7 @@
       </div>
       <div class="search-box">
         <van-icon name="search" color="#999" />
-        <input
-          v-model="keyword"
-          class="search-input"
-          type="text"
-          placeholder="搜索地点"
-          @keyup.enter="doSearch"
-        />
+        <input v-model="keyword" class="search-input" type="text" placeholder="搜索地点" @keyup.enter="doSearch" />
         <span v-if="keyword" class="clear" @click="clearSearch">
           <van-icon name="cross" color="#999" />
         </span>
@@ -23,12 +17,7 @@
 
     <!-- 搜索结果 -->
     <div v-if="searchList.length" class="search-list">
-      <div
-        v-for="(item, idx) in searchList"
-        :key="idx"
-        class="search-item"
-        @click="pickSearch(item)"
-      >
+      <div v-for="(item, idx) in searchList" :key="idx" class="search-item" @click="pickSearch(item)">
         <div class="search-name">{{ item.title }}</div>
         <div class="search-addr">{{ item.address }}</div>
       </div>

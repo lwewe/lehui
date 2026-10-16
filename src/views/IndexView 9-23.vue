@@ -215,7 +215,7 @@
                 <!-- <div class="product-subtitle" v-if="item.subtitle">{{ item.subtitle }}</div> -->
                 <div class="product-price-row">
                   <span class="sell-price">{{ item.sell_price }}</span>
-                  <span class="market-price" v-if="item.market_price">￥{{ item.market_price }}</span>
+                  <span class="market-price" v-if="item.sell_price < item.market_price">￥{{ item.market_price }}</span>
                 </div>
                 <!-- <div class="product-sales" v-if="item.sale_num">
                   已售{{ item.sale_num }}
@@ -242,7 +242,7 @@
                 <!-- <div class="product-subtitle" v-if="item.subtitle">{{ item.subtitle }}</div> -->
                 <div class="product-price-row">
                   <span class="sell-price">{{ item.sell_price }}</span>
-                  <span class="market-price" v-if="item.market_price">￥{{ item.market_price }}</span>
+                  <span class="market-price" v-if="item.sell_price < item.market_price">￥{{ item.market_price }}</span>
                 </div>
                 <!-- <div class="product-sales" v-if="item.sale_num">
                   已售{{ item.sale_num }}

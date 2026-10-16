@@ -11,30 +11,23 @@
     <!-- 3. 商品列表 -->
     <div class="list-wrapper" v-if="goodsList.length > 0">
       <div class="list-item" v-for="(item, index) in goodsList" :key="index" @click="goToDetail(item)">
-        <!-- 左侧图片 -->
         <div class="item-img-box">
-          <img class="item-img" :src="item.img" alt="" />
+          <img class="item-img" :src="item.img || defaultImg" alt="" />
         </div>
 
-        <!-- 右侧信息 -->
         <div class="item-info">
           <div class="item-title">{{ item.title }}</div>
-          
-          <!-- 副标题 -->
-          <!-- <div class="item-subtitle" v-if="item.subtitle">{{ item.subtitle }}</div> -->
 
-          <!-- 标签 -->
           <div class="item-tags">
             <span class="tag-orange" v-if="item.cate_name">{{ item.cate_name }}</span>
             <span class="tag-gray" v-if="item.sale_num">已售{{ formatSaleNum(item.sale_num) }}</span>
           </div>
 
-          <!-- 底部价格行 -->
           <div class="item-bottom">
             <div class="price-box">
               <span class="symbol">¥</span>
               <span class="price">{{ item.sell_price }}</span>
-              <span class="original-price" v-if="item.market_price">¥{{ item.market_price }}</span>
+              <span class="original-price" v-if="item.sell_price < item.market_price">¥{{ item.market_price }}</span>
             </div>
             <div class="add-btn" @click.stop="addToCart(item)">+</div>
           </div>
@@ -50,76 +43,65 @@
 </template>
 
 <script>
-import { home } from "@/api/lhjdtm";
+import { channelDetail } from "@/api/lhjdtm";
 
 export default {
-  name: "ExclusiveNew",
+  name: "TmallExclusiveNew",
   data() {
     return {
-      platform: 2,           // 默认天猫平台
+      platform: 2,
       loading: false,
+      defaultImg: require('../../assets/lh/730.png'),
       goodsList: [],
     }
   },
   methods: {
-    // 获取独家上新数据（home接口的new）
+    // 获取独家上新数据（channelDetail 接口）
     getNewData() {
       this.loading = true;
-      home({ platform: this.platform, limit: 10 }).then(res => {
+      channelDetail({ id: 16 }).then(res => {
         console.log('独家上新数据:', res);
         if (res.code == 200) {
-          const data = res.data;
-          
-          // 获取 new 数据
-          if (data && data.new && data.new.length > 0) {
-            this.goodsList = data.new;
+          const data = res.data || {};
+          let newData = [];
+
+          if (data.sections && data.sections.length > 0) {
+            // 优先找 title === '独家上新'
+            // 找不到就退而取第二个 grid section
+            const newSection =
+              data.sections.find(s => s.title === '独家上新') ||
+              data.sections.filter(s => s.type === 'grid')[1];
+
+            if (newSection && newSection.items) {
+              newData = newSection.items;
+            }
           }
-          // 如果没有 new，使用 recommend 备选
-          else if (data && data.recommend && data.recommend.length > 0) {
-            this.goodsList = data.recommend;
-          }
+
+          this.goodsList = newData;
         }
       }).finally(() => {
         this.loading = false;
       })
     },
-    
-    // 格式化销量
+
     formatSaleNum(num) {
-      if (num >= 10000) {
-        return (num / 10000).toFixed(1) + '万';
-      }
+      if (num >= 10000) return (num / 10000).toFixed(1) + '万';
       return num;
     },
-    
-    // 查看商品详情
+
     goToDetail(item) {
+      if (!item) return;
       this.$goDetail(item);
-      // if (item.id) {
-      //   this.$router.push({
-      //     path: '/ProductDetail',
-      //     query: { id: item.id }
-      //   });
-      // }
     },
-    
-    // 加入购物车
+
     addToCart(item) {
       console.log('加入购物车:', item);
     },
-    
+
     goBack() {
       this.$router.go(-1);
     }
   },
-  
-  created() {
-    // 接收平台参数
-    if (this.$route.query.platform) {
-      this.platform = Number(this.$route.query.platform);
-    }
-  },
-  
   mounted() {
     this.getNewData();
   }
@@ -133,7 +115,7 @@ export default {
   padding-bottom: 20px;
 }
 
-/* ================= 顶部导航 ================= */
+/* 顶部导航 */
 .nav-bar {
   display: flex;
   justify-content: space-between;
@@ -154,13 +136,8 @@ export default {
     align-items: center;
   }
 
-  .nav-left {
-    justify-content: flex-start;
-  }
-
-  .nav-right {
-    justify-content: flex-end;
-  }
+  .nav-left { justify-content: flex-start; }
+  .nav-right { justify-content: flex-end; }
 
   .nav-title {
     font-size: 16px;
@@ -169,11 +146,10 @@ export default {
   }
 }
 
-/* ================= 黄色 Banner ================= */
+/* 黄色 Banner */
 .banner-area {
   width: 100%;
   height: 160px;
- 
 
   .banner-img {
     width: 100%;
@@ -183,7 +159,7 @@ export default {
   }
 }
 
-/* ================= 列表 ================= */
+/* 列表 */
 .list-wrapper {
   padding: 0 12px 10px 12px;
 }
@@ -218,6 +194,7 @@ export default {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    min-width: 0;
 
     .item-title {
       font-size: 14px;
@@ -229,15 +206,6 @@ export default {
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
-    }
-
-    .item-subtitle {
-      font-size: 12px;
-      color: #999;
-      margin-bottom: 4px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
     }
 
     .item-tags {
@@ -253,7 +221,7 @@ export default {
         padding: 2px 8px;
         border-radius: 10px;
       }
-      
+
       .tag-gray {
         font-size: 10px;
         color: #666;

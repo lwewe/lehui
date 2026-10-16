@@ -2,10 +2,8 @@
   <div class="tmall-page">
     <!-- 1. 顶部大图 + 悬浮搜索 -->
     <div class="top-wrapper">
-      <!-- 背景大图 -->
-      <img class="top-banner-img" src="../../assets//lh/tm/b1.png" alt="Banner" />
+      <img class="top-banner-img" :src="bannerImg || defaultBanner" alt="Banner" />
 
-      <!-- 悬浮的定位和搜索 -->
       <div class="search-overlay">
         <div class="location">
           <div class="back-btn" @click="goBack">
@@ -20,11 +18,11 @@
       </div>
     </div>
 
-    <!-- 2. 8个分类图标 -->
+    <!-- 2. 分类图标 -->
     <div class="category-box">
       <div class="category-grid">
         <div class="cat-item" v-for="(item, index) in categoryList" :key="index" @click="goToCategoryWithId(item)">
-          <img class="cat-icon" :src="item.img" alt="" />
+          <img class="cat-icon" :src="item.img || defaultImg" alt="" />
           <div class="cat-name">{{ item.title }}</div>
         </div>
       </div>
@@ -54,7 +52,7 @@
       <div class="new-arrival-box">
         <div class="new-title" @click="TmallExclusiveNew('new')">独家上新</div>
         <div class="new-desc">去购买 ▶</div>
-        <img class="new-img" :src="newList[0]?.img || defaultImg" alt="" @click="goToDetail(newList[0])" />
+        <img class="new-img" :src="(newList[0] && newList[0].img) || defaultImg" alt="" @click="goToDetail(newList[0])" />
       </div>
     </div>
 
@@ -62,33 +60,28 @@
     <div class="tab-header-row">
       <div class="tab-btn" :class="{ active: currentTab === 0 }" @click="changeTab(0)">猜你喜欢</div>
       <div class="tab-btn" :class="{ active: currentTab === 1 }" @click="changeTab(1)">热门推荐</div>
-      <div class="tab-btn" :class="{ active: currentTab === 2 }" @click="changeTab(2, 'hot')">热销榜</div>
-      <div class="tab-btn" :class="{ active: currentTab === 3 }" @click="changeTab(3, 'new')">新品</div>
+      <div class="tab-btn" :class="{ active: currentTab === 2 }" @click="changeTab(2)">热销榜</div>
+      <div class="tab-btn" :class="{ active: currentTab === 3 }" @click="changeTab(3)">新品</div>
     </div>
 
     <!-- 5. 底部商品瀑布流 -->
     <div class="goods-grid" v-if="currentGoodsList.length > 0">
       <div class="goods-item" v-for="(item, index) in currentGoodsList" :key="index" @click="goToDetail(item)">
-        <img class="goods-img" :src="item.img" alt="" />
+        <img class="goods-img" :src="item.img || defaultImg" alt="" />
         <div class="goods-info">
           <div class="goods-name">{{ item.title }}</div>
-          <!-- <div class="goods-subtitle" v-if="item.subtitle">{{ item.subtitle }}</div> -->
-          <!-- <div class="goods-tags">
-            <span class="tag" v-if="item.sale_num">已售{{ formatSaleNum(item.sale_num) }}</span>
-            <span class="tag" v-if="item.stock > 0">有货</span>
-          </div> -->
           <div class="goods-bottom">
             <div class="price-box">
               <span class="symbol">¥</span>
               <span class="price">{{ item.sell_price }}</span>
-              <span class="market-price" v-if="item.market_price">¥{{ item.market_price }}</span>
+              <span class="market-price" v-if="item.sell_price < item.market_price">¥{{ item.market_price }}</span>
             </div>
             <div class="add-cart" @click.stop="addToCart(item)">+</div>
           </div>
         </div>
       </div>
     </div>
-    
+
     <!-- 空状态 -->
     <div class="empty-tip" v-else-if="!loading">
       暂无商品
@@ -113,214 +106,155 @@
   </div>
 </template>
 
-<script>
-import { home, categoryList, productList } from "@/api/lhjdtm";
+ <script>
+import { channelDetail } from "@/api/lhjdtm";
 
 export default {
   name: "TmallSupermarket",
   data() {
     return {
-      platform: 2,           // 天猫平台
+      platform: 2,
       searchKeyword: '',
       currentTab: 0,
-      page: 1,
-      limit: 10,
-      currentSort: 'px',
       loading: false,
+
       defaultImg: require('../../assets/lh/730.png'),
-      
-      // 本地默认分类图标（兜底）
-      localCategoryIcons: [
-        require('../../assets/lh/tm/1-1.png'),
-        require('../../assets/lh/tm/1-2.png'),
-        require('../../assets/lh/tm/1-3.png'),
-        require('../../assets/lh/tm/1-4.png'),
-        require('../../assets/lh/tm/1-5.png'),
-        require('../../assets/lh/tm/1-6.png'),
-        require('../../assets/lh/tm/1-7.png'),
-        require('../../assets/lh/tm/1-8.png'),
-      ],
-      
-      categoryList: [],       // 分类列表
-      recommendList: [],      // 超级补贴（recommend）
-      hotList: [],           // 热门推荐（hot）
-      newList: [],           // 独家上新（new）
-      goodsList: [],          // 商品列表（productList）
+      defaultBanner: require('../../assets/lh/tm/b1.png'),
+
+      bannerImg: '',
+      baners: '',
+
+      categoryList: [],
+      recommendList: [],
+      newList: [],
+      tabList: [],
     }
   },
   computed: {
-    // 根据当前Tab返回对应数据
     currentGoodsList() {
-      switch (this.currentTab) {
-        case 0:
-          return this.goodsList;      // 猜你喜欢 - productList接口
-        case 1:
-          return this.hotList;        // 热门推荐 - home接口hot
-        case 2:
-          return this.hotList;        // 热销榜 - home接口hot
-        case 3:
-          return this.newList;        // 新品 - home接口new
-        default:
-          return this.goodsList;
-      }
+      if (this.tabList.length === 0) return [];
+      const tab = this.tabList[this.currentTab];
+      return (tab && tab.items) || [];
     }
   },
   methods: {
-    // 获取首页数据
-    Indexhome() {
-      home({ platform: this.platform, limit: 10 }).then(res => {
-        console.log('天猫首页数据:', res);
+    channelDetailIndex() {
+      channelDetail({ id: 16 }).then(res => {
         if (res.code == 200) {
-          const data = res.data;
-          
-          // 超级补贴数据（recommend）
-          if (data && data.recommend && data.recommend.length > 0) {
-            this.recommendList = data.recommend.slice(0, 3);
+          const data = res.data || {};
+
+          if (data.banner && data.banner.length > 0) {
+            this.bannerImg = data.banner[0].img;
+            this.baners = data.banner[0].img;
           }
-          
-          // 热门推荐数据（hot）
-          if (data && data.hot && data.hot.length > 0) {
-            this.hotList = data.hot;
+
+          if (data.nav && data.nav.length > 0) {
+            this.categoryList = data.nav.map((item, index) => ({
+              id: item.cate_id || item.id || index,
+              img: item.img || this.defaultImg,
+              title: item.title,
+              link: item.link
+            }));
           }
-          
-          // 独家上新数据（new）
-          if (data && data.new && data.new.length > 0) {
-            this.newList = data.new;
+
+          if (data.sections && data.sections.length > 0) {
+            const sections = data.sections;
+
+            // [0] 超级补贴
+            if (sections[0] && sections[0].items) {
+              this.recommendList = sections[0].items.slice(0, 3);
+            }
+
+            // [1] 独家上新
+            if (sections[1] && sections[1].items) {
+              this.newList = sections[1].items;
+            }
+
+            // tabs 区块
+            const tabSection = sections.find(s => s.type === 'tabs');
+            if (tabSection && tabSection.tabs && tabSection.tabs.length > 0) {
+              this.tabList = tabSection.tabs;
+              this.currentTab = 0;
+            }
           }
         }
       })
     },
-    
-    // 获取分类列表
-    IndexcategoryList() {
-      categoryList({ platform: this.platform }).then(res => {
-        console.log('天猫分类数据:', res);
-        if (res.code == 200) {
-          const apiData = res.data || [];
-          const topCategories = apiData.filter(item => item.pid === 0);
-          
-          if (topCategories.length > 0) {
-            this.categoryList = topCategories.slice(0, 8).map((item, index) => {
-              return {
-                id: item.id,
-                title: item.title,
-                img: item.img || this.localCategoryIcons[index] || this.defaultImg
-              };
-            });
-          }
-        }
-      })
-    },
-    
-    // 获取商品列表
-    IndexproductList() {
-      this.loading = true;
-      productList({
-        platform: this.platform,
-        page: this.page,
-        limit: this.limit,
-        sort: this.currentSort,
-        order: 'desc',
-      }).then(res => {
-        console.log('天猫商品数据:', res);
-        if (res.code == 200) {
-          if (res.data && res.data.data) {
-            this.goodsList = res.data.data;
-          } else if (Array.isArray(res.data)) {
-            this.goodsList = res.data;
-          }
-        }
-      }).finally(() => {
-        this.loading = false;
-      })
-    },
-    
-    // 格式化销量
+
     formatSaleNum(num) {
-      if (num >= 10000) {
-        return (num / 10000).toFixed(1) + '万';
-      }
+      if (num >= 10000) return (num / 10000).toFixed(1) + '万';
       return num;
     },
-    
-    // 搜索
+
     handleSearch() {
       if (this.searchKeyword.trim()) {
-        this.page = 1;
-        this.IndexproductList();
+        console.log('搜索:', this.searchKeyword);
       }
     },
-    
-    // 切换Tab
-    changeTab(index, type) {
+
+    changeTab(index) {
       this.currentTab = index;
     },
-    
-    // 点击分类跳转
-    goToCategoryWithId(item) {
+
+    // goToCategoryWithId(item) {
+    //   this.$router.push({
+    //     path: '/TmallCategory',
+    //     query: { categoryId: item.id, categoryTitle: item.title }
+    //   });
+    // },
+ goToCategoryWithId(item) {
       this.$router.push({
-        path: '/TmallCategory',
-        query: { categoryId: item.id, categoryTitle: item.title }
+        path: '/productList',
+        query: {
+          keyword: item.title,
+          platform: 2,
+         
+          t: Date.now()
+        }
       });
     },
-    
-    // 跳转超值列表
-    goToSuperValue(type) {
-      this.$router.push({
-        path: '/TmallTodaySuperLow',
-        // query: { type: type, platform: this.platform }
-      });
+
+    goToSuperValue() {
+      this.$router.push('/TmallTodaySuperLow');
     },
-    
-    // 查看商品详情
+
     goToDetail(item) {
-      
+      if (!item) return;
       this.$goDetail(item);
-      // if (item && item.id) {
-      //   this.$router.push({
-      //     path: '/ProductDetail',
-      //     query: { id: item.id }
-      //   });
-      // }
     },
-    
-    // 加入购物车
+
     addToCart(item) {
       console.log('加入购物车:', item);
     },
-    
+
     goBack() {
       this.$router.go(-1);
     },
-    
-    TmallExclusiveNew() { 
+
+    TmallExclusiveNew() {
       this.$router.push('/TmallExclusiveNew');
     },
-    
-    TmallTodaySuperLow() { 
-      this.$router.push('/TmallTodaySuperLow');
-    },
-    
+
     goToHome() {
       if (this.$route.path !== '/TmallSupermarket') {
         this.$router.push('/TmallSupermarket');
       }
     },
-    
+
     goToCategory() {
       this.$router.push('/TmallCategory');
     }
   },
-  
+  activated() {
+    this.channelDetailIndex();
+  },
   mounted() {
-    this.Indexhome();          // 获取首页数据
-    this.IndexcategoryList();  // 获取分类列表
-    this.IndexproductList();   // 获取商品列表
+    this.channelDetailIndex();
   }
 }
 </script>
+
 <style scoped lang="less">
-// 商品副标题
 .goods-subtitle {
   font-size: 12px;
   color: #999;
@@ -330,7 +264,6 @@ export default {
   white-space: nowrap;
 }
 
-// 市场价（划线价）
 .market-price {
   font-size: 11px;
   color: #999;
@@ -339,13 +272,13 @@ export default {
   font-weight: normal;
 }
 
-// 空状态
 .empty-tip {
   text-align: center;
   color: #999;
   padding: 40px 0;
   font-size: 14px;
 }
+
 .tmall-page {
   background: #f7f7f7;
   min-height: 100vh;
@@ -362,7 +295,6 @@ export default {
     width: 100%;
     display: block;
     object-fit: cover;
-    // height: 200px;
     padding-top: 49px;
   }
 
@@ -370,7 +302,6 @@ export default {
     background-color: #fd0046;
     position: absolute;
     top: 0;
-    /* 根据实际大图调整此数值 */
     left: 0;
     width: 100%;
     padding: 10px 10px;
@@ -379,7 +310,6 @@ export default {
     align-items: center;
     gap: 12px;
     z-index: 10;
-
 
     .location {
       font-size: 14px;
@@ -421,7 +351,6 @@ export default {
 
       .search-btn {
         background: #F42E45;
-        /* 天猫红色 */
         color: #fff;
         padding: 12px;
         border-radius: 16px;
@@ -436,8 +365,7 @@ export default {
 /* ================= 2. 分类图标 ================= */
 .category-box {
   margin: -12px 10px 10px 10px;
-  /* 向上覆盖 Banner */
-  padding: 0 0px;
+  padding: 0;
   background: #fff;
   border-radius: 12px 12px 0 0;
   position: relative;
@@ -445,7 +373,6 @@ export default {
 }
 
 .category-grid {
-  /* 核心修改：改为 4 列 */
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px 0;
@@ -467,7 +394,8 @@ export default {
 
     .cat-name {
       font-size: 12px;
-      color: #333;font-weight: 600;
+      color: #333;
+      font-weight: 600;
     }
   }
 }
@@ -528,6 +456,7 @@ export default {
         height: 50px;
         background: #f5f6fa;
         border-radius: 8px;
+        object-fit: cover;
       }
 
       .subsidy-name {
@@ -537,14 +466,15 @@ export default {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        width: 100%;
+        width: 60px;
       }
 
       .subsidy-price {
         color: #d32f2f;
 
         .symbol {
-          font-size: 10px;font-weight: bold;
+          font-size: 10px;
+          font-weight: bold;
         }
 
         .price {
@@ -583,34 +513,28 @@ export default {
     height: 60px;
     background: #f5f6fa;
     border-radius: 8px;
+    object-fit: cover;
   }
 }
 
 /* ================= 4. 切换 Tabs ================= */
-/* ================= 4. 切换 Tabs (文字宽度自适应版) ================= */
 .tab-header-row {
   display: flex;
   justify-content: center;
-  /* 整体居中 */
   gap: 40px;
-  /* Tab之间的间距 */
   padding: 0 10px 12px;
   overflow-x: auto;
 
   .tab-btn {
-    /* 核心修改：使用 inline-block 让容器宽度自动收缩到文字的长度 */
     display: inline-block;
     font-size: 14px;
     color: #3D3D3D;
-    // padding: 4px 0 8px 0; /* 上左右0，只有下边距，为了让绿线贴在底下 */
     cursor: pointer;
     position: relative;
 
     &.active {
       color: #000000;
       font-weight: bold;
-
-      /* 使用 border-bottom，天生宽度和文字一样宽 */
       border-bottom: 3px solid #00c46d;
     }
   }
@@ -641,12 +565,14 @@ export default {
     }
 
     .goods-name {
-      font-size: 14px;
-      font-weight: 500;
-      margin-bottom: 6px;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      overflow: hidden;
+     font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 6px;
+
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
     }
 
     .goods-tags {
@@ -674,7 +600,8 @@ export default {
       color: #d32f2f;
 
       .symbol {
-        font-size: 12px;font-weight: bold;
+        font-size: 12px;
+        font-weight: bold;
       }
 
       .price {
@@ -692,7 +619,8 @@ export default {
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 18px;font-weight: bold;
+      font-size: 14px;
+      font-weight: bold;
     }
   }
 }
@@ -732,8 +660,8 @@ export default {
       color: #999;
     }
 
-    &.active .tab-text {
-      color: #00c46d;
+    .tab-text.active {
+      color: #46C800;
       font-weight: bold;
     }
   }

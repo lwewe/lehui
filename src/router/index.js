@@ -1,10 +1,13 @@
 import filmRoutes from './lehuifilmrouter'
+import performRoutes from './lehuiyanchurouter'
+//import cakeRoutes from './lehuicake'    
 import Vue from 'vue'
 import Router from 'vue-router'
 import HelloWorld from "@/HelloWorld.vue";
 import VueRouter from "vue-router";
 import IndexView from "@/views/IndexView.vue";
 import ShopCart from "@/views/cart/ShopCart.vue";
+import ShopCartHm from "@/views/cart/ShopCartHm.vue";
 import Freeca from "@/views/freeca/Freeca.vue";
 import PersonCenter from "@/views/mine/PersonCenter.vue";
 import OrderInfo from "@/views/order/OrderInfo.vue";
@@ -28,7 +31,7 @@ import ConfirmOrderHema from "@/views/order/ConfirmOrderHema.vue";
 
 import TuHuConfirmOrder from "@/views/order/TuHuConfirmOrder.vue";
 
- 
+
 import TuhuZone from "@/views/shopcate/TuhuZone.vue";
 import FlowerZone from "@/views/shopcate/FlowerZone.vue";
 import HomeDap from "@/views/shoplh/HomeDap.vue";
@@ -91,6 +94,8 @@ import BeautyZoneNewList from "@/views/shopcate/BeautyZoneNewList.vue";
 
 import Setting from "@/views/mine/Setting.vue";
 import CityList from "@/views/city/CityList.vue";
+import CityListfilm from "@/views/city/CityListfilm.vue";
+
 // import FlashSale from "@/views/product/FlashSale.vue";
 // import HotProduct from "@/views/product/HotProduct.vue";
 import QuickLogin from "@/views/login/QuickLogin.vue";
@@ -143,7 +148,16 @@ const routes = [
         meta: {
             title: '购物车'
         }
-    }, {
+    },
+    {
+        path: '/shopCartHm',
+        component: ShopCartHm,
+        meta: {
+            title: '盒马购物车'
+        }
+    },
+    
+    {
         path: '/freeca',
         component: Freeca,
         meta: {
@@ -205,7 +219,7 @@ const routes = [
         component: TuhuZone,
         meta: {
             title: '提交订单',
-             keepAlive: true
+            keepAlive: true
         }
     },
 
@@ -364,7 +378,7 @@ const routes = [
             title: '鲜花', keepAlive: true
         }
     },
- {
+    {
         path: '/HemaDetail',
         component: HemaDetail,
         meta: {
@@ -372,14 +386,14 @@ const routes = [
         }
     },
 
-{
+    {
         path: '/ConfirmOrderHema',
         component: ConfirmOrderHema,
         meta: {
             title: '盒马支付'
         }
     },
-    
+
     {
         path: '/FoodDelivery',
         component: FoodDelivery,
@@ -393,7 +407,7 @@ const routes = [
         component: JingzaoHome,
         meta: {
             title: '京东京造',
-             keepAlive: true
+            keepAlive: true
         }
     },
     {
@@ -401,7 +415,7 @@ const routes = [
         component: JingzaoCategory,
         meta: {
             title: '京造分类',
-             keepAlive: true
+            keepAlive: true
         }
     },
     {
@@ -409,7 +423,7 @@ const routes = [
         component: JingzaoSuperValue,
         meta: {
             title: '超值推荐',
-             keepAlive: true
+            keepAlive: true
         }
     },
     {
@@ -417,7 +431,7 @@ const routes = [
         component: JingdongChannel,
         meta: {
             title: '京东频道',
-             keepAlive: true
+            keepAlive: true
         }
     },
     {
@@ -425,7 +439,7 @@ const routes = [
         component: JingdongCategory,
         meta: {
             title: '京东分类',
-             keepAlive: true
+            keepAlive: true
         }
     },
     {
@@ -433,7 +447,7 @@ const routes = [
         component: JingdongSuperValueList,
         meta: {
             title: '超值购',
-             keepAlive: true
+            keepAlive: true
         }
     },
     {
@@ -441,7 +455,7 @@ const routes = [
         component: TmallSupermarket,
         meta: {
             title: '天猫超市',
-             keepAlive: true
+            keepAlive: true
         }
     },
     {
@@ -449,7 +463,7 @@ const routes = [
         component: TmallCategory,
         meta: {
             title: '天猫分类',
-             keepAlive: true
+            keepAlive: true
         }
     },
 
@@ -458,7 +472,7 @@ const routes = [
         component: TmallExclusiveNew,
         meta: {
             title: '天猫上新',
-             keepAlive: true
+            keepAlive: true
         }
     }, {
         path: '/TmallTodaySuperLow',
@@ -480,7 +494,7 @@ const routes = [
         path: '/HemaFreshnew',
         component: HemaFreshnew,
         meta: {
-            title: '盒马生鲜',keepAlive: true
+            title: '盒马生鲜', keepAlive: true
         }
     },
     {
@@ -683,6 +697,14 @@ const routes = [
             title: '城市'
         }
     },
+    {
+        path: '/CityListfilm',
+        component: CityListfilm,
+        meta: {
+            title: '城市'
+        }
+    },
+
     //  {
     //     path: '/flashSale',
     //     component: FlashSale,
@@ -701,7 +723,7 @@ const routes = [
     //         keep: true,
     //     }
     // },
-    
+
     {
         path: '/quickLogin',
         component: QuickLogin,
@@ -738,7 +760,7 @@ const routes = [
     //         keep: true,
     //     }
     // },
-   
+
     {
         path: '/userGuide',
         component: UserGuide,
@@ -769,15 +791,17 @@ const routes = [
     //         title: '产品介绍'
     //     }
     // },
-     {
+    {
         path: '/notification',
         component: Notification,
         meta: {
             title: '春节发货通知'
         }
     },
-       // ==================== 电影模块 ====================
+    // ==================== 电影模块 ====================
     ...filmRoutes,
+    ...performRoutes,
+    //  ...cakeRoutes,   
 ]
 
 const router = new Router({
@@ -816,12 +840,27 @@ router.beforeEach((to, from, next) => {
     if (token) {
         // 情况 A：有 Token
         // 如果用户有 Token 但意图去登录页，直接踢回首页（防止重复登录）
+        // if (to.path === '/login' || to.path === '/quickLogin') {
+        //     next('/index');
+        // } else {
+        //     // 其他页面直接放行
+        //     next();
+        // }
+
+        // 情况 A：有 Token
         if (to.path === '/login' || to.path === '/quickLogin') {
             next('/index');
-        } else {
-            // 其他页面直接放行
-            next();
+            return;
         }
+
+        // ★ 新增：进首页要检查有没有绑卡
+        const cardId = localStorage.getItem("cardId");
+        if (to.path === '/index' && !cardId) {
+            next('/AddCard');
+            return;
+        }
+
+        next();
     } else {
         // 情况 B：没有 Token
         if (whiteList.includes(to.path)) {

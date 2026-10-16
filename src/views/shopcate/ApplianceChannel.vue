@@ -531,7 +531,7 @@ fetchChannelData() {
 
   /* 右侧：独立 Banner */
   .health-right-banner {
-    width: 160px;
+    flex: 1;
     /* 根据截图调整宽度 */
     flex-shrink: 0;
     border-radius: 12px;

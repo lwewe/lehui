@@ -115,6 +115,7 @@ export default {
   methods: {
     // 获取平台名称
     getPlatformName,
+    
     goToDetail(item) {
       this.$goDetail(item);
       // this.$router.push({ path: '/ProductDetail', query: { id: item.id } });

@@ -1,7 +1,7 @@
 <template>
   <div class="filmdetail" style="position: relative;">
     <ReturnBack :rcolor="'#000'" :bcolor="'rgb(255 255 255 / 84%)'"></ReturnBack>
-    <NProgress v-if="loadingflag"/>
+    <NProgress v-if="loadingflag" />
     <div class="headlogo" v-if="detailList.img">
       <img class="img" :src="detailList.img" alt="">
       <div class="zhezhao" style=""></div>
@@ -10,7 +10,7 @@
       <div class="detailtitle">
         <div class="titleleft">
           <!--                <img :src="detailList.logo" alt="">-->
-          <div class="imgBox" :style="'background-image: url('+detailList.img+')'"></div>
+          <div class="imgBox" :style="'background-image: url(' + detailList.img + ')'"></div>
         </div>
         <div class="titleright">
           <p class="title">{{ detailList.name }}</p>
@@ -44,8 +44,7 @@
     align-items: center;
     margin-right: 10px;
     background: rgb(219 219 219 / 29%);
-    justify-content: center;border-radius: 10px;"
-                 v-for="(item,index) in trailers" :key="index">
+    justify-content: center;border-radius: 10px;" v-for="(item, index) in trailers" :key="index">
               <div style="width: 100%;height:100%">
                 <img style="width: 100%;height:100%;border-radius: 10px;object-fit: cover" :src="item" alt="">
               </div>
@@ -87,19 +86,19 @@
         </div>
       </div>
       <div class="bottomBox">
-<!--        剧情简介-->
+        <!--        剧情简介-->
         <div class="descBox" v-if="detailList.desc">
           <div class="unfold">
             <div class="unfoldTitle">剧情简介</div>
-            <div class="unfoldText" @click="seeflag=!seeflag">{{ seeflag ? '收起' : '展开' }}
-              <van-icon v-if="!seeflag" name="arrow-down"/>
-              <van-icon v-else name="arrow-up"/>
+            <div class="unfoldText" @click="seeflag = !seeflag">{{ seeflag ? '收起' : '展开' }}
+              <van-icon v-if="!seeflag" name="arrow-down" />
+              <van-icon v-else name="arrow-up" />
             </div>
           </div>
-          <div class="desc" :class="{desc2:seeflag}" v-html="detailList.desc"></div>
+          <div class="desc" :class="{ desc2: seeflag }" v-html="detailList.desc"></div>
         </div>
-<!--        演职人员-->
-        <div class="descBox descBox2" v-if="workerList.length>0">
+        <!--        演职人员-->
+        <div class="descBox descBox2" v-if="workerList.length > 0">
           <div class="unfold">
             <div class="unfoldTitle">演职人员</div>
           </div>
@@ -113,25 +112,11 @@
             </div>
           </div>
         </div>
-<!--        剧照-->
-<!--        <div class="descBox descBox2" v-if="workerList.length>0">-->
-<!--          <div class="unfold">-->
-<!--            <div class="unfoldTitle">剧照</div>-->
-<!--          </div>-->
-<!--          <div class="workerBox">-->
-<!--            <div class="workerList" v-for="item in workerList" :key="item.actorName">-->
-<!--              <div class="avatarUrl">-->
-<!--                <img class="img" :src="item.avatarUrl" alt="">-->
-<!--              </div>-->
-<!--              <div class="actorName">{{ item.actorName }}</div>-->
-<!--              <div class="characterName">{{ item.characterName }}</div>-->
-<!--            </div>-->
-<!--          </div>-->
-<!--        </div>-->
+         
       </div>
     </div>
     <div class="btnBox">
-      <div class="paybtn" :class="{paybtn2:showSt==2}" @click="buyticket()">立即{{showSt==2?'预购':'购票'}}</div>
+      <div class="paybtn" :class="{ paybtn2: showSt == 2 }" @click="buyticket()">立即{{ showSt == 2 ? '预购' : '购票' }}</div>
     </div>
 
   </div>
@@ -147,10 +132,10 @@ import 'moment/locale/zh-cn';
 moment.locale('zh-cn');
 
 //调用热映电影详情接口
-import {getFilmDetail} from "@/api/lehuifilm";
+// import { getFilmDetail } from "@/api/lehuifilm";
 import toast from "vant/lib/toast";
 import router from "@/router";
-import {getMovieDetail} from "@/api/lehuifilm";
+import { getMovieDetail } from "@/api/lehuifilm";
 
 export default {
   data() {
@@ -167,7 +152,7 @@ export default {
       trailers: [],
       loadingflag: false,
       workerList: [],
-      showSt:""
+      showSt: ""
 
     }
   },
@@ -175,13 +160,30 @@ export default {
     // 得到电影的详情信息
     getDetails() {
       getMovieDetail({
-        movieId: this.id
+        movieid: this.id,
+      //  citycode:,
       }).then(res => {
         // console.log(res)
         this.loadingflag = false
-        if (res.code == 0) {
-          this.detailList = res.data
-          this.workerList = res.data.workerList
+        if (res.code == 200) {
+          const m = res.data.movie
+          this.detailList = {
+            img: m.logo,              // 模板用 img，接口给 logo
+            nm: m.name,               // 模板用 nm，接口给 name
+            name: m.name,             // 备用
+            director: m.director,     // 名字一样，直接给
+            star: m.actors,           // 模板用 star，接口给 actors
+            cat: m.type,              // 模板用 cat，接口给 type
+            pubDesc: m.playdate,      // 模板用 pubDesc，接口给 playdate
+            dur: m.duration,          // 模板用 dur，接口给 duration
+            desc: m.content,          // 模板用 desc，接口给 content
+            content: m.content,       // 备用（上面那个 display:none 的块用到）
+            movieId: m.id,            // 模板用 movieId，接口给 id
+            movieCode: m.standardid,  // 模板用 movieCode，接口给 standardid
+          }
+          this.workerList = res.data.workerList || []
+          // this.detailList = res.data.movie
+          // this.workerList = res.data.workerList
           // this.trailers = res.data.movie.trailers.split(",")
         } else {
           this.$toast("暂无数据")
@@ -203,7 +205,7 @@ export default {
     buyticket() {
       this.$router.push({
         path: "/multiplex",
-        query: {movieId: '' + this.detailList.movieId,movieCode:this.detailList.movieCode,moveName:this.detailList.nm}
+        query: { movieId: '' + this.detailList.movieId, movieCode: this.detailList.movieCode, moveName: this.detailList.nm }
       })
 
     }
@@ -212,10 +214,10 @@ export default {
   mounted() {
     // if(!to.meta.keepAlive){
     document.body.scrollTop = 0
-// firefox
+    // firefox
     document.documentElement.scrollTop = 0
 
-// safari
+    // safari
     window.pageYOffset = 0
     // 调用接口得到详情所有数据
     this.getDetails()
@@ -266,9 +268,7 @@ export default {
   }
 }
 
-.centerBox {
-
-}
+.centerBox {}
 
 .detailListCenter {
   background-color: white;
@@ -394,7 +394,8 @@ export default {
     /* 隐藏滚动条 */
 
     .workerBox::-webkit-scrollbar {
-      display: none; /* 对于 Chrome, Safari 和 Opera */
+      display: none;
+      /* 对于 Chrome, Safari 和 Opera */
     }
   }
 }
@@ -418,7 +419,8 @@ export default {
     line-height: 38px;
     text-align: center;
   }
-  .paybtn2{
+
+  .paybtn2 {
     background-color: #40A6FB;
   }
 }

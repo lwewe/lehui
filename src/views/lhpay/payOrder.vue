@@ -50,7 +50,31 @@
         <div v-if="cardList.length === 0" class="no-card">
           暂无可用福利卡
         </div>
+
+
+
+        <!-- ✅ 新增：微信支付单独选项（可微信支付时才露出） -->
+        <div class="card-item wx-pay-item" v-if="wxPayVisible" @click="selectWxPay">
+          <div class="card-info">
+            <div class="card-name wx-name">
+              <img src="../../assets/lh/wxpay.png" class="wx-icon" alt="">
+              <span>微信支付</span>
+            </div>
+            <div class="card-sub">{{ isWxSelected ? '当前使用微信支付' : '点击使用微信支付' }}</div>
+          </div>
+          <div class="card-right">
+            <div class="card-balance wx-balance"><span style="font-size: 10px;">￥</span>{{ wxPayAmount }}</div>
+            <div class="checkbox-wrapper">
+              <div class="checkbox-box" :class="{ 'active': isWxSelected }">
+                <span v-if="isWxSelected" class="check-mark">✓</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+
       </div>
+
 
       <!-- 支付金额信息 -->
       <div class="pay-info" v-if="payInfo">
@@ -73,7 +97,8 @@
       <!-- 支付方式提示 -->
       <div class="pay-method-tip" v-if="payInfo">
         <!-- ✅ 组合支付：只能卡支付时不显示 -->
-        <div v-if="!isCardOnly && payInfo.wxprice && payInfo.wxprice !== '0.00' && payInfo.dkprice && payInfo.dkprice !== '0.00'"
+        <div
+          v-if="!isCardOnly && payInfo.wxprice && payInfo.wxprice !== '0.00' && payInfo.dkprice && payInfo.dkprice !== '0.00'"
           style="display: flex;align-items: center;">
           <span style="display: flex;align-items: center;"><img src="../../assets/lh/wxpay.png"
               style="width: 20px;height: 20px;    margin-right: 4px;" alt=""> 将使用 </span>
@@ -109,7 +134,7 @@
     </div>
 
     <!-- 密码输入弹窗 -->
-    <PayPassword :is-show="showPasswordDialog" @onInput="onPasswordInput" />
+    <PayPassword :is-show="showPasswordDialog" :key="'pay-' + showPasswordDialog" @onInput="onPasswordInput" />
   </div>
 </template>
 
@@ -117,7 +142,7 @@
 import PayPassword from "@/components/PayPassword.vue";
 import { getOrderInfo, getCardList, calculatePayment, payByCard, payByWechat, paySuccess } from "@/api/payment";
 import wx from "weixin-js-sdk";
-
+const CARD_ONLY_TYPES = ['3', '8'];
 export default {
   name: "OrderInfo",
   components: {
@@ -141,13 +166,32 @@ export default {
     };
   },
   computed: {
+    // ✅ 微信支付选项是否露出
+    wxPayVisible() {
+      return !this.isCardOnly;
+    },
+    // ✅ 是否已选中微信支付（= 没有勾选任何卡）
+    isWxSelected() {
+      return this.wxPayVisible && this.selectedList.length === 0;
+    },
+    // ✅ 微信支付选项右侧金额
+    wxPayAmount() {
+      if (this.payInfo && this.payInfo.wxprice && this.payInfo.wxprice !== '0.00') {
+        return this.payInfo.wxprice;
+      }
+      return this.orderInfo.total_fee || '0.00';
+    },
     // ✅ 只能卡支付的类型：3-聚合商超，8-盒马鲜生
     isCardOnly() {
-      const CARD_ONLY_TYPES = ['3', '8'];
+      //const CARD_ONLY_TYPES = ['3', '8'];
       return CARD_ONLY_TYPES.includes(String(this.orderType));
     },
     selectedCardIds() {
-      return this.selectedList.map(idx => this.cardList[idx].id);
+      // return this.selectedList.map(idx => this.cardList[idx].id);
+      return this.selectedList
+        .map(idx => this.cardList[idx])
+        .filter(card => card)          // ← 加这一层过滤
+        .map(card => card.id);
     },
     selectedCardBalance() {
       return this.selectedList.reduce((sum, idx) => sum + parseFloat(this.cardList[idx].price || 0), 0);
@@ -182,6 +226,17 @@ export default {
     }
   },
   methods: {
+
+
+    async selectWxPay() {
+      if (!this.wxPayVisible) return;
+      if (this.isWxSelected) {
+        this.$toast('当前已是微信支付');
+        return;
+      }
+      this.selectedList = [];
+      await this.calculatePayInfo();
+    },
     // 密码输入回调（PayPassword 组件触发）
     onPasswordInput(password) {
       this.password = password;
@@ -386,12 +441,14 @@ export default {
           return;
         }
         this.password = "";
-        this.showPasswordDialog = true;
+        this.showPasswordDialog = false;
+        this.$nextTick(() => {
+          this.showPasswordDialog = true;
+        });
         return;
       }
 
       // 以下原有逻辑完全不动
-      // 情况1：纯卡支付
       if (dkPrice > 0 && wxPrice <= 0) {
         console.log('纯卡支付，弹出密码框');
         if (this.selectedList.length === 0) {
@@ -399,7 +456,10 @@ export default {
           return;
         }
         this.password = "";
-        this.showPasswordDialog = true;
+        this.showPasswordDialog = false;
+        this.$nextTick(() => {
+          this.showPasswordDialog = true;
+        });
         return;
       }
 
@@ -839,5 +899,27 @@ export default {
   box-sizing: border-box;
   display: flex;
   justify-content: center;
+}
+
+
+.wx-pay-item {
+  border-top: 8px solid #f5f5f5;
+  /* 它是列表最后一项，补回被 :last-child 去掉的下边框 */
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.wx-name {
+  display: flex;
+  align-items: center;
+}
+
+.wx-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 6px;
+}
+
+.wx-balance {
+  color: #07c160;
 }
 </style>

@@ -63,26 +63,32 @@
     </div>
 
     <div class="list">
-      <div class="listItem" v-for="(item, index) in chedulingList" :key="index"
-        @click="toSetMaps(item.opiid, item.movieid)">
-        <div class="chedulingTime">
-          <div class="timeBox">
-            <div class="time">{{ item.playtime.split(" ")[1].split(":").slice(0, 2).join(":") }}</div>
-            <div class="office">{{ item.closetime.split(" ")[1].split(":").slice(0, 2).join(":") }}散场</div>
-          </div>
-          <div>
-            <div class="language">{{ item.edition }}</div>
-            <div class="officeText">{{ item.roomname }}</div>
-          </div>
-        </div>
-        <div class="rightBox">
-          <div class="priceBox">
-            <span class="price">{{ (item.showPrice / 100).toFixed(2) }}</span>
-            <span class="first">元起</span>
-          </div>
-          <van-button plain type="danger" class="btn">购票</van-button>
-        </div>
+      <div v-if="schedulingLoading" class="scheduling-loading">
+        <van-loading size="20px" vertical>加载中...</van-loading>
       </div>
+      <template v-else>
+        <div class="listItem" v-for="(item, index) in chedulingList" :key="index"
+          @click="toSetMaps(item.opiid, item.movieid)">
+          <div class="chedulingTime">
+            <div class="timeBox">
+              <div class="time">{{ item.playtime.split(" ")[1].split(":").slice(0, 2).join(":") }}</div>
+              <div class="office">{{ item.closetime.split(" ")[1].split(":").slice(0, 2).join(":") }}散场</div>
+            </div>
+            <div>
+              <div class="language">{{ item.edition }}</div>
+              <div class="officeText">{{ item.roomname }}</div>
+            </div>
+          </div>
+          <div class="rightBox">
+            <div class="priceBox">
+              <span class="price">{{ (item.showPrice / 100).toFixed(2) }}</span>
+              <span class="first">元起</span>
+            </div>
+            <van-button plain type="danger" class="btn">购票</van-button>
+          </div>
+        </div>
+      </template>
+
     </div>
   </div>
 </template>
@@ -126,7 +132,9 @@ export default {
       cityid: "",
       moveId: "",
       moveName: "",
-      allOpilist: []
+      allOpilist: [],
+      schedulingLoading: false,
+schedulingSeq: 0,        // 顺手加，防止旧请求覆盖
     };
   },
   methods: {
@@ -240,14 +248,21 @@ export default {
 
     // -------- 单日排期 --------
     getScheduling(days, moviename) {
+        const seq = ++this.schedulingSeq;
+  this.schedulingLoading = true;
       this.chedulingList = [];
       getOpiList({ standardid: this.cinema.standardid }).then(res => {
+         if (seq !== this.schedulingSeq) return;   // 旧请求丢弃
         if (res.code == 200) {
           this.chedulingList = res.data.opilist.filter(
             item => item.playdate == days && item.moviename == moviename
           );
         }
-      });
+      }).finally(() => {
+    if (seq === this.schedulingSeq) {
+      this.schedulingLoading = false;
+    }
+  });
     },
 
     // -------- 切换电影 --------
@@ -303,8 +318,8 @@ export default {
         },
         paginationClickable: true,
         slideToClickedSlide: true,
-        slidesPerView: 5,
-        spaceBetween: 40,
+        slidesPerView: 4,
+        spaceBetween: 30,
         centeredSlides: true
       });
     },
@@ -542,5 +557,19 @@ export default {
 .swiper-slide-active,
 .swiper-slide-duplicate-active {
   transform: scale(1);
+}
+
+.scheduling-loading {
+  text-align: center;
+  padding: 40px 0;
+  color: #999;
+  margin: auto;
+}
+
+.empty-tip {
+  text-align: center;
+  color: #999;
+  padding: 40px 0;
+  font-size: 14px;
 }
 </style>

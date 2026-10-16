@@ -8,7 +8,7 @@
   >
     <van-tabbar-item icon="video-o" @click="goTab('/FilmIndex')">影片</van-tabbar-item>
     <van-tabbar-item icon="shop-o" @click="goTab('/multiplex')">影城</van-tabbar-item>
-    <van-tabbar-item icon="user-o" @click="goTab('/mine')">我的</van-tabbar-item>
+    <!-- <van-tabbar-item icon="user-o" @click="goTab('/mine')">我的</van-tabbar-item> -->
   </van-tabbar>
 </template>
 

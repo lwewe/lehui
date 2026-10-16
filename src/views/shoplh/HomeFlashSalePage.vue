@@ -37,7 +37,7 @@ border-radius: 8px 8px 0px 0px;padding: 9px 0 10px 10px;font-weight: bold;">
                   <span class="symbol">¥</span>
                   <span class="price">{{ item.sell_price }}</span>
                 </div>
-                <span class="old-price" v-if="item.market_price">¥{{ item.market_price }}</span>
+                <span class="old-price" v-if="item.sell_price < item.market_price">¥{{ item.market_price }}</span>
               </div>
               <div class="rush-btn" @click="goToDetail(item)">抢</div>
             </div>

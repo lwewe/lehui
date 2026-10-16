@@ -190,17 +190,17 @@ export default {
           this.sectionsImg2 = bannerSections[1].img || ''
           this.sectionsImg3 = bannerSections[2].img || ''
         }
-
+ this.sunCareList = this.channelData.nav[3].products.slice(0, 6)
         const tabsSection = (res.data.sections || []).find(section => section.type === 'tabs')
         if (tabsSection && tabsSection.tabs) {
           this.tabList = tabsSection.tabs
           this.tabGoodsList = tabsSection.tabs.map(tab => tab.items || [])
         }
 
-        const firstNavWithProducts = (res.data.nav || []).find(nav => nav.products && nav.products.length > 0)
-        if (firstNavWithProducts) {
-          this.sunCareList = firstNavWithProducts.products.slice(0, 6)
-        }
+        // const firstNavWithProducts = (res.data.nav || []).find(nav => nav.products && nav.products.length > 0)
+        // if (firstNavWithProducts) {
+        //   this.sunCareList = firstNavWithProducts.products.slice(0, 6)
+        // }
 
         const brandSections = (res.data.sections || []).filter(s => s.type === 'brand')
         const brandSection = brandSections[brandSections.length - 1]
@@ -214,41 +214,7 @@ export default {
       this.loading = false;     // 成功或失败都关掉
     })
 },
-    // fetchChannelData() {
-    //   channelDetail({ id: this.$route.query.id || 3 }).then(res => {
-    //     if (res.code == 200) {
-    //       this.channelData = res.data
-
-    //       this.navList = (res.data.nav || []).slice(0, 10)
-
-    //       const bannerSections = (res.data.sections || []).filter(section => section.type === 'banner')
-    //       if (bannerSections.length >= 3) {
-    //         this.sectionsImg1 = bannerSections[0].img || ''
-    //         this.sectionsImg2 = bannerSections[1].img || ''
-    //         this.sectionsImg3 = bannerSections[2].img || ''
-    //       }
-
-    //       const tabsSection = (res.data.sections || []).find(section => section.type === 'tabs')
-    //       if (tabsSection && tabsSection.tabs) {
-    //         this.tabList = tabsSection.tabs
-    //         this.tabGoodsList = tabsSection.tabs.map(tab => tab.items || [])
-    //       }
-
-    //       const firstNavWithProducts = (res.data.nav || []).find(nav => nav.products && nav.products.length > 0)
-    //       if (firstNavWithProducts) {
-    //         this.sunCareList = firstNavWithProducts.products.slice(0, 6)
-    //       }
-
-    //       // ✅ 品牌推荐：合并所有 brand section，取前 8 个
-    //       // ✅ 品牌推荐：取最后一个 brand section（美妆品牌）
-    //       const brandSections = (res.data.sections || []).filter(s => s.type === 'brand')
-    //       const brandSection = brandSections[brandSections.length - 1]
-    //       this.brandList = (brandSection?.items || []).slice(0, 6)
-    //     }
-    //   }).catch(err => {
-    //     console.error('获取数据失败:', err)
-    //   })
-    // },
+  
     // 商品点击事件
     handleGoodsClick(item) {
       console.log('点击商品:', item)
