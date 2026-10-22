@@ -177,4 +177,14 @@ export default {
   display: flex;
   flex-direction: column;
 } */
+ .mb10{margin-bottom: 10px;}
+ .bdr10{
+  border-radius: 10px;
+ }
+.pd10{
+  padding: 10px;
+}
+ .bgfff{
+  background: #ffffff;
+ }
 </style>

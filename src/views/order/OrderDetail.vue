@@ -16,7 +16,9 @@
               <span class="phone">{{ detail.delivery.phone }}</span>
             </div>
 
-            <div class="addressDetail">{{ detail.delivery.province_name}}{{detail.delivery.city_name}}{{ detail.delivery.addr || detail.delivery.detail }}</div>
+            <div class="addressDetail">{{ detail.delivery.province_name}}{{detail.delivery.city_name}}{{detail.delivery.county_name}}{{ detail.delivery.addr }}
+              {{  detail.delivery.detail }}
+            </div>
           </div>
         </div>
       </div>
@@ -76,7 +78,7 @@
         </div>
         <div class="shopPrice">
           <div class="shopPriceText">商品金额</div>
-          <div class="price"><span style="font-size: 10px;">￥</span>{{ detail.sell_price }}</div>
+          <div class="price"><span style="font-size: 10px;">￥</span>{{ detail.total_price }}</div>
         </div>
 
 

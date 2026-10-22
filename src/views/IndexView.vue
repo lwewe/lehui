@@ -68,67 +68,103 @@
       </div>
       <!--      甄选-->
 
+      <div class="addbg2">
 
-      <!--      限时抢购 addff-->
-      <div class="imageSlider">
-        <div class="sliderContainer">
-          <div class="sliderItem" v-for="(item, index) in imageList" :key="index">
-            <img :src="item.img" @click="goToFour(item)" alt="" class="sliderImg">
+        <div
+          style="font-weight: 600;font-size: 15px;color: #FFFFFF;padding-bottom: 8px; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4); ">
+          超级补贴<span style="font-size: 12px;font-weight: normal;"> | 爆款低价 ~</span></div>
+        <!--      限时抢购 addff-->
+        <div class="bgfff pd10 bdr10 mb10">
+          <div class="imageSlider">
+            <div class="sliderContainer">
+              <div class="sliderItem" v-for="(item, index) in imageList" :key="index">
+                <img :src="item.img" @click="goToFour(item)" alt="" class="sliderImg">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!--  -->
+        <div class="product-row">
+          <!-- 特价好物 -->
+          <div class="product-card">
+            <div class="card-header" @click="HomeFlashSalePage()">
+              <span style="display: flex; align-items: center;">
+
+                <span class="title">特价好物</span>
+              </span>
+              <span class="sub">热抢中...<img src="../assets/idjt.png" style="width: 10px;height: 10px;"> </span>
+            </div>
+            <div class="product-list">
+              <div class="product-item" v-for="(item, index) in zoneGoods1" :key="item.id" @click="goToDetail(item)">
+                <img class="product-img" :src="item.img" alt="">
+                <div class="tag-row">
+                  <span class="name">{{ item.title }}</span>
+                </div>
+                <div class="price-row">
+                  <span class="current"><span style="font-size: 10px;">￥</span>{{ item.sell_price }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 热卖好物 -->
+          <div class="product-card">
+            <div class="card-header" @click="JingzaoSuperValue()">
+              <span style="display: flex; align-items: center;">
+
+                <span class="title">热卖好物</span>
+              </span>
+              <span class="sub">门店热销 <img src="../assets/jtlff.png" style="width: 10px;height: 10px;"></span>
+            </div>
+
+
+            <div class="product-list">
+              <div class="product-item" v-for="(item, index) in zoneGoods2" :key="item.id" @click="goToDetail(item)">
+                <img class="product-img" :src="item.img" alt="">
+                <div class="tag-row1">
+                  <span class="name">{{ item.title }}</span>
+                </div>
+                <div class="price-row">
+                  <span class="current"><span style="font-size: 10px;">￥</span>{{ item.sell_price }}</span>
+                </div>
+              </div>
+            </div>
+
+
           </div>
         </div>
       </div>
-
 
       <!--  -->
-      <div class="product-row">
-        <!-- 特价好物 -->
-        <div class="product-card">
-          <div class="card-header" @click="HomeFlashSalePage()">
-            <span style="display: flex; align-items: center;">
-              <img src="../assets/lh/tj-1.png" alt="" style="margin-right: 6px;">
-              <span class="title">特价好物</span>
-            </span>
-            <span class="sub">热抢中</span>
-          </div>
-          <div class="product-list">
-            <div class="product-item" v-for="(item, index) in zoneGoods1" :key="item.id" @click="goToDetail(item)">
-              <img class="product-img" :src="item.img" alt="">
-              <div class="tag-row">
-                <span class="name">{{ item.title }}</span>
-              </div>
-              <div class="price-row">
-                <span class="current"><span style="font-size: 10px;">￥</span>{{ item.sell_price }}</span>
-              </div>
+      <!-- ================= 新增：多分类聚合板块 ================= -->
+      <!-- ================= 新增：多分类聚合板块 ================= -->
+      <div class="multiCategorySection" style="display: none;">
+        <div class="category-block" v-for="(block, index) in multiCategoryData" :key="index">
+          <!-- 板块头部 -->
+          <div class="block-header">
+            <div class="title-area">
+              <span class="title">{{ block.title }}</span>
+              <span class="desc">{{ block.desc }}</span>
             </div>
-          </div>
-        </div>
-
-        <!-- 热卖好物 -->
-        <div class="product-card">
-          <div class="card-header" @click="JingzaoSuperValue()">
-            <span style="display: flex; align-items: center;">
-              <img src="../assets/lh/tj-2.png" alt="" style="margin-right: 6px;">
-              <span class="title">热卖好物</span>
-            </span>
-            <span class="sub">门店热销</span>
-          </div>
-
-
-          <div class="product-list">
-            <div class="product-item" v-for="(item, index) in zoneGoods2" :key="item.id" @click="goToDetail(item)">
-              <img class="product-img" :src="item.img" alt="">
-              <div class="tag-row1">
-                <span class="name">{{ item.title }}</span>
-              </div>
-              <div class="price-row">
-                <span class="current"><span style="font-size: 10px;">￥</span>{{ item.sell_price }}</span>
-              </div>
+            <div class="more-btn" v-if="block.showMore">
+              查看更多 <img src="../assets/8.png" style="width: 14px;height: 14px;" alt="">
             </div>
           </div>
 
-
+          <!-- 板块内容网格 -->
+          <div class="block-grid">
+            <div class="grid-item" v-for="(item, idx) in block.list" :key="idx" @click="handleMultiCategoryClick(item)">
+              <div class="icon-box">
+                <img :src="item.img" alt="" />
+              </div>
+              <div class="item-name">{{ item.name }}</div>
+            </div>
+          </div>
         </div>
       </div>
+      <!-- ================= 新增结束 ================= -->
+      <!-- ================= 新增结束 ================= -->
       <!--  -->
       <div>
         <div class="brandSection">
@@ -191,10 +227,15 @@
       <div class="waterfall-container">
         <!-- 左列 -->
         <div class="waterfall-column">
-          <div class="bannerBox" v-if="active == 0 && shopSwiper.length > 0">
-            <van-swipe :autoplay="3000" indicator-color="white">
-              <van-swipe-item class="bannerImg" v-for="(item, index) in shopSwiper" :key="item.id || index"
-                @click="toDetail(item)">
+           <div class="bannerBox"   v-if="active == 13 && activityList.length > 0">
+            <!-- 如果只有1张图，设置 autoplay 为 0 不轮播；多张图则自动轮播 -->
+            <van-swipe :autoplay="activityList.length > 1 ? 3000 : 0" indicator-color="white">
+              <van-swipe-item 
+                class="bannerImg" 
+                v-for="(item, index) in activityList" 
+                :key="index"
+                @click="handleActivityClick(item)"
+              >
                 <img class="img" :src="item.img" alt="">
               </van-swipe-item>
             </van-swipe>
@@ -312,6 +353,91 @@ export default {
   },
   data() {
     return {
+       activityList: [
+        {
+          id: 1,
+          img: require('../assets/11.jpg'), // 记得换成你自己的图片路径
+          link: '/ActivityPage1' // 点击跳转的路径
+        }
+        // 如果想要多个图切换，就把下面的注释放开并修改路径：
+        // ,{
+        //   id: 2,
+        //   img: require('../assets/u.png'),
+        //   link: '/ActivityPage2'
+        // }
+        // ,{
+        //   id: 3,
+        //   img: require('../assets/33.png'),
+        //   link: '/ActivityPage2'
+        // }
+      ],
+      // 新增：多分类聚合板块的数据
+      multiCategoryData: [
+        {
+          title: '本地生活',
+          desc: '| 外卖、生鲜、商超、团购',
+          showMore: true,
+          list: [
+            { id: 1, name: '美团外卖', img: require('../assets/dsc.png') },
+            { id: 2, name: '美团到店', img: require('../assets/dsc.png') },
+            { id: 3, name: '小象超市', img: require('../assets/dsc.png') },
+            { id: 4, name: '盒马鲜生', img: require('../assets/dsc.png') },
+            { id: 5, name: '天猫超市', img: require('../assets/dsc.png') },
+            { id: 6, name: '永辉超市', img: require('../assets/dsc.png') },
+            { id: 7, name: '麦德龙', img: require('../assets/dsc.png') },
+            { id: 8, name: '大润发', img: require('../assets/dsc.png') },
+            { id: 9, name: '叮咚买菜', img: require('../assets/dsc.png') },
+            { id: 10, name: '东方甄选', img: require('../assets/dsc.png') }
+          ]
+        },
+        {
+          title: '在线点餐',
+          desc: '| 奶茶、咖啡、炸鸡、汉堡',
+          showMore: true,
+          list: [
+            { id: 11, name: '麦当劳', img: require('../assets/dsc.png') },
+            { id: 12, name: '星巴克', img: require('../assets/dsc.png') },
+            { id: 13, name: '肯德基', img: require('../assets/dsc.png') },
+            { id: 14, name: '瑞幸咖啡', img: require('../assets/dsc.png') },
+            { id: 15, name: '必胜客', img: require('../assets/dsc.png') }
+          ]
+        },
+        {
+          title: '便民服务',
+          desc: '| 加油、洗车、酒店、景点',
+          showMore: true,
+          list: [
+            { id: 16, name: '途虎养车', img: require('../assets/dsc.png') },
+            { id: 17, name: '中石化油', img: require('../assets/dsc.png') },
+            { id: 18, name: '鲜花配送', img: require('../assets/dsc.png') },
+            { id: 19, name: '特惠打车', img: require('../assets/dsc.png') },
+            { id: 20, name: '特惠酒店', img: require('../assets/dsc.png') }
+          ]
+        }, {
+          title: '便民服务',
+          desc: '视频、音乐、阅读、网络',
+          showMore: true,
+          list: [
+            { id: 16, name: '途虎养车', img: require('../assets/dsc.png') },
+            { id: 17, name: '中石化油', img: require('../assets/dsc.png') },
+            { id: 18, name: '鲜花配送', img: require('../assets/dsc.png') },
+            { id: 19, name: '特惠打车', img: require('../assets/dsc.png') },
+            { id: 20, name: '特惠酒店', img: require('../assets/dsc.png') }
+          ]
+        }, {
+          title: '便民服务',
+          desc: '蛋糕、饮品、甜品',
+          showMore: true,
+          list: [
+            { id: 16, name: '途虎养车', img: require('../assets/dsc.png') },
+            { id: 17, name: '中石化油', img: require('../assets/dsc.png') },
+            { id: 18, name: '鲜花配送', img: require('../assets/dsc.png') },
+            { id: 19, name: '特惠打车', img: require('../assets/dsc.png') },
+            { id: 20, name: '特惠酒店', img: require('../assets/dsc.png') }
+          ]
+        }
+
+      ],
       dingdongPosition: {
         latitude: "",
         longitude: ""
@@ -369,6 +495,20 @@ export default {
     }
   },
   methods: {
+    handleActivityClick(item) {
+      console.log('点击了活动图:', item);
+      if (item.link) {
+        // 如果是站内路由：
+        this.$router.push(item.link);
+        // 如果是外部链接，请换成：window.location.href = item.link;
+      }
+    },
+    // 新增：处理多分类板块的点击事件
+    handleMultiCategoryClick(item) {
+      console.log('点击了分类图标:', item.name);
+      // 在这里根据 item.id 或 item.name 决定跳转逻辑
+      // 例如：this.$router.push({ path: '/somePath', query: { id: item.id } });
+    },
     // 跳转到美团小象超市免密登录
     async goToXiaoxiang() {
       if (this.isGettingLocation) return;
@@ -1158,7 +1298,7 @@ export default {
 
             const defaultTab = this.currentTabs.find(item => item.id == 13);
             this.active = defaultTab ? defaultTab.id : this.currentTabs[0].id;
-            this.getGoodPickByCategory(this.active, 1);
+            this.getGoodPickByCategory(this.active, 1,0);
 
           }
         }
@@ -1394,7 +1534,7 @@ export default {
       }
       if (item.id == 13) {
         // this.goToHemashangcheng();
-        this.$router.push({ path: "/HemaFresh" })  
+        this.$router.push({ path: "/HemaFresh" })
         return;
       }
       if (item.id == 80) {
@@ -1495,13 +1635,24 @@ export default {
       window.location.href = this.kefu
     },
 
-    getGoodPickByCategory(cate_id, page = 1) {
+    getGoodPickByCategory(cate_id, page = 1,tabIndex = 0) {
       // ✅ 完全不使用任何 loading 状态，避免页面跳动
+
+       const isJingxuan = tabIndex === 0 ? 1 : 0; 
+      const isHot = tabIndex === 0 ? 0 : 1;
+
       productLists({
-        cate_id: cate_id,
+        // cate_id: cate_id,
+        // cate_id: cate_id,
         platform: 0,
         page: page,
-        pagesize: 10
+        pagesize: 10,
+         jingxuan: isJingxuan, // ✅ 动态传参
+        hot: isHot,    
+       // jingxuan:1,
+        // shop_cate_id:0,//	系统内产品分类 id（后台「产品分类」两级树）。传一级 = 含其下所有二级；传二级 = 精确匹配；0/不传 = 不筛选
+       //  hot:	1,// / 0或不传	1=只看热门商品，0=不筛选
+        // jingxuan	1 / 0或不传	1=只看精选商品，0=不筛选
       }).then(res => {
         if (res.code == 200) {
           let productData = []
@@ -1551,7 +1702,7 @@ export default {
       // this.shopList = []       // ✅ 切换 tab 时先清空
       // this.leftList = []
       // this.rightList = []
-      this.getGoodPickByCategory(id, 1)
+      this.getGoodPickByCategory(id, 1,index)
 
 
     },
@@ -1756,9 +1907,9 @@ export default {
           }
 
           // 添加数据
-          productData.forEach(item => {
-            this.shopList.push(item)
-          })
+          // productData.forEach(item => {
+          //   this.shopList.push(item)
+          // })
 
           // 分割数据到左右两列
           this.splitShopList(this.shopList)
@@ -2397,10 +2548,7 @@ export default {
   padding: 0px 10px;
   padding-bottom: 10px;
 
-  .bannerBox {
-    width: 48%;
-    margin-top: 10px;
-  }
+  
 
   .listBox {
     display: flex;
@@ -2515,7 +2663,7 @@ export default {
 // ffadd
 .imageSlider {
 
-  padding: 10px 0;
+  padding: 0px 0;
 
   .sliderContainer {
     display: flex;
@@ -2532,7 +2680,7 @@ export default {
     scrollbar-width: none;
 
     .sliderItem {
-      flex: 0 0 calc((100% - 30px) / 3.5);
+      flex: 0 0 calc((100% - 66px) / 3.5);
       /* 显示3.5个 */
       scroll-snap-align: start;
 
@@ -2657,7 +2805,7 @@ export default {
 
   background-color: #ffffff;
   border-radius: 10px;
-  padding: 10px 10px 4px 10px;
+  padding: 0px;
 
   overflow: hidden;
 }
@@ -2680,6 +2828,8 @@ export default {
   justify-content: space-between;
   margin-bottom: 6px;
   gap: 4px;
+  // line-height: 30px;
+  background: linear-gradient(242deg, #ECFDFD 0%, #BFE1F9 49.56%, #BFE1F9 100%);
 }
 
 .card-header img {
@@ -2689,21 +2839,31 @@ export default {
 }
 
 .card-header .title {
+
   font-size: 15px;
   font-weight: bold;
   white-space: nowrap;
+  padding: 0 9px;
+  border-radius: 0 13px 0 0;
+  width: 70px;
+  padding-top: 4px;
+  background: url(../assets/b-11.png) no-repeat;
+  background-size: cover;
+  // background: linear-gradient(181deg, rgba(247, 254, 254, 0.8) 0%, #F2FDFD 100%);
+
 }
 
 .card-header .sub {
-  color: #b9b9b9;
-  font-size: 14px;
-  font-weight: 600;
+  color: #304CA3;
+  font-size: 11px;
   white-space: nowrap;
+  padding-right: 8px;
 }
 
 .product-list {
   display: flex;
   gap: 8px;
+  padding: 2px 10px 8px 10px;
 }
 
 .product-item {
@@ -2819,11 +2979,19 @@ export default {
   .card-header .title {
     font-size: 15px;
     font-weight: bold;
-    color: #38393b;
+    color: #304CA3;
+    padding: 0 9px;
+    border-radius: 0 13px 0 0;
+    padding-top: 4px;
+
+    background: url(../assets/b-11.png) no-repeat;
+    background-size: cover;
+    width: 70px;
+    // background: linear-gradient(181deg, rgba(247, 254, 254, 0.8) 0%, #F2FDFD 100%);
   }
 
   .card-header .sub {
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .tag-row .name {
@@ -2841,9 +3009,9 @@ export default {
     gap: 6px; // 小屏幕减小间距
   }
 
-  .product-card {
-    padding: 8px; // 小屏幕减小内边距
-  }
+  // .product-card {
+  //   padding: 8px; // 小屏幕减小内边距
+  // }
 }
 
 /* ================= 自定义搜索框 (仿截图样式) ================= */
@@ -2914,6 +3082,7 @@ export default {
 .waterfall-column {
   flex: 1;
   min-width: 0;
+  
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -2923,8 +3092,7 @@ export default {
   width: 100%;
   border-radius: 10px;
   overflow: hidden;
-  margin-top: 10px;
-
+  
   .van-swipe {
     border-radius: 10px;
   }
@@ -2935,6 +3103,7 @@ export default {
     .img {
       width: 100%;
       display: block;
+      object-fit: cover;
     }
   }
 }
@@ -2944,7 +3113,7 @@ export default {
 }
 
 .product-card {
-  background: #fff;
+  background: #F3FCFD;
   border-radius: 10px;
   overflow: hidden;
   cursor: pointer;
@@ -3038,4 +3207,275 @@ export default {
 .listMax {
   padding-bottom: 10px;
 }
+
+
+//2026-10-20
+.addbg2 {
+  margin-top: 10px;
+  padding: 10px;
+  background: linear-gradient(215deg, #D4F4FC 0%, #A8D3F9 42.28%, #98CAF8 100%);
+  border-radius: 10px 10px 10px 10px;
+}
+
+
+
+/* ================= 新增：多分类聚合板块样式 ================= */
+/* ================= 多分类聚合板块样式（纯CSS分离颜色） ================= */
+.multiCategorySection {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  .category-block {
+    border-radius: 12px;
+
+    padding: 0px 0px 10px 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+
+    // 头部样式
+    .block-header {
+      display: flex;
+      justify-content: space-between;
+      // align-items: center;
+      margin-bottom: 12px;
+      // padding: 6px 12px;
+      border-radius: 10px 10px 0 0;
+
+      .title-area {
+        display: flex;
+        align-items: baseline;
+        // line-height: 32px;
+        padding-top: 6px;
+        padding-bottom: 7px;
+        padding-left: 10px;
+        padding-right: 10px;
+        border-radius: 10px 10px 0 0;
+
+        .title {
+          font-size: 15px;
+          font-weight: bold;
+        }
+
+        .desc {
+          font-size: 12px;
+          margin-left: 4px;
+          opacity: 0.8;
+        }
+      }
+
+      .more-btn {
+        font-weight: 600;
+        color: #ffffff;
+        font-size: 11px;
+        padding: 3px 10px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        cursor: pointer;
+
+      }
+    }
+
+    // 网格布局
+    .block-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      row-gap: 15px;
+      column-gap: 5px;
+
+      .grid-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        cursor: pointer;
+
+        .icon-box {
+          width: 46px;
+          height: 46px;
+          border-radius: 8px;
+          overflow: hidden;
+          margin-bottom: 6px;
+          background-color: #ffffff;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+
+          img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+          }
+        }
+
+        .item-name {
+          font-size: 11px;
+          color: #333;
+          text-align: center;
+          width: 100%;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          padding: 0 2px;
+          box-sizing: border-box;
+        }
+      }
+    }
+  }
+
+
+  /* 🌟 1. 本地生活 (黄色系) */
+  .category-block:nth-child(1) {
+    .title-area {
+      width: 65%;
+      // background: linear-gradient(180deg, #FEE246 0%, #FDFED8 100%);
+
+    }
+
+    background: #FEFDDE;
+
+    .block-header {
+      // background: #FED72C;
+      background: url(../assets/b-1.png);
+      background-size: cover;
+
+      .more-btn {
+        color: #591600;
+      }
+
+      .title {
+        color: #591600;
+      }
+
+      .desc {
+        color: #591600;
+      }
+    }
+  }
+
+  /* 🌟 2. 在线点餐 (橙色系) */
+  .category-block:nth-child(2) {
+    .title-area {
+      width: 65%;
+
+
+      // background: linear-gradient(180deg, #FBD4A2 0%, #FEFDE2 100%);
+    }
+
+    background: #FFFEE6;
+
+    .block-header {
+      // background: #FCA95D;
+      background: url(../assets/b-2.png);
+      background-size: cover;
+
+      .more-btn {
+        color: #591600;
+      }
+
+      .title {
+        color: #591600
+      }
+
+      .desc {
+        color: #591600
+      }
+    }
+  }
+
+  /* 🌟 3. 便民服务 (紫色系) */
+  .category-block:nth-child(3) {
+    .title-area {
+      width: 65%;
+      // background: linear-gradient(180deg, #DCC7FC 0%, #FDFDFB 100%);
+
+
+    }
+
+    background: linear-gradient(180deg, #FBF8FF 0%, #F2EBFF 100%);
+
+    .block-header {
+      // background: #B087E9;
+      background: url(../assets/b-3.png);
+      background-size: cover;
+
+      .more-btn {
+        color: #3E0462;
+      }
+
+      .title {
+        color: #3E0462
+      }
+
+      .desc {
+        color: #3E0462
+      }
+    }
+  }
+
+  /* 🌟 如果你后续再加板块，可以继续写 :nth-child(4) 比如 (蓝色系) */
+  .category-block:nth-child(4) {
+    .title-area {
+      width: 65%;
+
+
+      // background: linear-gradient(180deg, #98BFED 0%, #E9F3FC 100%);
+    }
+
+    background: #E9F3FC;
+
+    .block-header {
+      // background: #74AAE9;
+      background: url(../assets/b-4.png);
+      background-size: cover;
+
+      .more-btn {
+        color: #ffffff;
+      }
+
+      .title {
+        color: #246DC4
+      }
+
+      .desc {
+        color: #246DC4
+      }
+    }
+  }
+
+  /* 🌟 如果你后续再加板块，可以继续写 :nth-child(4) 比如 (蓝色系) */
+  .category-block:nth-child(5) {
+    .title-area {
+      width: 65%;
+
+
+      // background: linear-gradient(180deg, #FF75A3 0%, #FFFAFC 100%);
+    }
+
+    background: #FFFAFC;
+
+    .block-header {
+      // background: #FF75A3;
+      background: url(../assets/b-5.png);
+      background-size: cover;
+
+      .more-btn {
+        color: #ffffff;
+      }
+
+      .title {
+        color: #A10E0E
+      }
+
+      .desc {
+        color: #A10E0E
+      }
+    }
+  }
+
+
+
+}
+
+// jieshu
 </style>

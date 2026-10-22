@@ -12,8 +12,10 @@
     </div>
     <div class="top-banner-area">
       <div style="padding: 10px;">
-        <img class="banner-img" :src="bannerImg" alt="鲜花Banner" @click="handleBannerClick" />
+        <img class="banner-img" :src="bannerImg" v-if="bannerImg" alt="鲜花Banner" @error="bannerImg = ''" />
+        <div v-else class="banner-placeholder" @click="handleBannerClick"></div>
       </div>
+
     </div>
 
     <!-- 2. 中间左右滚动的图标分类 -->
@@ -55,9 +57,9 @@
             <div class="price-box">
               <span class="symbol">¥</span>
               <span class="price">{{ item.discount_price }}</span>
-              <span class="origin-price" v-if="item.original_price && item.original_price !== item.discount_price">
+              <!-- <span class="origin-price" v-if="item.original_price && item.original_price !== item.discount_price">
                 ¥{{ item.original_price }}
-              </span>
+              </span> -->
             </div>
             <div class="add-btn">+</div>
           </div>
@@ -264,6 +266,15 @@ export default {
 </script>
 
 <style scoped lang="less">
+.banner-placeholder {
+  width: 100%;
+  height: 180px;
+  border-radius: 10px;
+  background: #f0f0f0;
+  /* 这里换成你想要的背景色，或者用 background-image 放一张默认底图 */
+  margin-bottom: 10px;
+}
+
 .flower-zone-page {
   background: #f7f7f7;
   height: 100vh;

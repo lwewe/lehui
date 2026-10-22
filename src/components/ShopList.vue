@@ -1,7 +1,7 @@
 <template>
   <div class="shop-card" @click="toDetail">
     <div class="img-wrapper">
-      <img class="shop-img" :src="listItem.img" :alt="listItem.title" loading="lazy">
+      <img class="shop-img" :src="listItem.img  || defaultImg" :alt="listItem.title" loading="lazy"  @error="handleImgError">
     </div>
     <div class="shop-info">
       <div class="shop-title"> {{ listItem.title }}</div>
@@ -32,8 +32,9 @@
 
 <script>
 import { getPlatformName } from '@/utils/platform'
-
+import defaultImg from '@/assets/no-img.png'
 export default {
+  
   name: "ShopList",
   props: {
     listItem: {
@@ -41,6 +42,11 @@ export default {
       default: () => ({})
     },
     flag: [Number, String]
+  },
+  data() {
+    return {
+      defaultImg
+    }
   },
   computed: {
     showMarketPrice() {
@@ -50,6 +56,12 @@ export default {
     }
   },
   methods: {
+    handleImgError(e) {
+    // 防止默认图也失败时无限触发 error
+    if (e.target.dataset.fallback) return
+    e.target.dataset.fallback = '1'
+    e.target.src = this.defaultImg
+  },
     formatPrice(price) {
       const num = parseFloat(price || '0');
       return num.toFixed(2);

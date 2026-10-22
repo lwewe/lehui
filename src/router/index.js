@@ -20,6 +20,7 @@ import ProductDetail from "@/views/product/ProductDetail.vue";
 import ConfirmOrder from "@/views/order/ConfirmOrder.vue";
 import AddressManagement from "@/views/mine/AddressManagement.vue";
 import AddAdress from "@/views/mine/AddAdress.vue";
+import AddAdresshm from "@/views/mine/AddAdresshm.vue";
 
 // ff
 import MapPicker from "@/views/shopcate/MapPicker.vue";
@@ -265,6 +266,15 @@ const routes = [
             title: '新建地址'
         }
     },
+
+{
+        path: '/addAddresshm',
+        component: AddAdresshm,
+        meta: {
+            title: '新建地址'
+        }
+    },
+
     {
         path: '/AddCard',
         component: AddCard,

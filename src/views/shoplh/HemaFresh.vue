@@ -20,10 +20,11 @@
         <div class="cat-item" v-for="(item, index) in categoryList.slice(0, 10)" :key="index" @click="goCategory(item)">
           <img class="cat-icon" :src="item.img" alt="" />
           <div class="cat-name">{{ item.name }}</div>
+
         </div>
       </div>
     </div>
-
+    <!-- //name -->
     <!-- 每日特惠 -->
     <!-- <div class="daily-special" v-if="dailyList.length">
       <div class="ds-header">
@@ -82,7 +83,7 @@ export default {
       dailyList: [],
       goodsList: [],
       page: 1,
-      limit: 10,keyword: "",
+      limit: 10, keyword: "",
       isLoading: false,
       isScroll: false,   // true 表示没有更多了
       timer: null
@@ -90,16 +91,16 @@ export default {
   },
   methods: {
     goBack() {
-  this.$router.go(-1);
-},
+      this.$router.go(-1);
+    },
 
-handleSearch() {
-  // 重置分页，从第 1 页开始
-  this.page = 1;
-  this.isScroll = false;
-  this.goodsList = [];   // 搜索时清空旧列表
-  this.hemaProductsLists(1);
-},
+    handleSearch() {
+      // 重置分页，从第 1 页开始
+      this.page = 1;
+      this.isScroll = false;
+      this.goodsList = [];   // 搜索时清空旧列表
+      this.hemaProductsLists(1);
+    },
 
     async hemaProductsLists(page = this.page) {
       if (this.isLoading) return       // 防止重复请求
@@ -107,7 +108,7 @@ handleSearch() {
 
       this.isLoading = true
       try {
-        const res = await hemaProductsList({ page, limit: this.limit,keyword: this.keyword || ""  })
+        const res = await hemaProductsList({ page, limit: this.limit, keyword: this.keyword || "" })
         this.isLoading = false
 
         if (res.code === 200 && res.data) {
@@ -164,7 +165,7 @@ handleSearch() {
       try {
         const res = await hemaCategoriesList({ parent_id: 15, page: 1, limit: 50 });
         if (res.code === 200 && res.data) {
-
+          // this.categoryList = res.data.list;
         }
       } catch (err) {
         console.error("hemaCategoriesList 失败:", err);
@@ -560,7 +561,7 @@ handleSearch() {
     flex: 1;
     display: flex;
     align-items: center;
-     background: #e3e3e3;
+    background: #e3e3e3;
     border-radius: 20px;
     padding: 6px 12px;
     gap: 6px;

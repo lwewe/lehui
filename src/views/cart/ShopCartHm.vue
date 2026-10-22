@@ -113,6 +113,7 @@ export default {
   components: { NavigationTab },
   data() {
     return {
+      fiteredList:'',
       cartList: [],
       result: [],
       allChecked: false,
@@ -130,29 +131,7 @@ export default {
       // this.$router.push({ path: "/productDetail", query: { id } }) 
 
     },
-    // 分组逻辑
-    // groupCartList() {
-    //   const groups = {};
-    //   this.cartList.forEach(item => {
-    //     const platform = Number(item.product.platform);
-    //     const jdType = Number(item.product.jd_type || 0);
-    //     const key = platform === 1 ? `jd_${jdType}` : `p_${platform}`;
-
-    //     if (!groups[key]) {
-    //       groups[key] = {
-    //         key: key,
-    //         platform: platform,
-    //         jd_type: jdType,
-    //         source_name: item.source_name || '',
-    //         items: [],
-    //         allChecked: false
-    //       };
-    //     }
-    //     groups[key].items.push(item);
-    //   });
-    //   this.groupedCartList = Object.values(groups);
-    //   this.updateGroupCheckedState();
-    // },
+     
     // 分组逻辑
     groupCartList() {
       const groups = {};
@@ -334,7 +313,10 @@ export default {
       cartList().then(res => {
         this.loadingflag = false
         if (res.code == 200 && res.data.list) {
-          this.cartList = res.data.list.map(item => ({
+          this.fiteredList = res.data.list.filter(item => Number(item.product.platform) == 4 )
+          // this.fiteredList = res.data.list.filter(item => Number(item.product.platform) !== 4 )
+
+          this.cartList = this.fiteredList.map(item => ({
             ...item,
             isCheckout: item.checked == 1 ? true : false
           }))
@@ -346,37 +328,7 @@ export default {
         }
       })
     }
-    // getCart() {
-    //   cartList().then(res => {
-    //     this.loadingflag = false
-    //     if (res.code == 200 && res.data.list) {
-    //       this.cartList = res.data.list.map(item => ({
-    //         ...item,
-    //         isCheckout: item.checked == 1 ? true : false
-    //       }))
-
-    //       // 优先用后端 groups
-    //       if (res.data.groups && res.data.groups.length > 0) {
-    //         this.groupedCartList = res.data.groups.map(g => ({
-    //           platform: g.platform,
-    //           jd_type: g.jd_type || 0,
-    //           source_name: g.source_name || '',
-    //           // ✅ 按 id 从 cartList 里拿同一对象，保证引用一致
-    //           items: (g.items || [])
-    //             .map(git => this.cartList.find(c => c.id === git.id))
-    //             .filter(Boolean),
-    //           allChecked: false
-    //         }))
-    //         this.updateGroupCheckedState()
-    //       }
-    //       else {
-    //         this.groupCartList()
-    //       }
-
-    //       this.getFullPrice()
-    //     }
-    //   })
-    // }
+    
   },
   created() { this.getCart() }
 }

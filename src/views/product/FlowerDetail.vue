@@ -18,9 +18,9 @@
         <div class="price">
           <span>{{ changePrice1(detail.discount_price) }}</span>.{{ changePrice2(detail.discount_price) }}
         </div>
-        <div class="label" v-if="detail.original_price && detail.original_price !== detail.discount_price">
+        <!-- <div class="label" v-if="detail.original_price && detail.original_price !== detail.discount_price">
           <span style="text-decoration: line-through; color:#999;">原价 ¥{{ detail.original_price }}</span>
-        </div>
+        </div> -->
       </div>
 
       <div class="shopName">{{ detail.product_name }}</div>

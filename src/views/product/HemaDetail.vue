@@ -42,43 +42,7 @@
       </div>
     </div>
     <!-- 收货信息弹窗 -->
-    <van-popup v-model="showAddressPopup" position="bottom" round>
-      <div class="addressCard">
-        <div class="close" @click="showAddressPopup = false">
-          <van-icon size="18px" name="cross" />
-        </div>
-        <div class="addressCard-title">收货信息</div>
 
-        <!-- 收货人 -->
-        <div class="form-row">
-          <div class="form-label">收货人</div>
-          <van-field class="form-field" v-model="consigneeName" placeholder="请输入收货人姓名" maxlength="20" />
-        </div>
-
-        <!-- 电话 -->
-        <div class="form-row">
-          <div class="form-label">联系电话</div>
-          <van-field class="form-field" v-model="consigneePhone" type="tel" placeholder="请输入联系电话" maxlength="11" />
-        </div>
-
-        <!-- 收货区域 -->
-        <div class="form-row">
-          <div class="form-label">收货区域</div>
-          <div class="form-field area-pick" @click="openAreaPicker">
-            <van-icon name="location-o" />
-            <span :class="{ 'time-placeholder': !areaText }">
-              {{ areaText || '点击选择省/市/区/街道（必填）' }}
-            </span>
-          </div>
-        </div>
-
-        <!-- 详细地址 -->
-        <div class="form-row">
-          <div class="form-label">详细地址</div>
-          <van-field class="form-field" v-model="addressDetail" placeholder="如：光谷大道1号" maxlength="50" />
-        </div>
-      </div>
-    </van-popup>
     <!-- 商品详情：兼容 HTML 片段 和 URL 两种格式 -->
     <div class="shopDetail">
       <div class="shopDetailTextBox">
@@ -147,47 +111,16 @@
               <van-stepper v-model="value" :min="1" />
             </div>
 
-            <!-- 收货人 -->
-            <!-- <div class="form-row">
-              <div class="form-label">收货人</div>
-              <van-field class="form-field" v-model="consigneeName" placeholder="请输入收货人姓名" maxlength="20" />
-            </div>
- 
-            <div class="form-row">
-              <div class="form-label">联系电话</div>
-              <van-field class="form-field" v-model="consigneePhone" type="tel" placeholder="请输入联系电话" maxlength="11" />
-            </div> -->
 
-            <!-- 备注 -->
-            <div style="margin-top:15px;" class="hcard">
-              <div class="title">备注（选填）</div>
-              <van-field v-model="remark" rows="2" autosize type="textarea" maxlength="100" placeholder="如：请放门口"
-                show-word-limit />
-            </div>
-
-            <!-- 收货区域（逐级选择） -->
-            <!-- <div style="margin-top:15px;">
-              <div class="title">收货区域</div>
-              <div class="area-pick" @click="openAreaPicker">
-                <van-icon name="location-o" />
-                <span>{{ areaText || '点击选择省/市/区/街道（必填）' }}</span>
-              </div>
-            </div>
-
-            
-            <div style="margin-top:15px;" class="hcard">
-              <div class="title">详细地址</div>
-              <van-field v-model="addressDetail" placeholder="如：光谷大道1号" maxlength="50" />
-            </div> -->
           </div>
 
           <div v-if="errorMsg" class="global-error">{{ errorMsg }}</div>
 
           <!-- 提交 -->
           <div class="footer">
-            <!-- <div class="button" v-if="status == 'c'">
+            <div class="button" v-if="status == 'c'">
               <div class="resetting complete" style="width:100%;" @click="submitOrder">确认下单</div>
-            </div> -->
+            </div>
 
 
             <div class="button" v-if="status == 'b'">
@@ -199,36 +132,59 @@
       </van-popup>
     </div>
 
-    <!-- 区域选择弹窗 -->
-    <van-popup v-model="showArea" position="bottom">
-      <div class="area-popup">
-        <div class="area-title">
-          <span>
-            {{ areaLevel === 1 ? '选择省' :
-              areaLevel === 2 ? '选择市' :
-                areaLevel === 3 ? '选择区' : '选择街道' }}
-          </span>
-          <van-icon name="cross" @click="showArea = false" />
+
+    <!-- 地址选择弹窗 -->
+    <van-popup v-model="showAddressPopup" position="bottom" round>
+      <div class="address-popup-box">
+        <div class="popup-header">
+          <div class="title">选择收货地址</div>
+          <van-icon name="cross" @click="showAddressPopup = false" />
         </div>
-        <div class="area-list">
-          <div class="area-item" v-for="item in areaList" :key="item.division_code" @click="pickArea(item)">
-            {{ item.division_name }}
+
+        <!-- 有地址时展示列表 -->
+        <div class="address-list" v-if="hemaAddressList.length > 0">
+          <div class="address-item" :class="{ active: currentAddressId === item.id, disabled: item.can_hema !== 1 }"
+            v-for="item in hemaAddressList" :key="item.id" @click="selectAddress(item)">
+            <div class="info">
+              <div class="name">
+                {{ item.name }} <span class="phone">{{ item.phone }}</span>
+                <span class="tag" v-if="item.is_default == 1">默认</span>
+              </div>
+              <div class="addr">{{ item.province_name }} {{ item.city_name }} {{ item.county_name }} {{ item.town_name
+              }} {{ item.addr }}</div>
+              <div class="tips" v-if="item.can_hema !== 1">该地址暂不支持盒马配送</div>
+            </div>
+            <van-icon name="success" color="#EE0A24" v-if="currentAddressId === item.id" />
           </div>
+        </div>
+
+        <!-- 无地址时展示提示 -->
+        <div class="no-address" v-else>
+          <van-icon name="location-o" size="30" color="#ccc" />
+          <p>您还没有配送地址</p>
+        </div>
+
+        <!-- 底部新增按钮 -->
+        <div class="popup-footer">
+          <div class="add-btn" @click="goToAddAddress">+ 新增收货地址</div>
         </div>
       </div>
     </van-popup>
+    <!-- 区域选择弹窗 -->
+
   </div>
 </template>
 
 <script>
 import { hemaProductsDetail, hemaCreateOrder, hemaAreasList } from "@/api/hemaapi";
+import { addressList, cartAdd } from "@/api/lhjdtm";
 
 export default {
   name: "HemaDetail",
   data() {
     return {
       loadedProductId: "",   //    
-      showAddressPopup: false, // 收货信息弹窗
+
       loadingflag: true,
       onIndex: 1,
       detail: {},
@@ -266,7 +222,15 @@ export default {
 
       addressDetail: "",
 
-      localId: ""
+      localId: "",
+
+
+
+      // 🚨 新增这三个
+      showAddressPopup: false,
+      hemaAddressList: [],
+      currentAddressId: "",
+
     };
   },
   watch: {
@@ -305,45 +269,142 @@ export default {
 
   },
   methods: {
-     // 加入购物车（按最新接口调整：POST /jdtmshop/cartAdd）
+    async loadDefaultAddress() {
+      if (!localStorage.getItem("token")) return;
+      try {
+        const res = await addressList({});
+        if (res.code === 200 && res.data) {
+          this.hemaAddressList = res.data; // 🚨 存给弹窗用
+
+          if (res.data.length > 0) {
+            const def = res.data.find(i => i.is_default == 1 && i.can_hema == 1)
+              || res.data.find(i => i.can_hema == 1)
+              || res.data[0];
+
+            if (def) {
+              this.currentAddressId = def.id;
+              this.consigneeName = def.name || "";
+              this.consigneePhone = def.phone || "";
+              this.addressDetail = def.addr || "";
+              this.divisionCode = def.division_code || "";
+              this.townDivisionCode = def.town_division_code || "";
+              this.areaText = [def.province_name, def.city_name, def.county_name, def.town_name].filter(Boolean).join(" ");
+
+              if (def.can_hema == 1) {
+                this.selectList[1].text = `${def.name || ""} ${def.phone || ""}`.trim();
+              } else {
+                this.selectList[1].text = "该地址暂不支持盒马配送，请重新选择";
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.error("loadDefaultAddress 失败:", e);
+      }
+    },
+
+    // 加入购物车
     resetting() {
-      // 1. 判断是否必须选规格
-      if (this.detail.specs && this.detail.specs.length > 0 && !this.modelId) {
+      if (this.detail.skus && this.detail.skus.length > 0 && !this.modelId) {
         this.$toast("请选择规格");
         return;
       }
 
-      // 2. 组装参数
+      let pid = this.detail.local_id || this.localId;
+      if (!pid) {
+        this.$toast("商品ID异常，无法加购");
+        return;
+      }
+
       let params = {
-        product_id: Number(this.detail.id),     // 商品ID
-        quantity: Number(this.value),           // 数量
-        sku: "",                                // 默认空字符串
-        spec_name: ""                           // 默认空字符串
+        product_id: Number(pid),
+        quantity: Number(this.value),
+        sku: "",
+        spec_name: ""
       };
 
-      // 3. 如果选了规格，把选中的规格 SKU 和名称带入
       if (this.modelId) {
-        let selectedSpec = this.detail.specs.find(item => item.id === this.modelId);
-        if (selectedSpec) {
-          params.sku = selectedSpec.sku || '';
-          params.spec_name = selectedSpec.spec_name || selectedSpec.xinghao || '';
+        let selectedSku = (this.detail.skus || []).find(item => item.skuId === this.modelId);
+        if (selectedSku) {
+          params.sku = selectedSku.skuId || '';
+          params.spec_name = selectedSku.title || selectedSku.skuSpecsCode || '';
         }
       }
 
-      // 4. 调用正确的接口
       cartAdd(params).then(res => {
-        if (res.data) {
-          this.$toast(res.data)
-        }
         if (res.code == 200) {
+          // 🚨 核心改动：把刚才选的地址存到缓存里，给收银台用
+          if (this.currentAddressId) {
+            sessionStorage.setItem('hemaConfirmData', JSON.stringify({
+              address_id: this.currentAddressId,
+              consignee_name: this.consigneeName,
+              consignee_phone: this.consigneePhone,
+              address_detail: this.addressDetail,
+              display_address: `${this.areaText} ${this.addressDetail}`.trim(),
+              division_code: this.divisionCode,
+              town_division_code: this.townDivisionCode || ""
+            }));
+          }
           this.$toast("加入购物车成功");
           this.showAll = false;
         } else {
           this.$toast(res.msg || '加入购物车失败');
         }
       }).catch(err => {
-        this.$toast('网络异常，请稍后重试')
-      })
+        this.$toast('网络异常，请稍后重试');
+      });
+    },
+    // 1. 获取地址列表，控制弹窗还是跳转
+    async fetchAddressList() {
+      try {
+        const res = await addressList({});
+        if (res.code === 200) {
+          this.hemaAddressList = res.data || [];
+          if (this.hemaAddressList.length > 0) {
+            this.showAddressPopup = true; // 有地址，弹窗
+          } else {
+            this.$toast("暂无地址，去新增一个吧");
+            this.goToAddAddress(); // 没地址，跳转
+          }
+        }
+      } catch (e) {
+        this.$toast("获取地址失败");
+      }
+    },
+
+    // 2. 选中某个地址
+    // 2. 选中某个地址
+    selectAddress(item) {
+      if (item.can_hema !== 1) {
+        this.$toast('该地址暂不支持盒马配送，请更换或新增地址');
+        return;
+      }
+
+      this.currentAddressId = item.id;
+      this.consigneeName = item.name;
+      this.consigneePhone = item.phone;
+      this.addressDetail = item.addr;
+      this.divisionCode = item.division_code;
+      this.townDivisionCode = item.town_division_code || "";
+
+      // 🚨 完整拼装省市区
+      this.areaText = [item.province_name, item.city_name, item.county_name, item.town_name].filter(Boolean).join(" ");
+      this.selectList[1].text = `${item.name} ${item.phone}`.trim();
+
+      this.showAddressPopup = false; // 关闭弹窗
+    },
+
+    // 3. 去新增地址页
+    goToAddAddress() {
+      this.showAddressPopup = false;
+      this.$router.push({
+        path: "/addAddresshm",
+        query: {
+          from: "hemaDetail",
+          product_id: this.$route.query.product_id || this.$route.query.id || "",
+          local_id: this.$route.query.local_id || ""
+        }
+      });
     },
     openSelect() {
       if (!localStorage.getItem("token")) {
@@ -351,23 +412,6 @@ export default {
         return;
       }
 
-      // 收货信息不完整 → 只提示，不弹窗
-      if (!this.consigneeName.trim()) {
-        this.$toast("请填写收货信息");
-        return;
-      }
-      if (!/^1\d{10}$/.test(this.consigneePhone.trim())) {
-        this.$toast("请填写收货信息");
-        return;
-      }
-      if (!this.divisionCode) {
-        this.$toast("请填写收货信息");
-        return;
-      }
-      if (!this.addressDetail.trim()) {
-        this.$toast("请填写收货信息");
-        return;
-      }
 
       // 收货信息完整 → 打开下单弹窗
       this.selectId = 1;
@@ -382,6 +426,7 @@ export default {
         console.log('description 原始:', JSON.stringify(res.data.description).slice(0, 200));
 
         if (res.code === 200 && res.data) {
+          console.log("盒马商品详情数据：", res.data); // 👈 加这行
           this.detail = res.data;
           this.localId = res.data.local_id;
 
@@ -432,19 +477,23 @@ export default {
       }
 
       // 点「请填写收货信息」→ 弹收货信息弹窗
+      // if (status === "address") {
+      //   this.showAddressPopup = true;
+      //   return;
+      // }
+
+      // 🚨 修改了这里：点地址栏不再直接跳转，而是去调接口弹窗
       if (status === "address") {
-        this.showAddressPopup = true;
+        this.fetchAddressList();
         return;
       }
-
-
 
       this.selectId = id;
       this.showAll = true;
       this.status = status;
 
 
-      
+
     },
 
     isWeiXin() {
@@ -510,71 +559,49 @@ export default {
 
     async submitOrder() {
       this.errorMsg = "";
-
-      if (!this.consigneeName.trim()) {
-        this.errorMsg = "请输入收货人";
-        return;
-      }
-
-      if (!/^1\d{10}$/.test(this.consigneePhone.trim())) {
-        this.errorMsg = "请输入正确的手机号";
-        return;
-      }
-
-      if (!this.divisionCode) {
-        this.errorMsg = "请选择收货区域";
-        return;
-      }
-
-      if (!this.addressDetail.trim()) {
-        this.errorMsg = "请输入详细地址";
-        return;
-      }
-
       if (!this.modelId) {
         this.errorMsg = "请选择规格";
         return;
       }
 
+      // 1. 组装展示和下单所有数据
+      let pid = this.detail.local_id || this.localId;
+      let selectedSku = (this.detail.skus || []).find(item => item.skuId === this.modelId) || {};
+
       const params = {
+        address_id: this.currentAddressId,
         division_code: this.divisionCode,
         town_division_code: this.townDivisionCode || "",
+        // 🚨 这里的 address_detail 拼满
         address_detail: `${this.areaText} ${this.addressDetail}`.trim(),
         consignee_name: this.consigneeName.trim(),
         consignee_phone: this.consigneePhone.trim(),
         remark: this.remark || "",
-        skus: this.buildSkus()
+        skus: JSON.stringify([{
+          product_id: pid,
+          sku_id: this.modelId,
+          quantity: Number(this.value),
+          spec_name: selectedSku.title || ""
+        }]),
+        product_title: this.detail.title,
+        product_img: this.detail.picUrl || '',
+        sell_price: this.modelPrice || this.detail.price,
+        quantity: Number(this.value),
+        spec_name: selectedSku.title || ""
       };
 
-      console.log("【hemaCreateOrder】params:", params);
+      // 🚨 最核心的改动：前端为了保证兼容，直接在这个缓存里带一个专门展示的字段
+      sessionStorage.setItem('hemaConfirmData', JSON.stringify({
+        ...params,
+        display_address: `${this.areaText} ${this.addressDetail}`.trim()
+      }));
 
-      hemaCreateOrder(params).then(res => {
-        if (res.code === 200 && res.data) {
-          this.$toast("下单成功，正在跳转支付...");
-          this.showAll = false;
-          setTimeout(() => {
-            this.$router.push({
-              path: "/ConfirmOrderHema",
-              query: {
-                order_id: res.data.order_id,
-                order_no: res.data.order_no || "",
-                total_price: res.data.pay_amount || 0,
-                consignee_name: this.consigneeName.trim(),
-                consignee_phone: this.consigneePhone.trim(),
-                address_detail: `${this.areaText} ${this.addressDetail}`.trim(),
-                division_code: this.divisionCode,
-                town_division_code: this.townDivisionCode || ""
-              }
-            });
-          }, 500);
-        } else {
-          this.$toast(res.msg || "下单失败");
-        }
-      }).catch(() => {
-        this.$toast("网络异常，请稍后重试");
+      this.showAll = false;
+      this.$router.push({
+        path: "/ConfirmOrderHema",
+        query: { t: new Date().getTime() }
       });
     },
-
     initFromRoute() {
       console.trace('[initFromRoute] 被调用')   // ← 加这一行
       const productId = this.$route.query.product_id || this.$route.query.id;
@@ -606,7 +633,11 @@ export default {
   },
   created() {
     this.initFromRoute();
-  }
+    this.loadDefaultAddress();
+  }, activated() {
+    // 从新增地址页返回时刷新（若详情页被 keep-alive 缓存）
+    this.loadDefaultAddress();
+  },
 };
 </script>
 
@@ -1034,6 +1065,115 @@ export default {
     font-size: 16px;
     margin-bottom: 5px;
     text-align: center;
+  }
+}
+
+
+/* 地址选择弹窗样式 */
+.address-popup-box {
+  display: flex;
+  flex-direction: column;
+  max-height: 70vh;
+  background: #F7F8FA;
+
+  .popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: #fff;
+    font-size: 16px;
+    font-weight: bold;
+    border-bottom: 1px solid #f5f5f5;
+  }
+
+  .address-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+
+    .address-item {
+      background: #fff;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid transparent;
+
+      &.active {
+        border-color: #EE0A24;
+      }
+
+      &.disabled {
+        opacity: 0.6;
+      }
+
+      .info {
+        flex: 1;
+        padding-right: 10px;
+
+        .name {
+          font-size: 15px;
+          font-weight: bold;
+          color: #333;
+
+          .phone {
+            font-size: 13px;
+            color: #666;
+            margin-left: 8px;
+            font-weight: normal;
+          }
+
+          .tag {
+            font-size: 10px;
+            background: #EE0A24;
+            color: #fff;
+            padding: 2px 4px;
+            border-radius: 4px;
+            margin-left: 6px;
+          }
+        }
+
+        .addr {
+          font-size: 13px;
+          color: #666;
+          margin-top: 6px;
+          line-height: 1.4;
+        }
+
+        .tips {
+          font-size: 12px;
+          color: #EE0A24;
+          margin-top: 4px;
+        }
+      }
+    }
+  }
+
+  .no-address {
+    padding: 40px 0;
+    text-align: center;
+    color: #999;
+    font-size: 14px;
+  }
+
+  .popup-footer {
+    padding: 12px 16px 24px;
+    background: #fff;
+    border-top: 1px solid #f5f5f5;
+
+    .add-btn {
+      background: #EE0A24;
+      color: #fff;
+      text-align: center;
+      height: 40px;
+      line-height: 40px;
+      border-radius: 20px;
+      font-size: 15px;
+      font-weight: bold;
+    }
   }
 }
 </style>

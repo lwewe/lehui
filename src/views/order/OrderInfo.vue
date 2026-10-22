@@ -192,32 +192,64 @@ export default {
     // this.fetchOrderList();
   },
   methods: {
+    // normalizeItems(item) {
+    //   // 1. 有 items 数组，直接用
+    //   if (Array.isArray(item.items) && item.items.length) {
+    //     return item.items;
+    //   }
+
+    //   // 2. 有 product 对象（盒马、途虎）
+    //   if (item.product && typeof item.product === 'object') {
+    //     return [{
+    //       product_title: item.product.title || item.product_title || '',
+    //       product_img: item.product.img || item.product_img || '',
+    //       sell_price: item.product.sell_price || item.sell_price || '',
+    //       quantity: item.quantity || 1,
+    //       spec_name: ''
+    //     }];
+    //   }
+
+    //   // 3. product 为 null（鲜花），用根级字段
+    //   return [{
+    //     product_title: item.product_title || '',
+    //     product_img: item.product_img || '',
+    //     sell_price: item.sell_price || '',
+    //     quantity: item.quantity || 1,
+    //     spec_name: ''
+    //   }];
+    // },
     normalizeItems(item) {
-      // 1. 有 items 数组，直接用
-      if (Array.isArray(item.items) && item.items.length) {
-        return item.items;
-      }
+  // 1. 有 items 数组：接口里字段是 title / img，统一映射为模板需要的字段
+  if (Array.isArray(item.items) && item.items.length) {
+    return item.items.map(goods => ({
+      product_title: goods.title || goods.product_title || '',
+      product_img: goods.img || goods.product_img || '',
+      sell_price: goods.sell_price ?? '',
+      quantity: goods.quantity ?? 1,
+      spec_name: goods.spec_name || ''
+    }));
+  }
 
-      // 2. 有 product 对象（盒马、途虎）
-      if (item.product && typeof item.product === 'object') {
-        return [{
-          product_title: item.product.title || item.product_title || '',
-          product_img: item.product.img || item.product_img || '',
-          sell_price: item.product.sell_price || item.sell_price || '',
-          quantity: item.quantity || 1,
-          spec_name: ''
-        }];
-      }
+  // 2. 有 product 对象（盒马、途虎等）
+  if (item.product && typeof item.product === 'object') {
+    return [{
+      product_title: item.product.title || item.product_title || '',
+      product_img: item.product.img || item.product_img || '',
+      sell_price: item.product.sell_price ?? item.sell_price ?? '',
+      quantity: item.quantity ?? 1,
+      spec_name: ''
+    }];
+  }
 
-      // 3. product 为 null（鲜花），用根级字段
-      return [{
-        product_title: item.product_title || '',
-        product_img: item.product_img || '',
-        sell_price: item.sell_price || '',
-        quantity: item.quantity || 1,
-        spec_name: ''
-      }];
-    },
+  // 3. product 为 null（鲜花等），用根级字段
+  return [{
+    product_title: item.product_title || '',
+    product_img: item.product_img || '',
+    sell_price: item.sell_price ?? '',
+    quantity: item.quantity ?? 1,
+    spec_name: ''
+  }];
+},
     getPlatformName,
     // 订单卡片整体点击，跳转详情页
     goDetail(item) {
@@ -256,30 +288,35 @@ export default {
         }
 
         // ✅ 盒马 4
+
+        // 在 handleAction 里针对盒马的跳转部分：
         if (platform === 4) {
           const q = {
             order_id: item.id,
-            total_price: item.total_price,
+            total_price: item.total_price || item.pay_amount,
             order_no: item.order_no
           };
 
+          // 🚨 解析地址并拆分传给确认页
           let delivery = {};
           try {
             delivery = typeof item.delivery === 'string' ? JSON.parse(item.delivery) : (item.delivery || {});
           } catch (e) { }
 
-          q.consignee_name = delivery.name || '';
-          q.consignee_phone = delivery.phone || '';
-          q.address_detail = delivery.detail || '';
-          q.division_code = delivery.divisionCode || '';
-          q.town_division_code = delivery.townDivisionCode || '';
+          if (delivery) {
+            q.address_id = delivery.id;
+            q.consignee_name = delivery.name;
+            q.consignee_phone = delivery.phone;
+            q.address_detail = delivery.detail || delivery.addr;
+            q.division_code = delivery.divisionCode || delivery.division_code;
+            q.town_division_code = delivery.townDivisionCode || delivery.town_division_code;
+          }
 
           this.$router.push({ path: '/ConfirmOrderHema', query: q });
           return;
         }
+        //   鲜花 5
 
-        // ✅ 鲜花 5
-        // ✅ 鲜花 5
         if (platform === 5) {
           const q = {
             order_id: item.id,
@@ -363,65 +400,121 @@ export default {
       this.fetchOrderList();
     },
 
-    // 获取订单列表 (对接文档接口)
+    // 获取订单列表 (对接文档接口)2026-10-20
+    // async fetchOrderList() {
+    //   if (this.page === 1 && this.orderList.length === 0) {
+    //     this.loading = true;
+    //   }
+
+    //   try {
+    //     const res = await orderList({
+    //       status: this.currentTab,
+    //       page: this.page,
+    //       limit: this.limit
+    //     });
+
+    //     if (res.code === 200) {
+    //       // 根据接口文档，data 可能直接是数组
+    //       let list = [];
+    //       let total = 0;
+
+    //       if (Array.isArray(res.data)) {
+    //         // 如果 data 直接是数组
+    //         list = res.data;
+    //         total = res.data.length;
+    //       } else if (res.data && Array.isArray(res.data.list)) {
+    //         // 如果 data 是对象，包含 list
+    //         list = res.data.list;
+    //         total = res.data.total || res.data.list.length;
+    //       } else if (res.data && Array.isArray(res.data.data)) {
+    //         // 如果 data.data 是数组
+    //         list = res.data.data;
+    //         total = res.data.total || res.data.data.length;
+    //       } else {
+    //         list = [];
+    //         total = 0;
+    //       }
+
+    //       // 如果列表为空，显示空状态
+    //       if (this.page === 1) {
+    //         this.orderList = list;
+    //       } else {
+    //         this.orderList = [...this.orderList, ...list];
+    //       }
+    //       this.total = total;
+
+    //       // 如果加载的列表为空，提示没有更多
+    //       if (list.length === 0 && this.page > 1) {
+    //         this.showToast('没有更多了');
+    //         this.page--;
+    //       }
+    //     } else {
+    //       this.showToast(res.msg || '获取订单失败');
+    //     }
+    //   } catch (error) {
+    //     console.error('获取订单失败', error);
+    //     this.showToast('网络异常，请稍后重试');
+    //   } finally {
+    //     this.loading = false;
+    //   }
+    // },
+    //调整的数据结构
     async fetchOrderList() {
-      if (this.page === 1 && this.orderList.length === 0) {
-        this.loading = true;
-      }
+  if (this.page === 1 && this.orderList.length === 0) {
+    this.loading = true;
+  }
 
-      try {
-        const res = await orderList({
-          status: this.currentTab,
-          page: this.page,
-          limit: this.limit
-        });
+  try {
+    const res = await orderList({
+      status: this.currentTab,
+      page: this.page,
+      limit: this.limit
+    });
 
-        if (res.code === 200) {
-          // 根据接口文档，data 可能直接是数组
-          let list = [];
-          let total = 0;
+    if (res.code === 200) {
+      let list = [];
+      let total = 0;
+      const payload = res.data;
 
-          if (Array.isArray(res.data)) {
-            // 如果 data 直接是数组
-            list = res.data;
-            total = res.data.length;
-          } else if (res.data && Array.isArray(res.data.list)) {
-            // 如果 data 是对象，包含 list
-            list = res.data.list;
-            total = res.data.total || res.data.list.length;
-          } else if (res.data && Array.isArray(res.data.data)) {
-            // 如果 data.data 是数组
-            list = res.data.data;
-            total = res.data.total || res.data.data.length;
-          } else {
-            list = [];
-            total = 0;
-          }
-
-          // 如果列表为空，显示空状态
-          if (this.page === 1) {
-            this.orderList = list;
-          } else {
-            this.orderList = [...this.orderList, ...list];
-          }
-          this.total = total;
-
-          // 如果加载的列表为空，提示没有更多
-          if (list.length === 0 && this.page > 1) {
-            this.showToast('没有更多了');
-            this.page--;
-          }
-        } else {
-          this.showToast(res.msg || '获取订单失败');
+      if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+        // 标准分页结构：{ total, per_page, current_page, last_page, data: [], list: [] }
+        if (Array.isArray(payload.data)) {
+          list = payload.data;
+        } else if (Array.isArray(payload.list)) {
+          list = payload.list;
         }
-      } catch (error) {
-        console.error('获取订单失败', error);
-        this.showToast('网络异常，请稍后重试');
-      } finally {
-        this.loading = false;
+        total = Number(payload.total) || 0;
+      } else if (Array.isArray(payload)) {
+        // 兼容 data 直接是数组
+        list = payload;
+        total = payload.length;
       }
-    },
 
+      if (this.page === 1) {
+        this.orderList = list;
+      } else {
+        // 按 id 去重，防止后端重复返回导致列表出现重复订单
+        const existingIds = new Set(this.orderList.map(item => item.id));
+        const newItems = list.filter(item => !existingIds.has(item.id));
+        this.orderList = [...this.orderList, ...newItems];
+      }
+
+      this.total = total;
+
+      if (list.length === 0 && this.page > 1) {
+        this.showToast('没有更多了');
+        this.page--;
+      }
+    } else {
+      this.showToast(res.msg || '获取订单失败');
+    }
+  } catch (error) {
+    console.error('获取订单失败', error);
+    this.showToast('网络异常，请稍后重试');
+  } finally {
+    this.loading = false;
+  }
+},
     // 加载更多
     loadMore() {
       if (!this.hasMore || this.loading) return;
@@ -650,7 +743,7 @@ export default {
   border-radius: 20px;
   padding: 6px 16px;
   font-size: 12px;
-  color:  #717070;
+  color: #717070;
   cursor: pointer;
   outline: none;
 }
