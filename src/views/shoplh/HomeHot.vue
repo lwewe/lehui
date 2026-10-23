@@ -36,7 +36,7 @@
                 <span class="price">{{ item.sell_price }}</span>
                 <span class="original-price" v-if="item.sell_price < item.market_price">¥{{ item.market_price }}</span>
               </div>
-              <div class="add-btn" @click="addToCart(item)">+</div>
+              <div class="add-btn"   @click.stop="addToCart(item)">+</div>
             </div>
 
 
@@ -54,7 +54,8 @@
 </template>
 
 <script>
-import { zoneList } from "@/api/lhjdtm";
+
+import { zoneList, cartAdd } from "@/api/lhjdtm";
 import { getPlatformName } from '@/utils/platform'
 export default {
   name: "JingzaoSuperValue",
@@ -119,8 +120,30 @@ export default {
 
     // 加入购物车
     addToCart(item) {
-      console.log('加入购物车:', item);
-      // 调用加入购物车接口
+      // 商品ID：按接口实际字段取，常见是 id 或 goods_id
+      const productId = item.id || item.goods_id;
+      if (!productId) {
+        this.$toast("商品信息异常");
+        return;
+      }
+
+      cartAdd({
+        product_id: Number(productId),
+        quantity: 1,
+        sku: "",
+        spec_name: ""
+      })
+        .then(res => {
+          if (res.code == 200) {
+            this.$toast("加入购物车成功");
+            // 可选：刷新购物车角标 / 触发全局事件
+          } else {
+            this.$toast(res.msg || "加入购物车失败");
+          }
+        })
+        .catch(() => {
+          this.$toast("网络异常，请稍后重试");
+        });
     },
 
     goBack() {

@@ -97,7 +97,7 @@
 </template>
 
 <script>
-import { channelChildrenDetaill } from "@/api/lhjdtm";
+import { channelDetail  } from "@/api/lhjdtm";
 import { getPlatformName } from '@/utils/platform'
 export default {
   name: "ApplianceRecommend",
@@ -131,34 +131,57 @@ export default {
       this.$goDetail(item);
       // this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
     },
-    // 新增：获取频道详情
     channelDetailIndex() {
-      channelChildrenDetaill({ id: this.$route.query.id, nav_index: this.$route.query.nav, child_index: this.$route.query.index }).then(res => {
-        if (res.code == 200) {
-          console.log(res)
-          this.baners = res.data.banner[0].img;
-          this.newArrivalList = res.data.sections[0].items;
-          this.coolPlanList = res.data.sections[1].items;
-          this.moreList = res.data.sections[2].items;
+  this.loading = true;
+  channelDetail({ id: this.$route.query.id || 4 })
+    .then(res => {
+      if (res.code !== 200) return;
+      
+      const modules = res.data?.modules || [];
+      const navPx = Number(this.$route.query.nav);
 
-          this.title1 = res.data.sections[0].title;
-          this.title2 = res.data.sections[1].title;
-          this.title3 = res.data.sections[2].title;
+      // 1. 优先按路由带来的 nav (即 px) 匹配
+      let subpage = modules.find(m => m.type === 'subpage' && Number(m.px) === navPx);
+      
+      // 2. 兜底：如果 nav 没传对或匹配不到，直接按 sort = 6 匹配（确保拿到的是品质焕新）
+      if (!subpage) {
+        subpage = modules.find(m => m.type === 'subpage' && m.sort === 6);
+      }
+      
+      // 3. 如果还没匹配到，按标题兜底
+      if (!subpage) {
+        subpage = modules.find(m => m.type === 'subpage' && /品质焕新/.test(m.title || ''));
+      }
 
+      if (!subpage) return;
 
+      // 顶部 Banner 图
+      this.baners = subpage.banner_img || '';
 
-          const bgColorStr = res.data.bg_color || '';
-          const colors = bgColorStr.split(',').map(item => item.trim()).filter(item => item);
-          this.pageBgStyle = {
-            backgroundColor: colors[0]
-          };
-          this.pageBgStyle1 = {
-            color: colors[1]
-          };
+      // 将 sections 按 sort 倒序（新品3 -> 清凉2 -> 更多1）
+      const sections = (subpage.sections || []).slice().sort((a, b) => (b.sort || 0) - (a.sort || 0));
+      
+      // 动态赋值标题
+      this.title1 = sections[0]?.title || '';
+      this.title2 = sections[1]?.title || '';
+      this.title3 = sections[2]?.title || '';
+      
+      // 动态赋值商品列表
+      this.newArrivalList = sections[0]?.items || [];
+      this.coolPlanList   = sections[1]?.items || [];
+      this.moreList       = sections[2]?.items || [];
 
-        }
-      })
-    },
+      // 动态背景色
+      const bgColor = (subpage.bg_color || '').trim();
+      if (bgColor) {
+        this.pageBgStyle = { backgroundColor: bgColor };
+      }
+    })
+    .catch(err => console.error('获取子页面数据失败:', err))
+    .finally(() => {
+      this.loading = false;
+    });
+},
     goBack() {
       this.$router.go(-1);
     }

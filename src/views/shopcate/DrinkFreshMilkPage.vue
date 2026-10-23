@@ -1,50 +1,50 @@
 <template>
   <div class="fresh-milk-page" :style="pageBgStyle">
-    <!-- 1. 顶部导航 -->
     <NProgress v-if="loading" />
-    <!-- 2. 顶部大 Banner -->
-    <div class="top-banner-area">
+
+    <!-- 顶部 Banner -->
+    <div class="top-banner-area" v-if="baners">
       <img class="banner-img" :src="baners" alt="" />
     </div>
 
-    <!-- 3. 板块一：每日鲜活 (6个商品) -->
-    <div class="section-box">
-      <div class="section-title"> <span class="title-text" :style="pageBgStyle1">{{ title1 }}</span>
+    <!-- 板块一 -->
+    <div class="section-box" v-if="dailyList.length">
+      <div class="section-title">
+        <span class="title-text" :style="pageBgStyle1">{{ title1 }}</span>
       </div>
       <div class="goods-grid-3">
         <div class="goods-item-3" v-for="(item, index) in dailyList" :key="index" @click="goToDetail(item)">
           <img class="item-img" :src="item.img" alt="" />
           <div class="item-name">{{ item.title }}</div>
-
           <div class="item-bottom">
             <span class="price"><span style="font-size: 10px;font-weight: bold;">¥</span>{{ item.sell_price }}</span>
             <span class="add-btn">+</span>
           </div>
         </div>
       </div>
-
     </div>
 
-    <!-- 4. 板块二：成长补给站 (6个商品) -->
-    <div class="section-box">
-      <div class="section-title"> <span class="title-text" :style="pageBgStyle1">{{ title2 }}</span></div>
+    <!-- 板块二 -->
+    <div class="section-box" v-if="growthList.length">
+      <div class="section-title">
+        <span class="title-text" :style="pageBgStyle1">{{ title2 }}</span>
+      </div>
       <div class="goods-grid-3">
         <div class="goods-item-3" v-for="(item, index) in growthList" :key="index" @click="goToDetail(item)">
           <img class="item-img" :src="item.img" alt="" />
           <div class="item-name">{{ item.title }}</div>
-
           <div class="item-bottom">
             <span class="price"><span style="font-size: 10px;font-weight: bold;">¥</span>{{ item.sell_price }}</span>
             <span class="add-btn">+</span>
           </div>
         </div>
       </div>
-
     </div>
 
-    <!-- 5. 板块三：更多推荐 (双列瀑布流) -->
-    <div class="section-box">
-      <div class="section-title"> <span class="title-text" :style="pageBgStyle1">{{ title3 }}</span>
+    <!-- 板块三 -->
+    <div class="section-box" v-if="moreList.length">
+      <div class="section-title">
+        <span class="title-text" :style="pageBgStyle1">{{ title3 }}</span>
       </div>
       <div class="goods-grid-2">
         <div class="goods-item-2" v-for="(item, index) in moreList" :key="index" @click="goToDetail(item)">
@@ -66,36 +66,31 @@
       </div>
     </div>
 
-
+    <!-- 全局空态 -->
+    <div v-if="!loading && !baners && !dailyList.length && !growthList.length && !moreList.length" class="empty-page">
+      暂无内容
+    </div>
   </div>
 </template>
 
 <script>
-import { channelChildrenDetaill } from "@/api/lhjdtm";
+import { channelDetail } from "@/api/lhjdtm";
 import { getPlatformName } from '@/utils/platform'
+
 export default {
   name: "FreshMilkPage",
   data() {
     return {
-      loading: false,      // 新增
+      loading: false,
       title1: '',
       title2: '',
       title3: '',
       baners: '',
-      pageBgStyle1: {},
-      pageBgStyle: {},
-      // 板块一：每日鲜活 (6个)
-      dailyList: [
-
-      ],
-      // 板块二：成长补给站 (6个)
-      growthList: [
-
-      ],
-      // 板块三：更多推荐 (双列，可继续增加数据)
-      moreList: [
-
-      ]
+      pageBgStyle: { backgroundColor: '#f7f7f7' },
+      pageBgStyle1: { color: '#333' },
+      dailyList: [],
+      growthList: [],
+      moreList: []
     }
   },
   mounted() {
@@ -106,65 +101,70 @@ export default {
   },
   methods: {
     getPlatformName,
+
     channelDetailIndex() {
-      this.loading = true;          // 请求开始
+  this.loading = true;
 
-      channelChildrenDetaill({
-        id: this.$route.query.id,
-        nav_index: this.$route.query.nav,
-        child_index: this.$route.query.index
-      })
-        .then(res => {
-          if (res.code == 200) {
-            this.baners = res.data.banner[0].img;
-            this.dailyList = res.data.sections[0].items;
-            this.growthList = res.data.sections[1].items;
-            this.moreList = res.data.sections[2].items;
+  channelDetail({ id: this.$route.query.id || 3 })
+    .then(res => {
+      if (res.code !== 200) return;
 
-            this.title1 = res.data.sections[0].title;
-            this.title2 = res.data.sections[1].title;
-            this.title3 = res.data.sections[2].title;
+      const modules = res.data?.modules || [];
+      const navPx = Number(this.$route.query.nav);
+      const subpages = modules.filter(m => m.type === 'subpage');
 
-            const bgColorStr = res.data.bg_color || '';
-            const colors = bgColorStr.split(',').map(item => item.trim()).filter(item => item);
-            this.pageBgStyle = { backgroundColor: colors[0] };
-            this.pageBgStyle1 = { color: colors[1] };
-          }
-        })
-        .finally(() => {
-          this.loading = false;     // 成功或失败都关掉
-        });
-    },
-    // channelDetailIndex() {
-    //   channelChildrenDetaill({ id: this.$route.query.id, nav_index: this.$route.query.nav, child_index: this.$route.query.index }).then(res => {
-    //     if (res.code == 200) {
-    //       console.log(res)
-    //       this.baners = res.data.banner[0].img;
-    //       this.dailyList = res.data.sections[0].items;
-    //       this.growthList = res.data.sections[1].items;
-    //       this.moreList = res.data.sections[2].items;
+      // 1) 优先按 px 匹配（强转数字，防字符串）
+      let subpage = subpages.find(m => Number(m.px) === navPx);
+      // 2) 兜底：按 sort 排序取对应位置，再不行取第一个
+      if (!subpage && subpages.length) {
+        const sorted = subpages.slice().sort((a, b) => (a.sort || 0) - (b.sort || 0));
+        subpage = sorted[navPx] || sorted[0];
+      }
+      if (!subpage) {
+        this.loading = false;
+        return;
+      }
 
+      // Banner：头图 banner_img，没有则入口图 img
+      this.baners = subpage.banner_img || subpage.img || '';
 
+      // 三个板块
+      const sections = subpage.sections || [];
+      this.title1 = sections[0]?.title || '';
+      this.title2 = sections[1]?.title || '';
+      this.title3 = sections[2]?.title || '';
+      this.dailyList  = sections[0]?.items || [];
+      this.growthList = sections[1]?.items || [];
+      this.moreList   = sections[2]?.items || [];
 
-    //       this.title1 = res.data.sections[0].title;
-    //       this.title2 = res.data.sections[1].title;
-    //       this.title3 = res.data.sections[2].title;
+      // ✅ 背景色：优先取 subpage.bg_color，没有则默认
+      // bg_color 可能是 "rgba(231,173,181,1)" 或 "#fff,#e4393c" 两种格式，统一处理
+      const bgColor = (subpage.bg_color || '').trim();
+      if (bgColor) {
+        this.pageBgStyle = { backgroundColor: bgColor };
+      } else {
+        this.pageBgStyle = { backgroundColor: '#f7f7f7' };
+      }
 
-    //       const bgColorStr = res.data.bg_color || '';
-    //       const colors = bgColorStr.split(',').map(item => item.trim()).filter(item => item);
-    //       this.pageBgStyle = {
-    //         backgroundColor: colors[0]
-    //       };
-    //       this.pageBgStyle1 = {
-    //         color: colors[1]
-    //       };
+      // 标题色：如果 bg_color 是逗号分隔两段（背景,标题），第二段作标题色
+      // 当前接口只给单色 rgba(...)，没有逗号，所以标题色保持默认
+      const colorParts = bgColor.split(',').map(s => s.trim()).filter(Boolean);
+      if (colorParts.length >= 2 && colorParts[1].match(/^(#|rgb)/)) {
+        this.pageBgStyle1 = { color: colorParts[1] };
+      } else {
+        this.pageBgStyle1 = { color: '#333' };
+      }
+    })
+    .catch(err => {
+      console.error('获取子页面数据失败:', err);
+    })
+    .finally(() => {
+      this.loading = false;
+    });
+},
 
-    //     }
-    //   })
-    // },
     goToDetail(item) {
       this.$goDetail(item);
-      // this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
     },
     goBack() {
       this.$router.go(-1);
@@ -219,10 +219,8 @@ export default {
 
 /* ================= 2. Banner ================= */
 .top-banner-area {
-
   .banner-img {
     width: 100%;
-    // height: 410px;
     object-fit: cover;
   }
 }
@@ -236,9 +234,7 @@ export default {
 /* ================= 3. 通用板块容器 ================= */
 .section-box {
   margin: 0 10px 16px 10px;
-  // background: #fff;
   border-radius: 12px;
-  // padding: 16px 12px 12px 12px;
 
   .section-title {
     text-align: center;
@@ -252,7 +248,6 @@ export default {
     }
   }
 
-  /* “查看更多”通栏按钮 */
   .more-btn-box {
     text-align: center;
     color: #999;
@@ -265,7 +260,7 @@ export default {
   }
 }
 
-/* ================= 4. 3列网格布局 (6个商品平铺) ================= */
+/* ================= 4. 3列网格布局 ================= */
 .goods-grid-3 {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -281,7 +276,6 @@ export default {
 
     .item-img {
       width: 100%;
-
       object-fit: cover;
       background: #fff;
       border-radius: 10px 10px 0 0;
@@ -335,7 +329,7 @@ export default {
   }
 }
 
-/* ================= 5. 双列网格布局 (更多推荐) ================= */
+/* ================= 5. 双列网格布局 ================= */
 .goods-grid-2 {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -412,6 +406,14 @@ export default {
       }
     }
   }
+}
+
+/* ================= 6. 全局空态 ================= */
+.empty-page {
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+  padding: 60px 0;
 }
 
 .bottom-safe {

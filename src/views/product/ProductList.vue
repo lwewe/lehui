@@ -236,31 +236,52 @@ export default {
       });
     },
     // 获取分类树
+      
     async fetchCategory() {
       try {
-        const params = { platform: this.platform }
-        if (this.jd_type !== '' && this.jd_type !== null) {
-          params.jd_type = this.jd_type
-        }
-        const res = await categoryList(params)
-        if (res.code == 200) {
-          this.categoryList = res.data || []
-          this.topCategories = this.categoryList.filter(c => c.pid === 0).map(c => ({ id: c.id, title: c.title }))
+        // 🚨 使用新接口，获取一级分类及其 children
+        const res = await categoryList({
+          page: 1,
+          limit: 100,
+          pid: 0,
+          with_children: 1
+        });
 
+        if (res.code === 200 || res.code === 0) {
+          // ThinkPHP 分页数据在 res.data.data
+          const rawData = res?.data?.data || res?.data || [];
+
+          // 数据格式清洗，将 name 映射为 title，tbimg 映射为 img
+          this.categoryList = rawData.map(item => ({
+            ...item,
+            title: item.name || '',
+            img: item.tbimg || '',
+            children: (item.children || []).map(child => ({
+              ...child,
+              title: child.name || '',
+              img: child.tbimg || ''
+            }))
+          }));
+
+          // 过滤出大分类（一级分类）
+          this.topCategories = this.categoryList
+            .filter(c => c.pid === 0 || c.level === 1)
+            .map(c => ({ id: c.id, title: c.title }));
+
+          // 选中状态逻辑保持原样
           if (this.searchValue && this.searchValue.trim()) {
-            this.activeTopId = 0
-            this.activeSubId = 0
+            this.activeTopId = 0;
+            this.activeSubId = 0;
           } else if (this.cate_id) {
-            this.locateCategoryById(this.cate_id)
+            this.locateCategoryById(this.cate_id);
           } else {
-            this.activeTopId = 0
-            this.activeSubId = 0
+            this.activeTopId = 0;
+            this.activeSubId = 0;
           }
-          this.updateSubCategories()
-          // 不在这里调 scrollToActiveTop
+          this.updateSubCategories();
         }
       } catch (err) {
-        console.error('获取分类失败:', err)
+        console.error('获取分类失败:', err);
       }
     },
 

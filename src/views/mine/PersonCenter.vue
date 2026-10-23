@@ -127,7 +127,8 @@
                     <!-- 左列 -->
                     <span class="platform-tag" :class="getPlatformClass(item.platform)"
                       v-if="getPlatformName(item.platform)">
-                      {{ getPlatformName(item.platform, item.jd_type) }}
+                   {{ getPlatformName(item.platform, item.jd_type) }}
+                    
                     </span>
                     <div class="product-price-row">
                       <span class="sell-price">{{ item.sell_price }}</span>
@@ -152,7 +153,8 @@
                     <div class="product-title">{{ item.title }}</div>
                     <span class="platform-tag" :class="getPlatformClass(item.platform)"
                       v-if="getPlatformName(item.platform)">
-                      {{ getPlatformName(item.platform) }}
+                   {{ getPlatformName(item.platform,item.jd_type) }}
+
                     </span>
                     <div class="product-price-row">
                       <span class="sell-price">{{ item.sell_price }}</span>

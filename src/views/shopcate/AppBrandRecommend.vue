@@ -1,35 +1,32 @@
 <template>
   <div class="brand-recommend-page">
-    <!-- 1. 顶部导航 -->
-
-    <!-- 2. 顶部 Banner -->
+    <!-- 顶部 Banner -->
     <div class="top-area-wrapper">
       <div class="top-banner-area">
-        <img class="banner-img" src="../../assets/lh/cate/jd/b6.png" alt="品牌Banner" />
+        <img class="banner-img" :src="bannerImg" alt="品牌Banner" />
       </div>
     </div>
 
-    <!-- 3. 原生左右滑动品牌区 -->
+    <!-- 品牌横向滑动 -->
     <div class="brand-carousel-wrapper">
-      <!-- 核心滚动容器 -->
       <div class="carousel-scroll-box" ref="scrollContainer">
         <div class="brand-card" v-for="(brand, index) in brandList" :key="index"
           :class="{ active: activeBrandIndex === index }" @click="switchBrand(index)">
-          <img class="brand-icon" :src="brand.img" alt="" />
+          <img v-if="brand.img" class="brand-icon" :src="brand.img" alt="" />
+          <div v-else class="brand-icon brand-icon--placeholder">{{ (brand.name || '').slice(0, 2) }}</div>
         </div>
       </div>
 
-      <!-- 底部指示点 -->
-      <div class="indicators">
+      <div class="indicators" v-if="brandList.length">
         <span class="dot" v-for="(brand, index) in brandList" :key="index"
           :class="{ active: activeBrandIndex === index }" @click="switchBrand(index)"></span>
       </div>
     </div>
 
-    <!-- 4. 商品瀑布流 -->
+    <!-- 商品瀑布流 -->
     <div class="goods-section">
       <div class="goods-grid">
-        <div class="goods-item" v-for="(item, index) in currentGoodsList" :key="index">
+        <div class="goods-item" v-for="(item, index) in currentGoodsList" :key="index" @click="goToDetail(item)">
           <img class="goods-img" :src="item.img" alt="" />
           <div class="goods-info">
             <div class="goods-name">{{ item.title || item.name }}</div>
@@ -41,28 +38,32 @@
                 <span class="symbol">¥</span>
                 <span class="price">{{ item.sell_price || item.price }}</span>
               </div>
-              <!-- <div class="add-cart-btn" @click.stop="addToCart(item)">+</div> -->
             </div>
           </div>
         </div>
       </div>
+
+      <div v-if="!loading && !goodsList.length" class="empty-tip">暂无商品</div>
+      <div v-if="loading" class="loading-tip">加载中...</div>
+      <div v-if="finished && goodsList.length" class="finished-tip">没有更多了</div>
     </div>
-
-
   </div>
 </template>
+
 <script>
-import { productbrands, channelDetail } from "@/api/lhjdtm";
+import { channelDetail, productList } from "@/api/lhjdtm";
 import { getPlatformName } from '@/utils/platform'
+
 export default {
   name: "BrandRecommend",
   data() {
     return {
       activeBrandIndex: 0,
-      brandList: [],       // 品牌 tab 列表（从路由/接口来）
-      goodsList: [],       // 当前品牌商品
+      brandList: [],
+      goodsList: [],
       page: 1,
-      limit: 10,reqFlag: 0,
+      limit: 10,
+      reqFlag: 0,
       loading: false,
       finished: false,
       bannerImg: require('../../assets/lh/cate/jd/b6.png')
@@ -70,126 +71,113 @@ export default {
   },
   computed: {
     currentGoodsList() {
-      return this.goodsList
+      return this.goodsList;
     }
   },
   methods: {
-    fetchBrandList() {
-      const brandId = this.$route.query.brand_id
-
-      return channelDetail({ id: this.$route.query.channel_id || 4 }).then(res => {
-        if (res.code === 200) {
-          const brandSections = (res.data.sections || []).filter(s => s.type === 'brand')
-
-          // 先在所有 brand section 里找哪个包含当前 brand_id
-          let targetSection = brandSections.find(sec =>
-            (sec.items || []).some(it => String(it.id) === String(brandId))
-          )
-
-          // 找不到就取最后一个（通常最后一个才是当前频道真正要用的那组）
-          if (!targetSection) {
-            targetSection = brandSections[brandSections.length - 1]
-          }
-
-          this.brandList = targetSection?.items || []
-
-          const idx = this.brandList.findIndex(b => String(b.id) === String(brandId))
-          this.activeBrandIndex = idx > -1 ? idx : 0
-        }
-      })
-    },
     getPlatformName,
+
+    fetchBrandList() {
+  const brandId = this.$route.query.brand_id;
+
+  return channelDetail({ id: this.$route.query.channel_id || 3 }).then(res => {
+    if (res.code !== 200) return;
+
+    const modules = res.data?.modules || [];
+
+    // ✅ 顶部 Banner：取 type='banner' 模块的 banner_img，没则保留本地兜底
+    const bannerModule = modules.find(m => m.type === 'banner');
+    if (bannerModule?.banner_img) {
+      this.bannerImg = bannerModule.banner_img;
+    }
+
+    // 品牌列表
+    const brandModule = modules.find(m => m.type === 'brand');
+    this.brandList = brandModule?.items || [];
+// ✅ 顶部 Banner 取 brand 模块的 banner_img，没则保留本地兜底
+if (brandModule?.banner_img) {
+  this.bannerImg = brandModule.banner_img;
+}
+    const idx = this.brandList.findIndex(b => String(b.id) === String(brandId));
+    this.activeBrandIndex = idx > -1 ? idx : 0;
+  });
+},
+    // 2. 商品：productList 按 brand_id 筛
+    fetchGoods() {
+      if (this.loading || this.finished) return;
+      this.loading = true;
+      const flag = this.reqFlag;
+
+      const brand = this.brandList[this.activeBrandIndex];
+      if (!brand) {
+        this.loading = false;
+        return;
+      }
+
+      productList({
+        brand_id: brand.id,
+        page: this.page,
+        limit: this.limit,
+        sort: 'px',
+        order: 'desc'
+      }).then(res => {
+        if (flag !== this.reqFlag) return;
+        if (res.code === 200) {
+          const list = res.data?.data || [];
+          this.goodsList = this.goodsList.concat(list);
+
+          const current = res.data?.current_page || this.page;
+          const last = res.data?.last_page || 1;
+          if (current >= last) {
+            this.finished = true;
+          } else {
+            this.page = current + 1;
+          }
+        }
+      }).finally(() => {
+        if (flag === this.reqFlag) this.loading = false;
+      });
+    },
+
+    switchBrand(index) {
+      if (this.activeBrandIndex === index) return;
+      this.activeBrandIndex = index;
+      this.resetAndLoad();
+    },
+
+    resetAndLoad() {
+      this.page = 1;
+      this.goodsList = [];
+      this.finished = false;
+      this.loading = false;
+      this.reqFlag++;
+      this.fetchGoods();
+    },
+
+    goToDetail(item) {
+      this.$goDetail(item);
+    },
+
     goBack() {
       this.$router.go(-1);
     },
 
-    // 切换品牌
-    switchBrand(index) {
-      if (this.activeBrandIndex === index) return
-      this.activeBrandIndex = index
-      this.resetAndLoad()
-    },
-
-    // 重置分页并重新加载
-    resetAndLoad() {
-        this.page = 1
-  this.goodsList = []
-  this.finished = false
-  this.loading = false
-  this.reqFlag++
-  this.fetchGoods()
-    },
-
-    // 请求品牌下商品
-    fetchGoods() {
-      if (this.loading || this.finished) return
-      this.loading = true
-      const flag = this.reqFlag
-
-      const brand = this.brandList[this.activeBrandIndex]
-      if (!brand) {
-        this.loading = false
-        return
-      }
-
-      productbrands({
-        brand_id: brand.id,
-        page: this.page,
-        limit: this.limit
-      }).then(res => {
-        if (flag !== this.reqFlag) return
-        if (res.code === 200) {
-          const list = res.data?.data || []
-          this.goodsList = this.goodsList.concat(list)
-
-          const current = res.data?.current_page || this.page
-          const last = res.data?.last_page || 1
-          if (current >= last) {
-            this.finished = true
-          } else {
-            this.page = current + 1
-          }
-        }
-      }).finally(() => {
-        if (flag === this.reqFlag) this.loading = false
-      })
-    },
-
-    // 初始化品牌列表：优先用路由传参，其次给默认
-    initBrandList() {
-      const { brand_id, brand_name } = this.$route.query
-      if (brand_id) {
-        // 如果上个页面只传了单个品牌，就先构造一个
-        this.brandList = [{
-          id: Number(brand_id),
-          name: brand_name || '',
-          icon: require('../../assets/lh/qf.png') // 兜底图，实际可从接口补
-        }]
-      } else {
-        // 没有传参时的兜底，可写几个默认品牌
-        this.brandList = []
-      }
-      this.activeBrandIndex = 0
-    },
-
-    // 滚动加载（可选）
     onScroll(e) {
-      const el = e.target
+      const el = e.target;
       if (el.scrollHeight - el.scrollTop - el.clientHeight < 100) {
-        this.fetchGoods()
+        this.fetchGoods();
       }
     }
   },
-  
+
   mounted() {
     this.fetchBrandList().then(() => {
-      this.fetchGoods()
-    })
-    // this.initBrandList()
-    // this.fetchGoods()
+      this.fetchGoods();
+    });
   }
 }
 </script>
+
 <style scoped lang="less">
 .platform-tag {
   display: inline-block;
@@ -206,7 +194,6 @@ export default {
 
 .brand-recommend-page {
   background: #A6C0D2;
-  /* 整体浅蓝色背景 */
   min-height: 100vh;
   padding-bottom: 30px;
 }
@@ -245,14 +232,11 @@ export default {
 
 .top-banner-area {
   width: 100%;
-  // padding: 0px 10px;
-  // margin-top: -10px;
 
   .banner-img {
     width: 100%;
-    height: 380px;
+    // height: 380px;
     object-fit: cover;
-    // border-radius: 0 0 12px 12px;
     background: #f0f0f0;
     display: block;
   }
@@ -261,7 +245,6 @@ export default {
 /* ================= 3. 品牌横向无限滑动 ================= */
 .brand-carousel-wrapper {
   margin-top: -20px;
-  /* 略微叠在 Banner 下方 */
   padding: 0 10px 10px 10px;
   position: relative;
   z-index: 2;
@@ -269,13 +252,10 @@ export default {
   .carousel-scroll-box {
     display: flex;
     overflow-x: auto;
-    /* 开启横向滚动 */
     gap: 10px;
     padding: 8px 4px;
     -webkit-overflow-scrolling: touch;
-    /* 手机端顺滑 */
     scroll-snap-type: x mandatory;
-    /* 核心：让每次滑动后自动对齐到卡片，手感更好 */
 
     &::-webkit-scrollbar {
       display: none;
@@ -294,7 +274,6 @@ export default {
       backdrop-filter: blur(4px);
       border: 1px solid #ffffff;
       scroll-snap-align: start;
-      /* 核心：卡片也参与对齐 */
 
       .brand-icon {
         width: 80px;
@@ -306,10 +285,21 @@ export default {
       &.active {
         background: #ffffff;
         border: 1px solid #ffffff;
-        // box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
         transform: scale(1.1);
       }
     }
+  }
+
+  .brand-icon--placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    font-size: 16px;
+    color: #666;
+    background: #f5f6fa;
+    border-radius: 10px;
   }
 
   .indicators {
@@ -327,7 +317,6 @@ export default {
       cursor: pointer;
 
       &.active {
-        // background: #ffffff;
         background: linear-gradient(to right, #006DEF, #5A9DCB);
         width: 20px;
       }
@@ -370,11 +359,8 @@ export default {
       margin-bottom: 2px;
       display: -webkit-box;
       -webkit-box-orient: vertical;
-      /* ✅ 补上这行 */
       -webkit-line-clamp: 2;
-      /* 最多两行 */
       overflow: hidden;
-      /* ✅ 需要 */
       line-height: 1.4;
     }
 
@@ -427,6 +413,24 @@ export default {
       cursor: pointer;
     }
   }
+}
+
+/* ================= 5. 空态 / 加载态 ================= */
+.empty-tip,
+.finished-tip {
+  text-align: center;
+  color: #fff;
+  font-size: 14px;
+  padding: 20px 0;
+  opacity: 0.8;
+}
+
+.loading-tip {
+  text-align: center;
+  color: #fff;
+  font-size: 13px;
+  padding: 12px 0;
+  opacity: 0.7;
 }
 
 .bottom-safe {

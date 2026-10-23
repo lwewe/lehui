@@ -16,8 +16,10 @@
               <span class="phone">{{ detail.delivery.phone }}</span>
             </div>
 
-            <div class="addressDetail">{{ detail.delivery.province_name}}{{detail.delivery.city_name}}{{detail.delivery.county_name}}{{ detail.delivery.addr }}
-              {{  detail.delivery.detail }}
+            <div class="addressDetail">{{
+              detail.delivery.province_name}}{{ detail.delivery.city_name }}{{ detail.delivery.county_name }}{{
+                detail.delivery.addr }}
+              {{ detail.delivery.detail }}
             </div>
           </div>
         </div>
@@ -57,8 +59,9 @@
           <div class="price">{{ detail.express_company }}</div>
         </div>
         <div class="shopPrice">
-          <div class="shopPriceText" >快递单号</div>
-          <div class="price" @click="copyText(detail.express_no)">{{ detail.express_no }} <span class="copy-icon">复制</span></div>
+          <div class="shopPriceText">快递单号</div>
+          <div class="price" @click="copyText(detail.express_no)">{{ detail.express_no }} <span
+              class="copy-icon">复制</span></div>
         </div>
       </div>
     </div>
@@ -138,21 +141,52 @@ export default {
   methods: {
     copyText(text) {
       if (!text) return;
+      const str = String(text).trim();
+      if (!str) return;
 
-      const showTip = (msg) => {
-        if (this.$toast) {
-          this.$toast(msg);
-        } else {
-          alert(msg);
-        }
-      };
+      const showTip = (msg) =>
+        this.$toast ? this.$toast(msg) : alert(msg);
 
-      if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(String(text))
-          .then(() => showTip('复制成功'))
-          .catch(() => this.fallbackCopy(String(text)));
+      const isIOS = /ipad|iphone|ipod/i.test(navigator.userAgent);
+
+      // 同步 execCommand（手机/PC 都先试，最兼容）
+      const el = document.createElement(isIOS ? 'div' : 'textarea');
+      if (isIOS) {
+        el.contentEditable = 'true';
+        el.textContent = str;
       } else {
-        this.fallbackCopy(String(text));
+        el.value = str;
+        el.setAttribute('readonly', '');
+      }
+      el.style.cssText =
+        'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;overflow:hidden;';
+      document.body.appendChild(el);
+
+      if (isIOS) {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      } else {
+        el.select();
+        el.setSelectionRange(0, str.length);
+      }
+
+      let ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { }
+
+      document.body.removeChild(el);
+      window.getSelection()?.removeAllRanges?.();
+
+      if (ok) {
+        showTip('复制成功');
+      } else if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(str)
+          .then(() => showTip('复制成功'))
+          .catch(() => showTip('复制失败，请长按手动复制'));
+      } else {
+        showTip('复制失败，请长按手动复制');
       }
     },
     toKefu() {

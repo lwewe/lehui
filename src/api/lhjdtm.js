@@ -33,7 +33,7 @@ export function hotCity(data) {
 // ============ 商品相关 ============
 // 商品分类(树形)
 export function categoryList(data) {
-    return setaxios.post("/jdtmshop/categoryList", {
+    return setaxios.post("/jdtmshop/shopCategoryList", {
         channel_no: store.state.channel_no,
         token: localStorage.getItem("token"),
         ...data

@@ -2,10 +2,11 @@ import setaxios from "@/utils/setaxios";
 import store from "@/store";
 
 //分类列表
-export function getClassifyList() {
-    return setaxios.post("/jdtmshop/categoryList", {
+export function getClassifyList(data = {}) {
+    return setaxios.post("/jdtmshop/shopCategoryList", {
         channel_no:store.state.channel_no,
         token:localStorage.getItem("token"),
+         ...data
     });
 }
 // 品牌列表

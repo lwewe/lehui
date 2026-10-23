@@ -1,6 +1,6 @@
 <template>
   <div class="appliance-page">
-<NProgress v-if="loading" />
+    <NProgress v-if="loading" />
     <!-- 2. 顶部大 Banner -->
     <div class="banner-area">
       <img class="banner-img" :src="bannerImg" alt="家电Banner" @click="handleBannerClick" />
@@ -19,31 +19,34 @@
 
 
     <!-- 4. 个护健康 (分为左右两部分) -->
-    <div class="health-section">
-      <!-- 左侧：浅蓝底双列商品卡片 -->
-      <div class="health-left-card">
-        <div class="health-header" @click="ApplianceRecommend(4, 1, 0)">
-          <span class="title">个护健康</span>
-          <span class="sub">｜个人护理要注意</span>
+   <!-- 4. 个护健康 (分为左右两部分) -->
+<div class="health-section">
+  <!-- 左侧：浅蓝底双列商品卡片 -->
+  <div class="health-left-card">
+    <!-- 点击标题：跳转个护健康（nav=5） -->
+    <div class="health-header" @click="ApplianceRecommend(4, 5, 0)">
+      <span class="title">个护健康</span>
+      <span class="sub">｜个人护理要注意</span>
+    </div>
+    <div class="health-inner-grid">
+      <div class="h-item" v-for="(item, index) in healthList" :key="index" @click="goToDetail(item)">
+        <div class="h-img-box">
+          <img class="h-img" :src="item.img" alt="" />
         </div>
-        <div class="health-inner-grid">
-          <div class="h-item" v-for="(item, index) in healthList" :key="index" @click="goToDetail(item)">
-            <div class="h-img-box">
-              <img class="h-img" :src="item.img" alt="" />
-            </div>
-            <div class="h-name-tag">{{ item.title }}</div>
-            <div class="h-price-row">
-              <span class="h-price"><span style="font-size: 10px;">¥</span>{{ item.sell_price }}</span>
-            </div>
-          </div>
+        <div class="h-name-tag">{{ item.title }}</div>
+        <div class="h-price-row">
+          <span class="h-price"><span style="font-size: 10px;">¥</span>{{ item.sell_price }}</span>
         </div>
-      </div>
-
-      <!-- 右侧：独立方形 Banner -->
-      <div class="health-right-banner">
-        <img class="h-banner" :src="ghjk" @click="ApplianceRecommend(4, 0, 0)" alt="个护Banner" />
       </div>
     </div>
+  </div>
+
+  <!-- 右侧：独立方形 Banner -->
+  <div class="health-right-banner">
+    <!-- 点击右侧图：跳转品质焕新（nav=6） -->
+    <img class="h-banner" :src="ghjk" @click="ApplianceRecommend(4, 6, 0)" alt="个护Banner" />
+  </div>
+</div>
 
     <!-- 5. 显示补贴 (横向滚动) -->
     <div class="subsidy-section">
@@ -127,7 +130,7 @@ export default {
   name: "ApplianceChannel",
   data() {
     return {
-        loading: false,      // 新增
+      loading: false,      // 新增
       ghjk: '',
       activeTab: 0,
       channelData: { banner: [], nav: [] },
@@ -159,67 +162,87 @@ export default {
   methods: {
     getPlatformName,
     goToDetail(item) {
-        this.$goDetail(item);
+      this.$goDetail(item);
       // this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
     },
-fetchChannelData() {
-  this.loading = true;          // 请求开始
+    fetchChannelData() {
+      this.loading = true;
 
-  channelDetail({ id: this.$route.query.id || 4 })
-    .then(res => {
-      if (res.code == 200) {
-        this.channelData = res.data
+      channelDetail({ id: this.$route.query.id || 4 })
+        .then(res => {
+          if (res.code !== 200) return;
 
-        this.navList = (res.data.nav || []).slice(0, 10)
+          this.channelData = res.data;
+          const modules = res.data.modules || [];
 
-        if (res.data.nav?.[1]?.children?.[0]?.sections?.[0]?.items) {
-          this.healthList = res.data.nav[1].children[0].sections[0].items.slice(0, 2)
-        }
-        if (res.data.nav?.[0]?.children?.[0]?.img) {
-          this.ghjk = res.data.nav[0].children[0].img
-        }
+          // 1. 顶部 Banner：type='banner' 的 banner_img
+          const bannerModule = modules.find(m => m.type === 'banner');
+          if (bannerModule) {
+            this.channelData.banner = [{
+              img: bannerModule.banner_img || '',
+              link: bannerModule.link || ''
+            }];
+          }
 
-        this.subsidyList = res.data.sections?.[0]?.items || []
+          // 2. 分类图标：type='entry' && list_type='icon'
+          const iconModule = modules.find(m => m.type === 'entry' && m.list_type === 'icon');
+          this.navList = (iconModule?.items || []).slice(0, 10);
 
-        const brandSection = res.data.sections?.find(s => s.type === 'brand')
-        this.brandList = brandSection?.items || []
+          // 3. 品牌：type='brand'
+          const brandModule = modules.find(m => m.type === 'brand');
+          this.brandList = brandModule?.items || [];
 
-        this.processTabsData(res.data.sections)
-      }
-    })
-    .catch(() => {
-      // 兜底
-    })
-    .finally(() => {
-      this.loading = false;     // 成功或失败都关掉
-    })
-},
-    // fetchChannelData() {
-    //   channelDetail({ id: this.$route.query.id || 4 }).then(res => {
-    //     if (res.code == 200) {
-    //       this.channelData = res.data
+          // 4. 个护健康：获取模块
+          const qualityModule = modules.find(m => m.type === 'subpage' && m.sort === 6);
+          const healthModule = modules.find(m => m.type === 'subpage' && m.sort === 5);
 
-    //       this.navList = (res.data.nav || []).slice(0, 10)
+          // ----------------- 右侧图逻辑 -----------------
+          // 按你说的：优先用品质焕新的图，如果没有再用个护健康的图
+          if (qualityModule) {
+            this.ghjk = qualityModule.img || qualityModule.banner_img || '';
+          } else if (healthModule) {
+            this.ghjk = healthModule.banner_img || healthModule.img || '';
+          }
 
-    //       if (res.data.nav?.[1]?.children?.[0]?.sections?.[0]?.items) {
-    //         this.healthList = res.data.nav[1].children[0].sections[0].items.slice(0, 2)
-    //       }
-    //       if (res.data.nav?.[0]?.children?.[0]?.img) {
-    //         this.ghjk = res.data.nav[0].children[0].img
-    //       }
+          // ----------------- 左侧 2 个商品逻辑 -----------------
+          if (healthModule) {
+            // 1. 先取个护健康自己的商品（平铺所有 section 的 items）
+            let healthItems = (healthModule.sections || []).flatMap(sec => sec.items || []);
 
-    //       this.subsidyList = res.data.sections?.[0]?.items || []
+            // 2. 兜底：如果个护健康没配商品，借用品质焕新的商品
+            if (healthItems.length === 0 && qualityModule) {
+              healthItems = (qualityModule.sections || []).flatMap(sec => sec.items || []);
+            }
 
-    //       // ✅ 品牌推荐：从 sections 里取 type === 'brand'
-    //       const brandSection = res.data.sections?.find(s => s.type === 'brand')
-    //       this.brandList = brandSection?.items || []
+            // 3. 截取前 2 个，给左侧卡片展示
+            this.healthList = healthItems.slice(0, 2);
+          }
 
-    //       this.processTabsData(res.data.sections)
-    //     }
-    //   }).catch(() => {
-    //     // 兜底
-    //   })
-    // },
+
+
+          // 5. 显示补贴：type='grid' && title 含"补贴"
+          const subsidyModule = modules.find(m => m.type === 'grid' && /补贴/.test(m.title || ''));
+          if (subsidyModule) {
+            this.subsidyList = (subsidyModule.items || []).slice(0, 6);
+          }
+
+          // 6. 底部 Tab：type='tabs'
+          const tabsModule = modules.find(m => m.type === 'tabs');
+          if (tabsModule?.items) {
+            this.tabList = tabsModule.items.map(tab => ({
+              name: (tab.name || '').trim(),
+              cate_id: tab.cate_id || 0
+            }));
+            this.tabGoodsData = {};
+            tabsModule.items.forEach((tab, i) => {
+              this.tabGoodsData[i] = tab.items || [];
+            });
+            this.activeTab = 0;
+          }
+        })
+        .catch(err => console.error('获取频道数据失败:', err))
+        .finally(() => { this.loading = false; });
+    },
     ProductBrandLists() {
       ChannelDetail({ id: this.$route.query.id }).then(res => {
         if (res.code == 200) {

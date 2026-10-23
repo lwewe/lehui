@@ -1,7 +1,7 @@
 <template>
   <div class="beauty-zone-page">
     <!-- 1. 顶部导航 -->
-<NProgress v-if="loading" />
+    <NProgress v-if="loading" />
 
     <!-- 2. 顶部大 Banner (解锁超美丽) -->
     <div class="top-banner-area">
@@ -22,18 +22,19 @@
     </div>
 
     <!-- 4. 左右双拼模块 (每周上新 + 美妆礼品) -->
+    <!-- 4. 左右双拼模块 (每周上新 + 美妆礼品) -->
     <div class="split-block">
       <!-- 左侧：垂直长图 -->
       <div class="split-left">
-        <img class="split-big-img" :src="sectionsImg1" @click="DrinkHotRankList(3, 0, 0)" alt="每周上新" />
+        <img class="split-big-img" :src="sectionsImg1" @click="DrinkHotRankList(3, weeklyPx, 0)" alt="每周上新" />
       </div>
       <!-- 右侧：上下两张图 -->
       <div class="split-right">
         <div class="split-top">
-          <img class="split-img" @click="DrinkFreshMilkPage(3, 4, 0)" :src="sectionsImg2" alt="美妆礼品" />
+          <img class="split-img" @click="DrinkFreshMilkPage(3, meizhuangPx, 0)" :src="sectionsImg2" alt="美妆礼品" />
         </div>
         <div class="split-bottom">
-          <img class="split-img" @click="DrinkFreshMilkPage(3, 8, 0)" :src="sectionsImg3" alt="香氛好物" />
+          <img class="split-img" @click="DrinkFreshMilkPage(3, xiangfenPx, 0)" :src="sectionsImg3" alt="香氛好物" />
         </div>
       </div>
     </div>
@@ -80,7 +81,7 @@
     <!-- 8. 底部四个 Tab 切换 -->
     <div class="tabs-container">
       <div class="tab-btn" v-for="(tab, index) in tabList" :key="index" :class="{ active: activeTab === index }"
-        @click="activeTab = index">
+        @click="switchTab(index)">
         <div class="main">{{ tab.name }}</div>
         <div class="sub">{{ tab.sub }}</div>
       </div>
@@ -131,10 +132,15 @@ export default {
       sectionsImg2: '',
       sectionsImg3: '',
       sunCareList: [],
+      tabCateIds: [],   // 每个 tab 的 cate_id
       // 品牌推荐
       brandList: [
 
       ],
+      sceneBannerImg: '',   // ✅ 新增：场景 Banner 图
+      weeklyPx: 0,          // ✅ 新增：每周上新跳转参数（用 module.px）
+      meizhuangPx: 0,       // ✅ 新增：美妆 subpage 跳转参数
+      xiangfenPx: 0,        // ✅ 新增：香氛 subpage 跳转参数
     }
   },
 
@@ -152,7 +158,7 @@ export default {
   },
 
   methods: {
-     handleNavClick(item) {
+    handleNavClick(item) {
       console.log('点击家电图标:', item)
 
       // 有 link 优先跳链接
@@ -171,50 +177,97 @@ export default {
     },
     getPlatformName,
     goToDetail(item) {
-  this.$goDetail(item);
+      this.$goDetail(item);
       // this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
     },
+
     fetchChannelData() {
-  this.loading = true;          // 请求开始
+      this.loading = true;
 
-  channelDetail({ id: this.$route.query.id || 3 })
-    .then(res => {
-      if (res.code == 200) {
-        this.channelData = res.data
+      channelDetail({ id: this.$route.query.id || 3 })
+        .then(res => {
+          if (res.code !== 200) return;
 
-        this.navList = (res.data.nav || []).slice(0, 10)
+          this.channelData = res.data;
+          const modules = res.data.modules || [];
 
-        const bannerSections = (res.data.sections || []).filter(section => section.type === 'banner')
-        if (bannerSections.length >= 3) {
-          this.sectionsImg1 = bannerSections[0].img || ''
-          this.sectionsImg2 = bannerSections[1].img || ''
-          this.sectionsImg3 = bannerSections[2].img || ''
-        }
- this.sunCareList = this.channelData.nav[3].products.slice(0, 6)
-        const tabsSection = (res.data.sections || []).find(section => section.type === 'tabs')
-        if (tabsSection && tabsSection.tabs) {
-          this.tabList = tabsSection.tabs
-          this.tabGoodsList = tabsSection.tabs.map(tab => tab.items || [])
-        }
+          // 1. 顶部 Banner：type=banner，取 banner_img
+          const bannerModule = modules.find(m => m.type === 'banner');
+          if (bannerModule) {
+            this.channelData.banner = [{
+              img: bannerModule.banner_img || '',
+              link: bannerModule.link || ''
+            }];
+          }
 
-        // const firstNavWithProducts = (res.data.nav || []).find(nav => nav.products && nav.products.length > 0)
-        // if (firstNavWithProducts) {
-        //   this.sunCareList = firstNavWithProducts.products.slice(0, 6)
-        // }
+          // 2. 顶部分类图标：type=entry && list_type=icon
+          const iconModule = modules.find(m => m.type === 'entry' && m.list_type === 'icon');
+          this.navList = (iconModule?.items || []).slice(0, 10);
 
-        const brandSections = (res.data.sections || []).filter(s => s.type === 'brand')
-        const brandSection = brandSections[brandSections.length - 1]
-        this.brandList = (brandSection?.items || []).slice(0, 6)
-      }
-    })
-    .catch(err => {
-      console.error('获取数据失败:', err)
-    })
-    .finally(() => {
-      this.loading = false;     // 成功或失败都关掉
-    })
+          // 3. 品牌推荐：type=brand
+          const brandModule = modules.find(m => m.type === 'brand');
+          this.brandList = (brandModule?.items || []).slice(0, 6);
+
+          // 4. 每周上新（左侧大图）：type=grid 且 title 含"上新"，取 img
+          const weeklyModule = modules.find(m => m.type === 'grid' && /上新/.test(m.title || ''));
+          this.sectionsImg1 = weeklyModule?.img || '';
+          this.weeklyPx = weeklyModule?.px || 0;
+
+          // 5. 两个 subpage：按 title 区分美妆/香氛
+          //    ⚠️ 右侧双拼是"入口"，取 subpage.img（入口图），不是 banner_img（头图）
+          const subpages = modules.filter(m => m.type === 'subpage');
+          const meizhuang = subpages.find(m => m.title === '美妆');
+          const xiangfen = subpages.find(m => m.title === '香氛');
+          this.sectionsImg2 = meizhuang?.img || '';
+          this.sectionsImg3 = xiangfen?.img || '';
+          this.meizhuangPx = meizhuang?.px || 0;
+          this.xiangfenPx = xiangfen?.px || 0;
+
+          // 6. 场景 Banner + 防晒专区：type=grid 且 title 含"防晒"
+          const sunModule = modules.find(m => m.type === 'grid' && /防晒/.test(m.title || ''));
+          if (sunModule) {
+            this.sceneBannerImg = sunModule.img || '';
+            this.sunCareList = (sunModule.items || []).slice(0, 6);
+          }
+
+          // 7. 底部 Tab + 瀑布流：list_type=tab
+          const tabModule = modules.find(m => m.list_type === 'tab');
+          if (tabModule && tabModule.items) {
+            this.tabList = tabModule.items.map(item => ({
+              name: item.title,
+              sub: item.subtitle || ''
+            }));
+             this.tabCateIds = tabModule.items.map(item => item.cate_id || 0);
+            this.tabGoodsList = tabModule.items.map(item => item.products || []);
+            this.activeTab = 0;
+
+             // 第一个 tab 没商品，先拉
+  if (!this.tabGoodsList[0].length && this.tabCateIds[0]) {
+    this.loadTabGoods(0);
+  }
+
+          }
+        })
+        .catch(err => console.error('获取数据失败:', err))
+        .finally(() => { this.loading = false; });
+    },
+switchTab(index) {
+  this.activeTab = index;
+  // 没商品且没 cate_id 拉过，就拉一次
+  if (!this.tabGoodsList[index].length && this.tabCateIds[index]) {
+    this.loadTabGoods(index);
+  }
 },
-  
+
+loadTabGoods(index) {
+  productList({ cate_id: this.tabCateIds[index], page: 1, limit: 10, sort: 'px', order: 'desc' })
+    .then(res => {
+      if (res.code === 200) {
+        // Vue 2 用 $set 触发响应式
+        this.$set(this.tabGoodsList, index, res.data?.data || []);
+      }
+    });
+},
     // 商品点击事件
     handleGoodsClick(item) {
       console.log('点击商品:', item)
@@ -261,8 +314,8 @@ export default {
       this.$router.go(-1);
     }
   },
-activated() {
-     this.fetchChannelData()
+  activated() {
+    this.fetchChannelData()
   },
   mounted() {
     // this.fetchChannelData()
