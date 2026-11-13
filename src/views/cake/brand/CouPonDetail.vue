@@ -2,16 +2,7 @@
   <div class="conPage">
     <ReturnBack :rcolor="'#34495B'" :bcolor="'rgb(255 255 255 / 41%)'"></ReturnBack>
     <NProgress v-if="loadingflag"/>
-    <!--  轮播图-->
-    <!--    <div class="banner">-->
-    <!--      <van-swipe :autoplay="3000" indicator-color="white" @change="onChange">-->
-    <!--        <van-swipe-item class="bannerImg" v-for="item in bannerList" :key="item.id">-->
-    <!--          <img class="img"-->
-    <!--               :src=" item.img"-->
-    <!--               alt="">-->
-    <!--        </van-swipe-item>-->
-    <!--      </van-swipe>-->
-    <!--    </div>-->
+   
     <div>
       <img class="img" :src="brand.banner" alt="">
     </div>
@@ -20,7 +11,7 @@
       <div class="infoBox">
         <div class="againstBox">
           <div class="vector">
-            <img class="img" src="../../assets/dangao/Vector.png" alt="">
+            <img class="img" src="@/assets/dangao/Vector.png" alt="">
           </div>
           <div class="price" v-if="coupons.price">
             <span>{{ changePrice1(coupons.price) }}</span>.{{ changePrice2(coupons.price) }}
@@ -54,7 +45,7 @@
     <div class="footer">
       <div class="kefuBox" @click="toKefu">
         <div class="kefu">
-          <img class="img" src="../../assets/tubiao/kfz.png" alt="">
+          <img class="img" src="@/assets/tubiao/kfz.png" alt="">
         </div>
         <div>客服</div>
       </div>
@@ -65,117 +56,121 @@
     </div>
   </div>
 </template>
-<script>
-import {getCouPonShopDetail} from "@/api/coupon";
-import {getIsShowOder} from "@/api/service";
+ <script>
+// 1. 引入正确的商品详情接口
+import { getCouponsDetail } from "@/api/lehuicake";
 
 export default {
   name: "CouPonDetail",
   data() {
     return {
-      onIndex: "",
       bannerList: [],
-      brand: {},
-      coupons: {},
+      brand: {}, // 品牌信息
+      coupons: {}, // 电子券信息
       loadingflag: true,
-      isBuy: "",
-      signal: 0
-    }
+      isBuy: "", // 0-可售 1-没可用电子券 2-超了每日可购买数量 3-超了总限购
+      cid: "2", // 城市ID
+      signal: 0, // 保留原有逻辑，用于判断是否显示补货客服
+    };
   },
   methods: {
-    getIsShowOder() {
-      getIsShowOder().then(res => {
-        if (res.code == 200) {
-          this.flag = res.data.flag
-          this.signal = res.data.signal
-        }
-      })
-    },
     toKefu() {
-      window.location.href = localStorage.getItem("kefu")
+      window.location.href = localStorage.getItem("kefu");
     },
-    timestampToTime(time) {
-      // 时间戳为10位需*1000，时间戳为13位的话不需乘1000
-      var date = new Date(time * 1000)
-      let y = date.getFullYear()
-      let MM = date.getMonth() + 1
-      MM = MM < 10 ? ('0' + MM) : MM
-      let d = date.getDate()
-      d = d < 10 ? ('0' + d) : d
-      let h = date.getHours()
-      h = h < 10 ? ('0' + h) : h
-      let m = date.getMinutes()
-      m = m < 10 ? ('0' + m) : m
-      let s = date.getSeconds()
-      s = s < 10 ? ('0' + s) : s
-      return y + '-' + MM + '-' + d
-    },
+    
     // 价格处理
     changePrice1(price) {
-      return price.toString().includes(".") ? price.toString().split('.')[0] : price
+      if (!price) return "0";
+      return price.toString().includes(".") ? price.toString().split(".")[0] : price;
     },
     changePrice2(price) {
-      return price.toString().includes(".") ? Number(price).toFixed(2).toString().split('.')[1] : "00"
+      if (!price) return "00";
+      return price.toString().includes(".") ? Number(price).toFixed(2).toString().split(".")[1] : "00";
     },
-    onChange(index) {
-      this.onIndex = index + 1
-    },
+
+    // 点击立即兑换
     toCouPonComfireOrder() {
       if (this.isBuy == 1) {
-        // 显示正在补货中  先判断 brand->id = (13,18,73,74,75)  在请求接口 signal等于1 在弹窗
-        if (this.signal == 1 && (this.brand.id == 13 || this.brand.id == 18 || this.brand.id == 73 || this.brand.id == 74 || this.brand.id == 75)) {
-          this.$dialog.confirm({
-            title: '提示',
-            message: '遇到电子券补充中需联系客服',
-            confirmButtonColor: 'red'
-          }).then(() => {
-            this.toKefu()
-          }).catch(() => {
-          })
+        // 显示正在补货中，先判断特定品牌的提示
+        if (
+          this.signal == 1 &&
+          (this.brand.id == 13 || this.brand.id == 18 || this.brand.id == 73 || this.brand.id == 74 || this.brand.id == 75)
+        ) {
+          this.$dialog
+            .confirm({
+              title: "提示",
+              message: "遇到电子券补充中需联系客服",
+              confirmButtonColor: "red",
+            })
+            .then(() => {
+              this.toKefu();
+            })
+            .catch(() => {});
         } else {
-          this.$toast("卡已售罄")
+          this.$toast("卡已售罄");
         }
-        return
+        return;
       }
       if (this.isBuy == 2) {
-        this.$toast("您今日购卡次数已上限")
-        return
+        this.$toast("您今日购卡次数已上限");
+        return;
       }
       if (this.isBuy == 3) {
-        this.$toast("您今日总购卡次数已上限")
-        return
+        this.$toast("您今日总购卡次数已上限");
+        return;
       }
-      this.$router.push({path: "/couPonConfirmOrder", query: {id: this.coupons.id}})
+      // 可售状态，跳转确认订单页
+      this.$router.push({ path: "/CakeCouPonConfirmOrder", query: { id: this.coupons.id, cid: this.cid } });
     },
+
+    // 获取商品详情
     getCouPonShopDetail(id) {
-      var token = ""
-      if (localStorage.getItem("token")) {
-        token = localStorage.getItem("token")
-      } else {
-        token = ""
+      this.loadingflag = true;
+      
+      // 取当前城市ID（如果路由带了cid，优先用路由的）
+      if (this.$route.query.cid) {
+        this.cid = this.$route.query.cid;
       }
-      getCouPonShopDetail({
-        id, token
-      }).then(res => {
-        this.loadingflag = false
-        if (res.code == 200) {
-          this.brand = res.data.brand
-          this.coupons = res.data.coupons
-          this.isBuy = res.data.buy
-        } else if (res.code == -1) {
-          localStorage.removeItem("token")
-          this.getCouPonShopDetail(this.$route.query.id)
-        }
+
+      // 2. 调用正确的接口，传 cid 和 id
+      getCouponsDetail({
+        cid: this.cid,
+        id: id,
       })
-    }
+        .then((res) => {
+          this.loadingflag = false;
+          
+          // 兼容拦截器解析层级
+          const resData = res.data?.data || res.data;
+
+          if (res.code == 200) {
+            this.brand = resData.brand || {};
+            this.coupons = resData.coupons || {};
+            this.isBuy = resData.buy;
+          } else {
+            this.$toast(res.msg || "获取商品详情失败");
+          }
+        })
+        .catch((err) => {
+          this.loadingflag = false;
+          console.error("商品详情请求报错:", err);
+          this.$toast("网络请求异常");
+        });
+    },
   },
   created() {
-    this.getIsShowOder()
-    this.getCouPonShopDetail(this.$route.query.id)
-  }
-}
+    // 3. 接收路由传过来的电子券 id（兼容 query.id 或 query.brand_id）
+    const couponId = this.$route.query.id;
+    
+    if (couponId) {
+      this.getCouPonShopDetail(couponId);
+    } else {
+      this.loadingflag = false;
+      this.$toast("缺少电子券ID");
+    }
+  },
+};
 </script>
-
 <style scoped lang="less">
 .conPage {
   min-height: 100vh;

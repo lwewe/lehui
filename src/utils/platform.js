@@ -23,7 +23,7 @@ const PLATFORM_NAME_MAP = {
   [PLATFORM.HEMA]: '盒马',
   [PLATFORM.FLOWER]: '鲜花',
   [PLATFORM.TUHU]: '途虎养车',
-  [PLATFORM.SUPPLIER]: '供应商'
+  [PLATFORM.SUPPLIER]: '乐汇商城'
 };
 
 const JD_TYPE_NAME_MAP = {

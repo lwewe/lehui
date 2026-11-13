@@ -1,39 +1,31 @@
 <template>
   <div class="flash-sale-page">
- <NProgress v-if="loading" />
+    <NProgress v-if="loading" />
 
     <!-- 2. 顶部大 Banner (红色礼盒) -->
     <div class="top-banner-area">
       <img class="banner-img" :src="baners" alt="秒杀Banner" />
     </div>
 
-    <!-- 4. 今日疯抢模块 (橙色卡片) -->
+    <!-- 4. 今日疯抢模块 (顶部横排商品) -->
     <div class="today-rush-card">
-      <div class="rush-header">
-
+      <div class="rush-header"></div>
+      <div style="background: linear-gradient( 270deg, #FEAA48 0%, #FF4423 100%); border-radius: 8px 8px 0px 0px; padding: 9px 0 10px 10px; font-weight: bold;">
+        <span class="title" style="font-size: 15px; color: #ffffff;">
+          <span class="fire-icon"></span>今日疯抢
+        </span>
       </div>
-
-      <!-- 3列横向秒杀商品 -->
-      <div style="background: linear-gradient( 270deg, #FEAA48 0%, #FF4423 100%);
-border-radius: 8px 8px 0px 0px;padding: 9px 0 10px 10px;font-weight: bold;">
-        <span class="title" style="font-size: 15px ;color: #ffffff;"><span class="fire-icon">
-            <!-- <img src="../../assets/ht.png" style="width: 16px;position: relative;top: 2px;" alt=""> -->
-          </span>今日疯抢</span>
-      </div>
-      <div style="padding: 10px;background: #ffffff;border-radius: 0 0 8px 8px;">
+      <div style="padding: 10px; background: #ffffff; border-radius: 0 0 8px 8px;">
+        <!-- 对应 script 中的 rushList (水果的3个商品) -->
         <div class="rush-grid">
           <div class="rush-item" v-for="(item, index) in rushList" :key="index">
             <div class="item-img-box">
               <img class="item-img" :src="item.img" alt="" />
             </div>
             <div class="item-name">{{ item.title }}</div>
-            <!-- <div class="item-tags">
-              <span class="tag-down" v-if="item.market_price && item.sell_price">直降 ¥{{ (item.market_price -
-                item.sell_price).toFixed(2) }}</span>
-            </div> -->
             <div class="item-bottom">
               <div class="price-box">
-                <div style="">
+                <div>
                   <span class="symbol">¥</span>
                   <span class="price">{{ item.sell_price }}</span>
                 </div>
@@ -46,38 +38,39 @@ border-radius: 8px 8px 0px 0px;padding: 9px 0 10px 10px;font-weight: bold;">
       </div>
     </div>
 
-    <!-- 6. 分类 Tab 切换 (黄色背景) -->
+    <!-- 6. 分类 Tab 切换 (下方黄色背景) -->
     <div style="padding: 0 10px;">
       <div class="bgred"></div>
     </div>
     <div class="tab-section">
       <div class="bg">
         <div class="category-tabs">
-          <div class="tab-btn" v-for="(tab, index) in categoryTabs" :key="index"
-            :class="{ active: activeCategory === index }" @click="activeCategory = index">
-            {{ tab }}
+          <!-- 对应 script 中的 categoryTabs (截取后的剩余模块) -->
+          <div class="tab-btn" v-for="(tab, index) in categoryTabs" :key="tab.id"
+            :class="{ active: activeCategory === index }" @click="switchTab(index)">
+            {{ tab.title }}
             <span></span>
           </div>
         </div>
       </div>
       <!-- 7. 商品列表 (左图右文) -->
       <div class="list-wrapper">
+        <!-- 对应 script 中的 currentGoodsList (当前选中的商品) -->
         <div class="list-item" v-for="(item, index) in currentGoodsList" :key="index">
           <div class="list-img-box">
             <img class="list-img" :src="item.img" alt="" />
           </div>
           <div class="list-info">
             <div class="list-name">{{ item.title }}</div>
-            <div class="list-tags"  v-if="getPlatformName(item.platform)">
-               {{ getPlatformName(item.platform, item.jd_type || item.items?.[0]?.jd_type) }}
+            <div class="list-tags" v-if="getPlatformName(item.platform)">
+              {{ getPlatformName(item.platform, item.jd_type || item.items?.[0]?.jd_type) }}
             </div>
             <div class="list-bottom">
               <div class="price-box">
                 <div class="price-line">
                   <span class="symbol">¥</span>
                   <span class="price">{{ item.sell_price }}</span>
-                  <span class="old-price"><span style="font-size: 10px;font-weight: bold;">¥</span>{{ item.market_price
-                    }}</span>
+                  <span class="old-price"><span style="font-size: 10px;font-weight: bold;">¥</span>{{ item.market_price }}</span>
                 </div>
               </div>
               <div class="lightning-btn" @click="goToDetail(item)">抢</div>
@@ -98,70 +91,70 @@ import { getPlatformName } from '@/utils/platform'
 export default {
   name: "FlashSalePage",
   data() {
-    return {loading: false,      // 新增
-      baners: '',
-      activeCategory: 0,
-      rushList: [],
-      categoryTabs: [],
-      tabGoodsData: {
-        0: [],
-        1: [],
-        2: [],
-        3: []
-      }
+    return {
+      loading: false,
+      baners: this.$route.query.img,
+      activeCategory: 0,       // 当前选中的 Tab 索引
+      rushList: [],            // 顶部（水果）模块的商品
+      categoryTabs: [],        // 下方 Tabs (清洁护肤、饮料大等)
+      allTabsData: [],         // 保存所有 Tab 对应的商品数据
+      currentGoodsList: [],    // 当前下方列表渲染的商品
     }
   },
-  computed: {
-    currentGoodsList() {
-      return this.tabGoodsData[this.activeCategory] || [];
-    }
+  activated() {
+    this.zoneListIndex();
   },
-   activated() {
-  // 每次进入都重新请求
-  this.zoneListIndex();
-},
   mounted() {
     this.zoneListIndex();
   },
   methods: {
     getPlatformName,
+    
     zoneListIndex() {
-  this.loading = true;          // 请求开始，显示全屏加载
+      this.loading = true;
+      zoneList({ pid: 31 }) // 你的固定请求
+        .then(res => {
+          if (res.code === 200) {
+            // 1. 获取完整的模块列表
+            let allZones = res.data.list || [];
+            
+            if (allZones.length === 0) return;
 
-  zoneList()
-    .then(res => {
-      if (res.code == 200) {
-        let allZones = res.data.list || [];
+            // 2. 把【第一个模块】(水果) 提取出来，作为顶部的今日疯抢
+            let topZone = allZones[0]; // 对应你数据里的 "水果"
+            this.rushList = topZone.goods || [];
+            // this.baners = topZone.img || '';
 
-        // 1. 今日疯抢：取 id=5 的商品
-        let rushZone = allZones.find(zone => zone.id == 5);
-        if (rushZone && rushZone.goods) {
-          this.rushList = rushZone.goods.slice(0, 3);
-        }
-        this.baners = rushZone.img;
+            // 3. 把【剩下的模块】提取出来，作为下方的 Tabs 和 商品列表
+            // allZones.slice(1) 会截取掉第一项，剩下：清洁护肤、饮料大、粮油副食等
+            this.categoryTabs = allZones.slice(1);
 
-        // 2. 分类 Tab：根据 id 对应
-        allZones.forEach(zone => {
-          if (zone.id == 6) {
-            this.tabGoodsData[0] = zone.goods || [];
-          } else if (zone.id == 7) {
-            this.tabGoodsData[1] = zone.goods || [];
-          } else if (zone.id == 8) {
-            this.tabGoodsData[2] = zone.goods || [];
-          } else if (zone.id == 9) {
-            this.tabGoodsData[3] = zone.goods || [];
+            // 4. 初始化下方 Tab 的商品数据
+            this.allTabsData = this.categoryTabs.map(item => item.goods || []);
+            
+            // 5. 默认显示第一个 Tab (清洁护肤) 的商品
+            if (this.allTabsData.length > 0) {
+              this.currentGoodsList = this.allTabsData[0];
+            }
           }
+        })
+        .catch(err => {
+          console.error("请求失败", err);
+        })
+        .finally(() => {
+          this.loading = false;
         });
-      }
-    })
-    .finally(() => {
-      this.loading = false;     // 成功或失败都关掉
-    });
-},
+    },
+
+    // 点击下方的 Tab 切换商品
+    switchTab(index) {
+      this.activeCategory = index;
+      // 直接通过索引从缓存数组中拿数据，不需要重新请求接口，速度更快
+      this.currentGoodsList = this.allTabsData[index] || [];
+    },
+
     goToDetail(item) {
       this.$goDetail(item);
-      
-      // this.$router.push({ path: '/productDetail', query: { id: item.id } });
     },
     goBack() {
       this.$router.go(-1);
@@ -222,8 +215,6 @@ export default {
 
 /* ================= 2. Banner ================= */
 .top-banner-area {
-
-
   .banner-img {
     width: 100%;
     object-fit: cover;
@@ -245,10 +236,6 @@ export default {
 /* ================= 4. 今日疯抢模块 ================= */
 .today-rush-card {
   margin: 0 10px 12px 10px;
-  // padding: 12px;
-
-  // border-radius: 16px;
-  // box-shadow: 0 4px 12px rgba(255, 94, 58, 0.2);
 
   .rush-header {
     background: url(../../assets/lh/ms2.png) top no-repeat;
@@ -257,8 +244,6 @@ export default {
     justify-content: space-between;
     align-items: center;
     height: 58px;
-
-
 
     .header-right {
       padding-top: 70px;
@@ -304,7 +289,6 @@ export default {
     .rush-item {
       background: #fff;
       border-radius: 8px;
-
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -359,7 +343,6 @@ export default {
         padding-bottom: 6px;
 
         .price-box {
-
           display: flex;
           flex-direction: column;
           color: #d32f2f;
@@ -401,21 +384,14 @@ export default {
 }
 
 .bgred {
-
   background: url(../../assets/lh/ms2.png) top no-repeat;
   background-size: cover;
   height: 58px;
-
 }
 
 /* ================= 5. 分类 Tab ================= */
 .tab-section {
-  // background: #FEEAB3; /* 淡黄色背景 */
-  // margin: 0 10px 12px 10px;
-  // border-radius: 16px;
   padding: 0 10px 10px 10px;
-
-
 
   .category-tabs {
     background: linear-gradient(180deg, #FEE7A6 0%, #FBCA72 100%);
@@ -425,7 +401,6 @@ export default {
     justify-content: space-between;
     padding-bottom: 6px;
     padding-top: 10px;
-
 
     .tab-btn {
       font-size: 15px;
@@ -437,9 +412,6 @@ export default {
       text-align: center;
       position: relative;
 
-      // span{
-      //   width: 20px;height: 5px;border-radius: 5px;position: absolute;bottom: 0;left: 0;
-      // }
       &.active {
         span {
           background-color: A61616;
@@ -453,7 +425,6 @@ export default {
 
         color: #240003;
         font-weight: bold;
-        // border-bottom: 3px solid #A61616;
       }
     }
   }
@@ -467,7 +438,6 @@ export default {
 
   .list-item {
     display: flex;
-
     border-radius: 12px;
     padding: 12px;
     margin-bottom: 10px;
@@ -507,19 +477,15 @@ export default {
 
       .list-tags {
         margin-bottom: 6px;
-       // display: flex;
-       // gap: 4px;
-display: inline-block;
-  background-color: #DD0A09;
-  color: #ffffff;
-  border-radius: 2px;
-  font-size: 10px;
-  font-weight: 400;
-  line-height: 14px;
-  padding: 1px 4px;
- // margin-top: 4px;
-  width: max-content;
-        
+        display: inline-block;
+        background-color: #DD0A09;
+        color: #ffffff;
+        border-radius: 2px;
+        font-size: 10px;
+        font-weight: 400;
+        line-height: 14px;
+        padding: 1px 4px;
+        width: max-content;
       }
 
       .tag-orange {

@@ -1,7 +1,7 @@
 <template>
   <div class="hot-product-page">
     <!-- 1. 顶部导航 -->
-     
+
 
     <!-- 2. 顶部大 Banner (橙红渐变/奖杯) -->
     <div class="top-banner-area">
@@ -13,14 +13,14 @@
 
       <!-- ===== 板块 1：爆款双列瀑布流 ===== -->
       <div class="hot-grid-wrapper">
-        <div class="hot-goods-item" v-for="(item, index) in hotGoodsList" :key="index"  @click="goToDetail(item)">
+        <div class="hot-goods-item" v-for="(item, index) in hotGoodsList" :key="index" @click="goToDetail(item)">
           <img class="hot-goods-img" :src="item.img" alt="" />
           <div class="hot-goods-info">
             <div class="hot-goods-name">{{ item.title }}</div>
             <span class="platform-tag" v-if="getPlatformName(item.platform)">
-                  {{ getPlatformName(item.platform) }}
-                </span>
-            
+              {{ getPlatformName(item.platform) }}
+            </span>
+
             <div class="hot-goods-bottom">
               <div class="price-box">
                 <span class="symbol">¥</span>
@@ -34,8 +34,8 @@
 
       <!-- ===== 板块 2：底部排名列表 (带角标) ===== -->
       <div class="rank-list-wrapper">
-        <div class="rank-item" v-for="(item, index) in rankGoodsList" :key="index"  @click="goToDetail(item)">
-          
+        <div class="rank-item" v-for="(item, index) in rankGoodsList" :key="index" @click="goToDetail(item)">
+
           <!-- 图片 + 角标 -->
           <div class="rank-img-box">
             <div class="rank-badge">{{ index + 1 }}</div>
@@ -46,9 +46,9 @@
           <div class="rank-info">
             <div class="rank-name">{{ item.title }}</div>
             <span class="platform-tag" v-if="getPlatformName(item.platform)">
-                  {{ getPlatformName(item.platform) }}
-                </span>
-           
+              {{ getPlatformName(item.platform) }}
+            </span>
+
             <div class="rank-bottom">
               <div class="price-box">
                 <span class="symbol">¥</span>
@@ -63,7 +63,7 @@
 
     </div>
 
-    
+
   </div>
 </template>
 
@@ -73,44 +73,55 @@ import { getPlatformName } from '@/utils/platform'
 export default {
   name: "HotProductPage",
   data() {
-    return {baners:'',
+    return {
+      baners: '',
       // 双列爆款列表
       hotGoodsList: [
-       ],
+      ],
       // 底部带角标的排名列表
       rankGoodsList: [
-     ]
+      ]
     }
   },
-   mounted() {
+  mounted() {
     this.channelDetailIndex()
   },
   activated() {
-  // 每次进入都重新请求
-  this.channelDetailIndex();
-},
+    // 每次进入都重新请求
+    this.channelDetailIndex();
+  },
   methods: {
     getPlatformName,
-     goToDetail(item) {
+    goToDetail(item) {
       this.$goDetail(item);
       // this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
     },
     // 新增：获取频道详情
-     channelDetailIndex() {
-      channelDetail({ id: this.$route.query.id }).then(res => {
-        if (res.code == 200) {
-          
-          this.baners = res.data.nav[0].children[0].banner[0].img
-        
-         
-            this.hotGoodsList = res.data.nav[0].children[0].products.slice(0,6) || []
-            this.rankGoodsList = res.data.nav[0].children[0].products.slice(6,100) || []
-           
-          
-           
-           
-        }
-      })
+    channelDetailIndex() {
+      channelDetail({ id: this.$route.query.id || 5 })
+        .then(res => {
+          if (res.code !== 200) return;
+
+          const modules = res.data?.modules || [];
+
+          // 1. 查找「精品推荐」模块：type='grid' 且 title 包含 '精品'
+          const hotModule = modules.find(m => m.type === 'grid' && /精品/.test(m.title || ''));
+
+          if (hotModule) {
+            // 顶部 Banner 使用这个模块配置的 banner_img
+            this.baners = hotModule.banner_img || '';
+
+            // 所有商品列表
+            const items = hotModule.items || [];
+
+            // 取前 6 个作为双列瀑布流
+            this.hotGoodsList = items.slice(0, 6);
+
+            // 取第 6 个之后的（目前数据只有 6 个，所以这个数组会是空的；如果以后后台加商品，这里就会自动展示）
+            this.rankGoodsList = items.slice(6);
+          }
+        })
+        .catch(err => console.error('获取爆品页数据失败:', err));
     },
     goBack() {
       this.$router.go(-1);
@@ -121,7 +132,8 @@ export default {
 
 <style scoped lang="less">
 .platform-tag {
-  display: inline-block;width:max-content;
+  display: inline-block;
+  width: max-content;
   background-color: #DD0A09;
   color: #ffffff;
   border-radius: 2px;
@@ -129,10 +141,13 @@ export default {
   font-weight: 400;
   line-height: 14px;
   padding: 1px 4px;
-  margin-top: 2px;  margin-bottom: 4px;
+  margin-top: 2px;
+  margin-bottom: 4px;
 }
+
 .hot-product-page {
-  background: #F5F5F5; /* 页面浅灰底色 */
+  background: #F5F5F5;
+  /* 页面浅灰底色 */
   min-height: 100vh;
   padding-bottom: 20px;
 }
@@ -146,19 +161,37 @@ export default {
   padding-top: calc(12px + env(safe-area-inset-top));
   background: #fff;
 
-  .nav-left, .nav-right { font-size: 20px; color: #333; cursor: pointer; width: 24px; }
-  .nav-title { font-size: 16px; font-weight: 500; color: #333; }
+  .nav-left,
+  .nav-right {
+    font-size: 20px;
+    color: #333;
+    cursor: pointer;
+    width: 24px;
+  }
+
+  .nav-title {
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+  }
 }
 
 /* ================= 2. Banner ================= */
 .top-banner-area {
-   
-  .banner-img { width: 100%; height: 160px; object-fit: cover;   background: #f0f0f0; }
+
+  .banner-img {
+    width: 100%;
+    // height: 160px;
+    object-fit: cover;
+    background: #f0f0f0;
+  }
 }
 
 /* ================= 3. 主体内容 ================= */
 .main-container {
-  padding: 0 10px;position: relative;top: -20px;
+  padding: 0 10px;
+  position: relative;
+  top: -20px;
 }
 
 /* ===== 双列瀑布流 ===== */
@@ -193,7 +226,9 @@ export default {
       display: -webkit-box;
       -webkit-line-clamp: 2;
       overflow: hidden;
-      line-height: 1.4; -webkit-box-orient: vertical;  /* ✅ 新增这一行 */
+      line-height: 1.4;
+      -webkit-box-orient: vertical;
+      /* ✅ 新增这一行 */
     }
 
     .hot-goods-tags {
@@ -220,8 +255,15 @@ export default {
     .price-box {
       color: #ed2e33;
 
-      .symbol { font-size: 12px; font-weight: bold;}
-      .price { font-size: 16px; font-weight: bold; }
+      .symbol {
+        font-size: 12px;
+        font-weight: bold;
+      }
+
+      .price {
+        font-size: 16px;
+        font-weight: bold;
+      }
     }
 
     .add-btn {
@@ -234,7 +276,8 @@ export default {
       align-items: center;
       justify-content: center;
       font-size: 14px;
-      cursor: pointer;font-weight: bold;
+      cursor: pointer;
+      font-weight: bold;
     }
   }
 }
@@ -283,9 +326,9 @@ export default {
         align-items: center;
         justify-content: center;
         border-radius: 4px;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
         z-index: 2;
-        border: 1px solid rgba(0,0,0,0.02);
+        border: 1px solid rgba(0, 0, 0, 0.02);
       }
     }
 
@@ -310,6 +353,7 @@ export default {
       .rank-tags {
         margin-bottom: 6px;
         line-height: 1;
+
         .tag-red {
           font-size: 10px;
           color: #fff;
@@ -327,8 +371,16 @@ export default {
 
         .price-box {
           color: #d32f2f;
-          .symbol { font-size: 12px;font-weight: bold; }
-          .price { font-size: 18px; font-weight: bold; }
+
+          .symbol {
+            font-size: 12px;
+            font-weight: bold;
+          }
+
+          .price {
+            font-size: 18px;
+            font-weight: bold;
+          }
         }
 
         .add-btn {
@@ -349,5 +401,7 @@ export default {
   }
 }
 
-.bottom-safe { height: 20px; }
+.bottom-safe {
+  height: 20px;
+}
 </style>

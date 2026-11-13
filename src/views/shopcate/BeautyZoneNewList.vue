@@ -44,8 +44,9 @@ export default {
   name: "HotRankList",
   data() {
     return {
+      
       banenrs: '',
-      pageBgStyle: { backgroundColor: '#2A75BA' },
+      pageBgStyle: {},
       goodsList: []
     }
   },
@@ -88,9 +89,9 @@ export default {
             this.banenrs = '';
             this.goodsList = [];
           }
-
+console.log(weeklyModule)
           // channelDetail 无 bg_color 字段，固定默认蓝
-          this.pageBgStyle = { backgroundColor: '#2A75BA' };
+          this.pageBgStyle = { backgroundColor:weeklyModule.bg_color  };
         })
         .catch(err => {
           console.error('获取榜单数据失败:', err);

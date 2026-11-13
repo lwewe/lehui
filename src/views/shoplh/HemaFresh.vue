@@ -19,7 +19,7 @@
       <div class="category-grid">
         <div class="cat-item" v-for="(item, index) in categoryList.slice(0, 10)" :key="index" @click="goCategory(item)">
           <img class="cat-icon" :src="item.img" alt="" />
-          <div class="cat-name">{{ item.name }}</div>
+          <div class="cat-name">{{ item.title }}</div>
 
         </div>
       </div>
@@ -61,7 +61,7 @@
                 {{ item.market_price }}
               </span>
             </div>
-            <div class="add-cart">+</div>
+            <!-- <div class="add-cart">+</div> -->
           </div>
         </div>
       </div>
@@ -175,44 +175,22 @@ export default {
       try {
         const res = await channelDetail({ id: 15 });
         if (res.code === 200 && res.data) {
-          const data = res.data;
+           console.log('-----')
+           console.log(res.data)
 
-          // 1. Banner
-          if (data.banner && data.banner.length) {
-            this.bannerImg = data.banner[0].img;
-          }
+          this.categoryList = res.data.modules[0].items
 
-
-
-          // 3. sections
-          if (data.sections && data.sections.length) {
-            // 每日特惠
-            const dailySec = data.sections.find(s => s.title === "每日特惠");
-            if (dailySec && dailySec.items) {
-              this.dailyList = dailySec.items.map(item => ({
-                id: item.product_id,
-                local_id: item.id,
-                name: item.title,
-                img: item.img,
-                price: item.sell_price,
-                market_price: item.market_price || "",
-                platform: 4
-              }));
-            }
-
-            // 底部商品瀑布流
-
-          }
+ 
         }
       } catch (err) {
         console.error("channelDetail 失败:", err);
       }
     },
-
     goCategory(item) {
+        console.log('跳转 shop_cate_id =', item.id, 'name =', item.name)
       this.$router.push({
-        path: "/HemaFreshnew",
-        query: { cate_id: item.id, title: item.name }
+        path: "/productList",
+        query: { shop_cate_id: item.id, title: item.name }
       });
     },
 

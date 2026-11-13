@@ -151,8 +151,6 @@ export default {
     },
 
 
-
-
     getCheckout() {
       if (!this.order_id) {
         this.loadingflag = false;
@@ -162,32 +160,57 @@ export default {
         console.log('[FlowerConfirmOrder] detail =', JSON.stringify(res))
         if (res.code == 200 && res.data) {
           const d = res.data;
+
+          // 1. 解析商品明细（接口是 items 数组）
+          const items = (d.items && d.items.length ? d.items : [{
+            title: d.product_title || '',
+            img: d.product_img || '',
+            sell_price: d.pay_amount || 0,
+            quantity: d.quantity || 1
+          }]).map((it, idx) => ({
+            id: it.sku_id || it.product_id || idx,
+            title: it.title || d.product_title || '',
+            img: it.img || d.product_img || '',
+            sell_price: Number(it.sell_price ?? d.pay_amount) || 0,
+            spec_name: it.spec_name || '',
+            quantity: Number(it.quantity) || 1,
+            product: {
+              title: it.title || d.product_title || '',
+              img: it.img || d.product_img || '',
+              sell_price: Number(it.sell_price ?? d.pay_amount) || 0,
+              platform: 5
+            }
+          }));
+
+          // 2. 总数量
+          const totalCount = items.reduce((s, i) => s + i.quantity, 0);
+
+          // 3. 渲染分组
           this.groupedOrderList = [{
             platform: 5,
-            platform_name: "鲜花",
-            items: [{
-              id: 0,
-              title: d.product_name || d.title || this.$route.query.item_name || '',
-              img: d.product_image || d.img || this.$route.query.item_img || '',
-              sell_price: Number(d.sell_price || d.discount_price || this.$route.query.item_price) || 0,
-              spec_name: '',
-              quantity: Number(d.num || d.quantity || this.$route.query.num) || 1,
-              product: {
-                title: d.product_name || this.$route.query.item_name || '',
-                img: d.product_image || this.$route.query.item_img || '',
-                sell_price: Number(d.sell_price || this.$route.query.item_price) || 0,
-                platform: 5
-              }
-            }],
-            totalPrice: Number(d.pay_amount || d.total_price || this.total) || 0,
-            goodsTotal: Number(d.pay_amount || d.total_price || this.total) || 0,
-            freight: "0.00",
-            count: Number(d.num || d.quantity || 1) || 1
+            platform_name: '鲜花',
+            items: items,
+            totalPrice: Number(d.pay_amount) || 0,
+            goodsTotal: Number(d.pay_amount) || 0,
+            freight: '0.00',
+            count: totalCount
           }];
-          this.orderList = this.groupedOrderList.flatMap(g => g.items);
-          this.total = Number(d.pay_amount || d.total_price || this.total) || 0;
+
+          this.orderList = items;
+          this.total = Number(d.pay_amount) || 0;
+          this.timeArrive = d.arrive_time_text || '';
+
+          // 4. 解析收货地址（接口在 receiver 里）
+          if (d.receiver) {
+            this.addrShow = {
+              id: '',
+              name: d.receiver.name || '',
+              phone: d.receiver.phone || '',
+              addr: d.receiver.detail || ''
+            };
+          }
+
           this.loadingflag = false;
-          this.timeArrive = res.data.arrive_time_text
         } else {
           this.loadingflag = false;
           this.$toast(res.msg || "获取订单失败");
@@ -197,6 +220,7 @@ export default {
         this.$toast("网络异常");
       });
     },
+
 
     toPay() {
       console.log("[ConfirmOrder] toPay 开始, isLoading =", this.isLoading)

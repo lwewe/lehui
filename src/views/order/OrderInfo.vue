@@ -16,92 +16,155 @@
 
       <!-- 有订单 -->
       <div v-else-if="orderList.length > 0" class="order-list">
-        <div class="order-card" v-for="(item, index) in orderList" :key="item.id" @click="goDetail(item)">
+        <div class="order-card" v-for="(item, index) in orderList" :key="item.id || index" @click="goDetail(item)">
 
           <!-- 头部：订单号和状态 -->
           <div class="card-header">
             <div class="order-no">
-              <span class="platform-tag">
-                <!-- {{ getPlatformName(item.platform) }} -->
-                <!-- {{ getPlatformName(item.platform, item.jd_type || item.items?.[0]?.jd_type) }} -->
-                  {{ formatPlatformTag(item.platform, item.jd_type || item.items?.[0]?.jd_type) }}
-
+              <!-- 如果是真·跨平台组合单，显示“组合”，否则显示单个平台 -->
+              <span class="platform-tag" v-if="item.isGroup">组合</span>
+              <span class="platform-tag" v-else>
+                {{ formatPlatformTag(item.platform, item.jd_type || item.items?.[0]?.jd_type) }}
               </span>
-              <!-- 订单号：{{ item.order_no }}  
-              <span class="copy-btn" @click="copyOrderNo(item.order_no)"> 复制</span> -->
             </div>
-            <div class="status" :class="getStatusClass(item.status)">
-              {{ item.status_name }}
-            </div>
+            <!-- <div class="status" :class="getStatusClass(item.status)">
+             -- {{ item.status_name }}
+            </div> -->
           </div>
 
-          <!-- 主体：商品信息 -->
           <!-- 主体：商品信息 -->
           <div class="card-body">
-            <div class="product-item" v-for="(goods, gIndex) in normalizeItems(item)" :key="gIndex">
-              <div class="product-img" :style="{ backgroundImage: `url(${goods.product_img})` }"></div>
-              <div class="product-detail">
-                <div class="title">{{ goods.product_title }}</div>
-                <div class="specs1" v-if="goods.spec_name"><span class="specs">{{ goods.spec_name }}</span></div>
-                <div class="price-line">
-                  <span class="unit-price"><span style="font-size: 10px;">￥</span>{{ goods.sell_price }}</span>
-                  <span class="count">x{{ goods.quantity }}</span>
+
+            <!-- A. 合并订单的渲染方式（天猫、京东、供应商混合平铺） -->
+            <!-- A. 合并订单的渲染方式（天猫、京东、供应商混合平铺） -->
+            <template v-if="item.isGroup">
+              <div class="group-block" v-for="(sub, sIndex) in item.groupList" :key="sIndex">
+                <div class="product-item" v-for="(goods, gIndex) in getSubItems(sub)" :key="gIndex"
+                  @click.stop="goDetail(sub)">
+                  <div class="product-img" :style="{ backgroundImage: `url(${goods.img})` }"></div>
+                  <div class="product-detail">
+                    <div class="title">
+                      <!-- 只有合并单才在每个子单的第一个商品前显示所属平台标识 -->
+                      <span v-if="gIndex === 0" class="mini-platform-tag">
+                        {{ formatPlatformTag(sub.platform, sub.jd_type) }}
+                      </span>
+                      {{ goods.title }}
+                    </div>
+                    <div class="specs1" v-if="goods.spec_name"><span class="specs">{{ goods.spec_name }}</span></div>
+                    <div class="price-line">
+                      <span class="unit-price"><span style="font-size: 10px;">￥</span>{{ goods.sell_price }}</span>
+                      <span class="count">x{{ goods.quantity }}</span>
+                    </div>
+
+
+                    <div class="express-action">
+                      <div class="status" :class="getStatusClass(sub.status)">
+                        {{ sub.status_name }}
+                      </div>
+                      <!-- <span class="express-text">{{ goods.express_company || '快递' }} <span v-if="goods.express_no">({{
+            goods.express_no }})</span></span> -->
+                      <span v-if="goods.express_no" @click.stop="goLogistics(goods.order_id, goods.delivery)"
+                        class="logistics-btn">查看物流</span>
+                    </div>
+
+                  </div>
                 </div>
               </div>
-            </div>
+            </template>
 
+            <!-- B. 普通单条订单（即便是纯京东买多个商品也是走这里） -->
+            <template v-else>
+              <div class="product-item" v-for="(goods, gIndex) in getSubItems(item)" :key="gIndex">
+                <div class="product-img" :style="{ backgroundImage: `url(${goods.img})` }"></div>
+                <div class="product-detail">
+                  <div class="title">{{ goods.title }}</div>
+                  <div class="specs1" v-if="goods.spec_name"><span class="specs">{{ goods.spec_name }}</span></div>
+                  <div class="price-line">
+                    <span class="unit-price"><span style="font-size: 10px;">￥</span>{{ goods.sell_price }}</span>
+                    <span class="count">x{{ goods.quantity }}</span>
+                  </div>
+
+
+                  <!-- <div class="express-action" v-if="item.status === 2 || item.status === 7 || goods.express_no"
+                    @click.stop="goLogistics(goods.order_id, goods.delivery)">
+                    <span class="express-text">{{ goods.express_company || '快递' }} <span v-if="goods.express_no">({{
+                      goods.express_no }})</span></span>
+                    <span class="logistics-btn">——=查看物流 ></span>
+                  </div> -->
+
+
+                </div>
+              </div>
+            </template>
 
           </div>
+
           <!-- 底部：金额和操作按钮 -->
           <div class="card-footer">
             <div class="total-price">
-              总计：<span class="price-num">{{ item.total_price || item.pay_amount || 0 }}</span>
+              <!-- 如果是组合单，用组合累加金额；否则用单条订单原有的总金额 -->
+              总计：<span class="price-num">{{ item.isGroup ? item.totalGroupPrice : (item.total_price || item.pay_amount
+                || 0)
+              }}</span>
               <span class="unit">元</span>
             </div>
 
-            <!-- 动态按钮区域 (根据接口文档的状态值) -->
+            <!-- 动态按钮区域 -->
+                       <!-- 动态按钮区域 -->
             <div class="action-buttons">
-
-              <!-- 有 can_pay / can_cancel 字段的（途虎等新业务），优先用它 -->
-              <template v-if="item.can_pay !== undefined || item.can_cancel !== undefined">
-                <button v-if="item.can_cancel === 1" class="btn"
-                  @click="handleAction('cancelOrder', item, $event)">取消订单</button>
-                <button v-if="item.can_pay === 1" class="btn-red"
-                  @click="handleAction('payOrder', item, $event)">立即支付</button>
+              <!-- 【1. 组合单专属判断逻辑】 -->
+              <template v-if="item.isGroup">
+                <!-- 只要组内有“待支付”的，就显示取消和支付 -->
+                <template v-if="item.groupList.some(sub => sub.status === -1)">
+                  <button class="btn" @click.stop="handleAction('cancelOrder', item, $event)">取消订单</button>
+                  <button class="btn-red" @click.stop="handleAction('payOrder', item, $event)">立即支付</button>
+                </template>
+                <!-- 如果组内都是待发货/待收货 -->
+                <template v-else-if="item.groupList.some(sub => sub.status === 1 || sub.status === 2)">
+                  <button class="btn-cl6" @click.stop="handleAction('confirmReceive', item, $event)">申请售后</button>
+                </template>
+                <!-- 其他状态 -->
+                <template v-else>
+                  <button class="btn" @click.stop="handleAction('viewDetail', item, $event)">查看详情</button>
+                </template>
               </template>
 
-              <!-- 兼容旧逻辑：没有 can_pay/can_cancel 字段的，用 status 判断 -->
+              <!-- 【2. 普通单原有逻辑 (保持原样)】 -->
+              <template v-else-if="item.can_pay !== undefined || item.can_cancel !== undefined">
+                <button v-if="item.can_cancel === 1" class="btn"
+                  @click.stop="handleAction('cancelOrder', item, $event)">取消订单</button>
+                <button v-if="item.can_pay === 1" class="btn-red"
+                  @click.stop="handleAction('payOrder', item, $event)">立即支付</button>
+              </template>
               <template v-else>
                 <template v-if="item.status === -1">
-                  <button class="btn" @click="handleAction('cancelOrder', item, $event)">取消订单</button>
-                  <button class="btn-red" @click="handleAction('payOrder', item, $event)">立即支付</button>
+                  <button class="btn" @click.stop="handleAction('cancelOrder', item, $event)">取消订单</button>
+                  <button class="btn-red" @click.stop="handleAction('payOrder', item, $event)">立即支付</button>
                 </template>
                 <template v-else-if="item.status === 1">
-
-                  <button class="btn-cl6" @click="handleAction('confirmReceive', item, $event)">申请售后</button>
-
+                  <button class="btn-cl6" @click.stop="handleAction('confirmReceive', item, $event)">申请售后</button>
                 </template>
                 <template v-else-if="item.status === 2">
-                  <button class="btn" @click="handleAction('viewLogistics', item, $event)">查看物流</button>
-                  <button class="btn-cl6" @click="handleAction('confirmReceive', item, $event)">申请售后</button>
-                  <!-- <button class="btn-red" @click="handleAction('confirmReceive', item, $event)">确认收货</button> -->
+                  <button v-if="!item.isGroup" class="btn"
+                    @click.stop="handleAction('viewLogistics', item, $event)">查看物流</button>
+                  <button class="btn-cl6" @click.stop="handleAction('confirmReceive', item, $event)">申请售后</button>
                 </template>
                 <template v-else-if="item.status === 7 || item.status === 'used'">
-                  <button class="btn" @click="handleAction('viewDetail', item, $event)">查看详情</button>
+                  <button class="btn" @click.stop="handleAction('viewDetail', item, $event)">查看详情</button>
                 </template>
                 <template v-else-if="item.status === 9">
                   <button class="btn">已取消</button>
                 </template>
                 <template v-else-if="item.status === 'useable'">
-                  <button class="btn-red" @click="handleAction('useNow', item, $event)">立即使用</button>
+                  <button class="btn-red" @click.stop="handleAction('useNow', item, $event)">立即使用</button>
                 </template>
               </template>
-
             </div>
 
 
 
           </div>
+
         </div>
       </div>
 
@@ -127,33 +190,25 @@
 </template>
 
 <script>
-// 1. 引入你项目规范中的接口
 import { orderList, orderCancel } from "@/api/lhjdtm";
 import { getPlatformName } from '@/utils/platform'
+
 export default {
   name: "OrderList",
   data() {
     return {
-      // 状态 Tab 映射
       tabs: [
         { label: "全部", value: "all" },
         { label: "待支付", value: "-1" },
-        // { label: "待发货", value: "1" },
         { label: "待收货", value: "2" },
-        { label: "待使用", value: "useable" },
         { label: "已完成", value: "7" },
-        // { label: "已取消", value: "9" }
       ],
       currentTab: "all",
-
-      // 列表数据
       orderList: [],
       page: 1,
       limit: 10,
       total: 0,
       loading: false,
-
-      // Toast
       toastVisible: false,
       toastText: "",
       toastTimer: null
@@ -161,17 +216,13 @@ export default {
   },
   computed: {
     hasMore() {
-      // 如果 total 为 0，使用 orderList.length 判断
       if (this.total > 0) {
         return this.orderList.length < this.total;
       }
-      // 如果后端没返回 total，根据最后一批数据量判断
       return this.orderList.length >= this.limit;
     }
   },
   mounted() {
-
-    // ✅ 从路由读取初始 Tab（兼容 status 和 tabIndex）
     const routeStatus = this.$route.query.status
     const routeTabIndex = this.$route.query.tabIndex
 
@@ -187,116 +238,110 @@ export default {
         this.currentTab = mapped
       }
     }
-
     this.fetchOrderList()
-
-    // this.fetchOrderList();
   },
   methods: {
+    goLogistics(orderId, delivery) {
+      if (!orderId) {
+        this.$toast('暂无物流信息');
+        return;
+      }
+      this.$router.push({
+        path: '/shipInfo',
+        query: { id: orderId, address: delivery }
+      });
+    },
     formatPlatformTag(platform, jdType) {
       const p = Number(platform);
-
-      // 1. 只要是京东系（1），无论什么自营、京造，统一显示“京东”
-      if (p === 1) {
-        return '京东';
-      }
-
-      // 2. 天猫（2），统一显示“天猫”
-      if (p === 2) {
-        return '天猫';
-      }
-
-      // 3. 其他平台（盒马、鲜花、途虎等）直接复用你原先引用的 getPlatformName
+      if (p === 1) return '京东';
+      if (p === 2) return '天猫';
+      if (p === 4) return '盒马';
+      if (p === 5) return '鲜花';
+      if (p === 12) return '途虎';
       return this.getPlatformName(platform, jdType);
     },
 
-    // normalizeItems(item) {
-    //   // 1. 有 items 数组，直接用
-    //   if (Array.isArray(item.items) && item.items.length) {
-    //     return item.items;
-    //   }
+    // 提取所有商品数据
+    getSubItems(order) {
+      if (order.items && Array.isArray(order.items) && order.items.length > 0) {
+        return order.items.map(goods => ({
+          img: goods.img || order.product_img || '',
+          title: goods.title || order.product_title || '',
+          spec_name: goods.spec_name || '',
+          sell_price: goods.sell_price ?? order.sell_price ?? '',
+          quantity: goods.quantity ?? order.quantity ?? 1,
 
-    //   // 2. 有 product 对象（盒马、途虎）
-    //   if (item.product && typeof item.product === 'object') {
-    //     return [{
-    //       product_title: item.product.title || item.product_title || '',
-    //       product_img: item.product.img || item.product_img || '',
-    //       sell_price: item.product.sell_price || item.sell_price || '',
-    //       quantity: item.quantity || 1,
-    //       spec_name: ''
-    //     }];
-    //   }
+          order_id: order.id || order.order_id,
 
-    //   // 3. product 为 null（鲜花），用根级字段
-    //   return [{
-    //     product_title: item.product_title || '',
-    //     product_img: item.product_img || '',
-    //     sell_price: item.sell_price || '',
-    //     quantity: item.quantity || 1,
-    //     spec_name: ''
-    //   }];
-    // },
-    normalizeItems(item) {
-      // 1. 有 items 数组：接口里字段是 title / img，统一映射为模板需要的字段
-      if (Array.isArray(item.items) && item.items.length) {
-        return item.items.map(goods => ({
-          product_title: goods.title || goods.product_title || '',
-          product_img: goods.img || goods.product_img || '',
-          sell_price: goods.sell_price ?? '',
-          quantity: goods.quantity ?? 1,
-          spec_name: goods.spec_name || ''
+          express_company: goods.express_company || order.express_company || '',
+          express_no: goods.express_no || order.express_no || '',
+          delivery: goods.delivery || order.delivery || null
+
         }));
       }
-
-      // 2. 有 product 对象（盒马、途虎等）
-      if (item.product && typeof item.product === 'object') {
+      if (order.product) {
         return [{
-          product_title: item.product.title || item.product_title || '',
-          product_img: item.product.img || item.product_img || '',
-          sell_price: item.product.sell_price ?? item.sell_price ?? '',
-          quantity: item.quantity ?? 1,
-          spec_name: ''
+          img: order.product.img || order.product_img || '',
+          title: order.product.title || order.product_title || '',
+          spec_name: '',
+          sell_price: order.product.sell_price ?? order.sell_price ?? '',
+          quantity: order.quantity ?? 1
         }];
       }
-
-      // 3. product 为 null（鲜花等），用根级字段
       return [{
-        product_title: item.product_title || '',
-        product_img: item.product_img || '',
-        sell_price: item.sell_price ?? '',
-        quantity: item.quantity ?? 1,
-        spec_name: ''
+        img: order.product_img || '',
+        title: order.product_title || '',
+        spec_name: '',
+        sell_price: order.sell_price ?? '',
+        quantity: order.quantity ?? 1
       }];
     },
+
     getPlatformName,
-    // 订单卡片整体点击，跳转详情页
+
     goDetail(item) {
-      // 途虎没有详情页，不跳转
       if (item.biz === 'tuhu' || Number(item.platform) === 12) {
-        this.$toast('途虎订单暂不支持查看详情');
+        this.$router.push({ path: '/orderDetail', query: { order_id: item.order_id } });
+        return;
+      }
+      // 组合单点击跳转第一个商品或主订单
+      if (item.isGroup) {
+        this.$router.push({ path: '/orderDetail', query: { id: item.groupList[0].id } });
         return;
       }
       this.$router.push({ path: '/orderDetail', query: { id: item.id } });
     },
 
-    // 按钮点击事件处理
-    // 按钮点击事件处理（根据不同操作分别处理）
     handleAction(action, item, event) {
-      // 阻止冒泡（防止触发卡片点击）
       if (event && event.stopPropagation) event.stopPropagation()
 
-      if (action === 'payOrder') {
-        const platform = Number(item.platform);
+      const isGroup = item.isGroup;
+      const targetGroupId = isGroup ? (item.group_id || item.groupList[0].group_id) : null;
+      const targetId = item.id;
 
-        // ✅ 途虎 12
+      if (action === 'payOrder') {
+        // 1. 组合单去支付，传 group_id
+        if (isGroup) {
+          this.$router.push({
+            path: '/confirmOrder',
+            query: {
+              group_id: targetGroupId,
+              total_price: item.totalGroupPrice
+            }
+          });
+          return;
+        }
+
+        // 2. 普通单去支付
+        const platform = Number(item.platform);
         if (platform === 12 || item.biz === 'tuhu') {
-          const goods = this.normalizeItems(item)[0] || {};
+          const goods = this.getSubItems(item)[0] || {};
           this.$router.push({
             path: '/TuHuConfirmOrder',
             query: {
               order_id: item.id,
               order_no: item.order_no,
-              item_name: goods.product_title || '',
+              item_name: goods.title || '',
               item_price: goods.sell_price || item.pay_amount || 0,
               item_face: item.pay_amount || '',
               uuid: item.recharge_uuid || item.uuid || ''
@@ -305,64 +350,31 @@ export default {
           return;
         }
 
-        // ✅ 盒马 4
 
-        // 在 handleAction 里针对盒马的跳转部分：
         if (platform === 4) {
-          const q = {
-            order_id: item.id,
-            total_price: item.total_price || item.pay_amount,
-            order_no: item.order_no
-          };
-
-          // 🚨 解析地址并拆分传给确认页
-          let delivery = {};
-          try {
-            delivery = typeof item.delivery === 'string' ? JSON.parse(item.delivery) : (item.delivery || {});
-          } catch (e) { }
-
-          if (delivery) {
-            q.address_id = delivery.id;
-            q.consignee_name = delivery.name;
-            q.consignee_phone = delivery.phone;
-            q.address_detail = delivery.detail || delivery.addr;
-            q.division_code = delivery.divisionCode || delivery.division_code;
-            q.town_division_code = delivery.townDivisionCode || delivery.town_division_code;
-          }
-
-          this.$router.push({ path: '/ConfirmOrderHema', query: q });
-          return;
+          this.$router.push({
+            path: '/confirmOrderhm',
+            query: {
+              order_id: item.id,
+              total_price: item.total_price ?? item.pay_amount ?? 0,
+              order_no: item.order_no
+            }
+          });
+          return; // ✅ 关键：盒马跳完立即返回，避免穿透到普通单
         }
-        //   鲜花 5
-
         if (platform === 5) {
-          const q = {
-            order_id: item.id,
-            order_no: item.order_no,
-            total_price: item.total_price,
-            item_name: item.product_title || '',
-            item_img: item.product_img || '',
-            item_price: item.sell_price || item.total_price || 0,
-            num: item.quantity || 1
-          };
-
-          // ✅ 把地址从 delivery 里解析出来带上
-          let delivery = {};
-          try {
-            delivery = typeof item.delivery === 'string' ? JSON.parse(item.delivery) : (item.delivery || {});
-          } catch (e) { }
-
-          q.addr_name = delivery.name || '';
-          q.addr_phone = delivery.phone || '';
-          q.addr_text = delivery.detail || delivery.addr || '';
-          // 鲜花没有 address_id，可以传空，也可以传 delivery.id
-          q.address_id = delivery.id || '';
-
-          this.$router.push({ path: '/FlowerConfirmOrder', query: q });
-          return;
+          this.$router.push({
+            path: '/FlowerConfirmOrder',
+            query: {
+              order_id: item.id,
+              total_price: item.total_price ?? item.pay_amount ?? 0,
+              order_no: item.order_no
+            }
+          });
+          return; // ✅ 关键：鲜花同理
         }
 
-        // ✅ 其他（京东/天猫/京造/供应商）→ 默认确认页
+        // 普通单（京东/天猫/供应商/其他）
         this.$router.push({
           path: '/confirmOrder',
           query: {
@@ -371,18 +383,31 @@ export default {
             order_no: item.order_no
           }
         });
+        // if (platform === 4) { return; } // 盒马原逻辑
+        // if (platform === 5) { return; } // 鲜花原逻辑
+
+        // this.$router.push({
+        //   path: '/confirmOrder',
+        //   query: {
+        //     order_id: item.id,
+        //     total_price: item.total_price,
+        //     order_no: item.order_no
+        //   }
+        // });
       }
+
       else if (action === 'cancelOrder') {
-        // 待支付 - 取消订单（调用取消接口）
         this.$dialog.confirm({
           title: '取消订单',
           message: '确定要取消该订单吗？',
           confirmButtonColor: 'red'
         }).then(() => {
-          orderCancel({ id: item.id }).then(res => {
+          // ✅ 组合单传 group_id，普通单传 id
+          const cancelParams = isGroup ? { group_id: targetGroupId } : { id: targetId };
+
+          orderCancel(cancelParams).then(res => {
             if (res.code == 200) {
               this.$toast(res.msg || '订单已取消')
-              // 取消成功后重新刷新列表
               this.fetchOrderList()
             } else {
               this.$toast(res.msg || '取消失败')
@@ -390,27 +415,22 @@ export default {
           })
         }).catch(() => { })
       }
+
       else if (action === 'confirmReceive') {
-
         window.location.href = localStorage.getItem("kefu")
-
       }
       else if (action === 'viewLogistics') {
-        // 待收货 - 查看物流
         this.$router.push({ path: '/shipInfo', query: { id: item.id, address: item.delivery } })
       }
       else {
-        // 其他所有情况（查看详情、确认收货、提醒发货、再次购买、在线咨询等）
-        // 统一跳转订单详情页
         if (item.biz === 'tuhu' || Number(item.platform) === 12) {
           this.$toast('途虎订单暂不支持查看详情');
           return;
         }
-        // 其他平台统一跳订单详情
         this.$router.push({ path: '/orderDetail', query: { id: item.id } })
       }
     },
-    // 切换 Tab
+
     switchTab(value) {
       this.currentTab = value;
       this.page = 1;
@@ -418,65 +438,6 @@ export default {
       this.fetchOrderList();
     },
 
-    // 获取订单列表 (对接文档接口)2026-10-20
-    // async fetchOrderList() {
-    //   if (this.page === 1 && this.orderList.length === 0) {
-    //     this.loading = true;
-    //   }
-
-    //   try {
-    //     const res = await orderList({
-    //       status: this.currentTab,
-    //       page: this.page,
-    //       limit: this.limit
-    //     });
-
-    //     if (res.code === 200) {
-    //       // 根据接口文档，data 可能直接是数组
-    //       let list = [];
-    //       let total = 0;
-
-    //       if (Array.isArray(res.data)) {
-    //         // 如果 data 直接是数组
-    //         list = res.data;
-    //         total = res.data.length;
-    //       } else if (res.data && Array.isArray(res.data.list)) {
-    //         // 如果 data 是对象，包含 list
-    //         list = res.data.list;
-    //         total = res.data.total || res.data.list.length;
-    //       } else if (res.data && Array.isArray(res.data.data)) {
-    //         // 如果 data.data 是数组
-    //         list = res.data.data;
-    //         total = res.data.total || res.data.data.length;
-    //       } else {
-    //         list = [];
-    //         total = 0;
-    //       }
-
-    //       // 如果列表为空，显示空状态
-    //       if (this.page === 1) {
-    //         this.orderList = list;
-    //       } else {
-    //         this.orderList = [...this.orderList, ...list];
-    //       }
-    //       this.total = total;
-
-    //       // 如果加载的列表为空，提示没有更多
-    //       if (list.length === 0 && this.page > 1) {
-    //         this.showToast('没有更多了');
-    //         this.page--;
-    //       }
-    //     } else {
-    //       this.showToast(res.msg || '获取订单失败');
-    //     }
-    //   } catch (error) {
-    //     console.error('获取订单失败', error);
-    //     this.showToast('网络异常，请稍后重试');
-    //   } finally {
-    //     this.loading = false;
-    //   }
-    // },
-    //调整的数据结构
     async fetchOrderList() {
       if (this.page === 1 && this.orderList.length === 0) {
         this.loading = true;
@@ -495,25 +456,58 @@ export default {
           const payload = res.data;
 
           if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
-            // 标准分页结构：{ total, per_page, current_page, last_page, data: [], list: [] }
-            if (Array.isArray(payload.data)) {
-              list = payload.data;
-            } else if (Array.isArray(payload.list)) {
-              list = payload.list;
-            }
+            if (Array.isArray(payload.data)) list = payload.data;
+            else if (Array.isArray(payload.list)) list = payload.list;
             total = Number(payload.total) || 0;
           } else if (Array.isArray(payload)) {
-            // 兼容 data 直接是数组
             list = payload;
             total = payload.length;
           }
 
+          // 【核心聚合逻辑升级版】
+          const mergedList = [];
+          const groupMap = {};
+
+          list.forEach(item => {
+            const gid = item.group_id;
+
+            if (gid && String(gid) !== "0") {
+              if (!groupMap[gid]) {
+                groupMap[gid] = {
+                  ...item,
+                  groupList: [item],
+                  totalGroupPrice: Number(item.pay_amount || item.total_price || 0)
+                };
+                mergedList.push(groupMap[gid]);
+              } else {
+                groupMap[gid].groupList.push(item);
+                groupMap[gid].totalGroupPrice += Number(item.pay_amount || item.total_price || 0);
+              }
+            } else {
+              mergedList.push(item);
+            }
+          });
+
+          // 检查每个合并的组是否真的是跨平台组合
+
+          mergedList.forEach(item => {
+            if (item.groupList && item.groupList.length > 1) {
+              // 只要 groupList 里有多条订单，统一视为组合单（不管是同平台还是跨平台）
+              item.isGroup = true;
+              item.totalGroupPrice = Number(item.totalGroupPrice.toFixed(2));
+            } else {
+              // 只有一条订单，或者没有 group_id 的，保持普通单
+              item.isGroup = false;
+            }
+          });
+
+
+
           if (this.page === 1) {
-            this.orderList = list;
+            this.orderList = mergedList;
           } else {
-            // 按 id 去重，防止后端重复返回导致列表出现重复订单
             const existingIds = new Set(this.orderList.map(item => item.id));
-            const newItems = list.filter(item => !existingIds.has(item.id));
+            const newItems = mergedList.filter(item => !existingIds.has(item.id));
             this.orderList = [...this.orderList, ...newItems];
           }
 
@@ -533,39 +527,17 @@ export default {
         this.loading = false;
       }
     },
-    // 加载更多
+
     loadMore() {
       if (!this.hasMore || this.loading) return;
       this.page++;
-      console.log('加载第', this.page, '页')
       this.fetchOrderList();
     },
 
-    // 根据状态返回颜色
     getStatusClass(status) {
       if (status === 7 || status === 'used' || status === 9) return "status-gray";
       if (status === -1 || status === 'useable' || status === 1 || status === 2) return "status-red";
       return "";
-    },
-
-    // 按钮点击事件处理
-
-
-    // 复制订单号
-    async copyOrderNo(orderNo) {
-      try {
-        await navigator.clipboard.writeText(orderNo);
-        this.showToast("复制成功");
-      } catch (err) {
-        // 降级方案
-        const textArea = document.createElement("textarea");
-        textArea.value = orderNo;
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-        this.showToast("复制成功");
-      }
     },
 
     showToast(msg) {
@@ -593,10 +565,21 @@ export default {
   font-weight: 400;
   line-height: 14px;
   padding: 1px 4px;
-
 }
 
-/* 样式部分保持不变 */
+.mini-platform-tag {
+  display: inline-block;
+  background-color: #DD0A09;
+  color: #ffffff;
+  border-radius: 2px;
+  font-size: 10px;
+  line-height: 14px;
+  padding: 1px 4px;
+  margin-right: 6px;
+  font-weight: 400;
+  vertical-align: middle;
+}
+
 .order-page {
   max-width: 600px;
   margin: 0 auto;
@@ -615,7 +598,6 @@ export default {
   z-index: 10;
   border-bottom: 1px solid #f0f0f0;
   overflow-x: auto;
-  /* 防止 Tab 过多溢出 */
   white-space: nowrap;
 }
 
@@ -669,13 +651,6 @@ export default {
   align-items: center;
 }
 
-.copy-btn {
-  font-size: 12px;
-  color: #666;
-  margin-left: 6px;
-  cursor: pointer;
-}
-
 .status {
   font-weight: 500;
 }
@@ -685,17 +660,8 @@ export default {
 }
 
 .status-red {
-  color: #ff4d4f;
+  color: #b5691a;
 }
-
-
-
-
-
-
-
-
-
 
 .card-footer {
   display: flex;
@@ -770,9 +736,6 @@ export default {
   opacity: 0.8;
 }
 
-
-
-
 .state-box {
   text-align: center;
   padding: 50px 0;
@@ -794,7 +757,6 @@ export default {
 }
 
 .empty-text {
-
   font-size: 14px;
   color: #999;
 }
@@ -831,11 +793,20 @@ export default {
   opacity: 0;
 }
 
-
-/*  */
 .card-body {
   padding-bottom: 12px;
   border-bottom: 1px solid #f9f9f9;
+}
+
+.group-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.group-block+.group-block {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed #f0f0f0;
 }
 
 .product-item {
@@ -844,7 +815,7 @@ export default {
 }
 
 .product-item+.product-item {
-  border-top: 1px dashed #f0f0f0;
+  margin-top: 4px;
 }
 
 .product-img {
@@ -902,5 +873,25 @@ export default {
   color: #999;
 }
 
-/*  */
+
+.express-action {
+  display: flex;
+  justify-content: space-between;
+  /* align-items: center;*/
+  margin-top: 8px;
+  text-align: right;
+  padding: 0;
+  /* background-color: #f8f8f8; */
+  /* border-radius: 4px; */
+  font-size: 12px;
+}
+
+.express-text {
+  color: #666;
+}
+
+.logistics-btn {
+  color: #11141a;
+  font-weight: 500;
+}
 </style>

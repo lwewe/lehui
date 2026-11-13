@@ -1,6 +1,6 @@
 <template>
   <div class="conPage">
-    <NProgress v-if="loadingflag"/>
+    <NProgress v-if="loadingflag" />
     <div class="addressBox">
       <div class="consignee">
         <div class="consigneeText">收货人</div>
@@ -14,68 +14,56 @@
           <input class="inp" type="number" v-model="phone" placeholder="请输入收货人手机号码">
         </div>
       </div>
-      <div class="consignee consignee2" @click="changeAddress=true">
-        <div class="consigneeText" @click.stop="changeAddress=false">所在地区</div>
-        <div class="inpBox selectAddress" v-if="!allAddress">
-          请选择地址
-        </div>
-        <div class="inpBox selectAddress2" v-else>
-          {{ allAddress }}
-        </div>
-        <div>
-          <van-icon name="arrow"/>
-        </div>
+      <div class="consignee consignee2" @click="changeAddress = true">
+        <div class="consigneeText" @click.stop="changeAddress = false">所在地区</div>
+        <div class="inpBox selectAddress" v-if="!allAddress">请选择地址</div>
+        <div class="inpBox selectAddress2" v-else>{{ allAddress }}</div>
+        <div><van-icon name="arrow" /></div>
       </div>
+
+
+      <div class="consignee" @click="goMapPicker">
+        <div class="consigneeText">地图选点</div>
+        <div class="inpBox selectAddress" v-if="!lat || !lng" :key="'empty'">点击在地图上选择位置</div>
+        <!-- <div class="inpBox selectAddress2" v-else :key="lat + lng">{{ lng }}, {{ lat }}</div> -->
+
+        <div class="inpBox selectAddress2" v-else
+          style="color: #333; text-overflow: ellipsis; white-space: nowrap; overflow: hidden;">
+          {{ mapAddress }}
+        </div>
+
+        <div><van-icon name="arrow" /></div>
+      </div>
+
+
+
       <div class="consignee" style="align-items: flex-start">
         <div class="consigneeText">详细地址</div>
-        <div class="inpBox" @click="getLocation">
-          <textarea v-model="detailAddress" class="inp textarea" type="text"
-                    placeholder="小区、楼栋号、单元室等"></textarea>
-
-          <!--    当前定位的弹窗 :disabled="showAddress"-->
-          <!--          <div class="popupBox2">-->
-          <!--            <van-popup v-model="showAddress" position="top">-->
-          <!--              <div class="popup">-->
-          <!--                <div class="brandBox" style="margin: 0;">-->
-          <!--                  <div>{{ address }}-->
-          <!--                  </div>-->
-          <!--                </div>-->
-          <!--                <div class="retractBox">-->
-          <!--                  <div class="retract" @click="cancellation">取消</div>-->
-          <!--                  <div class="retract retract2" @click="filling">填入</div>-->
-          <!--                </div>-->
-          <!--              </div>-->
-          <!--            </van-popup>-->
-          <!--          </div>-->
+        <div class="inpBox">
+          <textarea v-model="detailAddress" class="inp textarea" placeholder="小区、楼栋号、单元室等"></textarea>
         </div>
       </div>
-      <!--      <div class="consignee consignee2">-->
-      <!--        <div class="consigneeText">门牌号</div>-->
-      <!--        <div class="inpBox">-->
-      <!--          <input class="inp" type="text" placeholder="例如:3号楼1单元1201">-->
-      <!--        </div>-->
-      <!--      </div>-->
+
       <div class="consignee">
         <div class="consigneeText">地址标签</div>
         <div class="inpBox labelBox">
-          <div class="label" :class="{label1:selectId==item.id&&item.checked}" @click="changeSelect(item.id,item.text)"
-               v-for="item in labelList" :key="item.id">{{ item.text }}
-          </div>
+          <div class="label" :class="{ label1: selectId == item.id && item.checked }"
+            @click="changeSelect(item.id, item.text)" v-for="item in labelList" :key="item.id">{{ item.text }}</div>
           <div class="label" v-if="!isAdd" @click="changeAdd">+</div>
           <div v-else>
             <div class="label determine" v-if="isExit" style="width: inherit;">
-              <div class="comfireBox" style="width: inherit;" :style="'background-color:'+ labelColor2+';color:'+Color"
-                   @click="changeWrite">{{ labelText }}
+              <div class="comfireBox" style="width: inherit;"
+                :style="'background-color:' + labelColor2 + ';color:' + Color" @click="changeWrite">{{ labelText }}
               </div>
-              <div class="comfire" :style="'background-color:'+ labelColor"
-                   style="width: inherit;border-left: 1px solid white" @click="exit">编辑
-              </div>
+              <div class="comfire" :style="'background-color:' + labelColor"
+                style="width: inherit;border-left: 1px solid white" @click="exit">编辑</div>
             </div>
             <div class="label determine" v-else>
-              <div class="comfireBox"><input maxlength="5" x @input="changeLabel" v-model="labelText" class="comfireInp"
-                                             type="text"
-                                             placeholder="请输入标签名称，最多5个字"></div>
-              <div class="comfire" :style="'background-color:'+ labelColor" @click="comfire">确定</div>
+              <div class="comfireBox">
+                <input maxlength="5" @input="changeLabel" v-model="labelText" class="comfireInp" type="text"
+                  placeholder="请输入标签名称，最多5个字">
+              </div>
+              <div class="comfire" :style="'background-color:' + labelColor" @click="comfire">确定</div>
             </div>
           </div>
         </div>
@@ -86,302 +74,328 @@
           <div class="info">每次下单会默认推荐使用该地址</div>
         </div>
         <div>
-          <van-switch @change="changeSwitch" active-color="#DF5756"
-                      inactive-color="#FFFFFF" v-model="checked"/>
+          <van-switch @change="changeSwitch" active-color="#DF5756" inactive-color="#FFFFFF" v-model="checked" />
         </div>
       </div>
     </div>
-    <!--    保存地址-->
+    <!-- 保存地址 -->
     <div class="addNewAddress">
       <div class="btn" @click="addaddress">保存地址</div>
     </div>
-    <!--      选择省市区街道-->
+    <!-- 选择省市区街道 -->
     <div class="popupBox3">
       <van-popup v-model="changeAddress" position="bottom">
         <div>
           <Address @getAddress="getAddress" @chanegTown="chanegTown"></Address>
-          <div class="close" @click="changeAddress=false">
-            <van-icon size="18px" name="cross"/>
+          <div class="close" @click="changeAddress = false">
+            <van-icon size="18px" name="cross" />
           </div>
         </div>
       </van-popup>
     </div>
   </div>
 </template>
+
 <script>
 import Address from "@/components/Address.vue";
-import {addscaddress, editscaddress, showscaddress} from "@/api/cakeAddress";
+import { addAddress, editAddress, getAddressDetail } from "@/api/lehuicake";
 
 export default {
   name: "AddAdress",
-  components: {Address},
+  components: { Address },
   data() {
     return {
+      mapAddress: "",
+      lat: "",
+      lng: "",
       checked: false,
       labelText: "",
       labelColor: "",
       labelColor2: "",
       labelList: [
-        {
-          id: 1,
-          text: "家",
-          checked: false
-        }, {
-          id: 2,
-          text: "公司",
-          checked: false
-        }, {
-          id: 3,
-          text: "学校",
-          checked: false
-        },
+        { id: 1, text: "家", checked: false },
+        { id: 2, text: "公司", checked: false },
+        { id: 3, text: "学校", checked: false }
       ],
       selectId: 0,
       isAdd: false,
       isExit: false,
       Color: "",
       isChange: false,
-      showAddress: false,
-      address: "",
       detailAddress: "",
-      isCancel: false,
       changeAddress: false,
       allAddress: "",
-      province_id: "",
-      city_id: "",
-      county_id: "",
-      town_id: "",
+      cityId: "",
+      cityName: "",
+      areaId: "",
+      areaName: "",
       userName: "",
       phone: "",
       changeText: "",
+      tagText: "",
       is_default: 0,
       id: "",
       change: null,
       listlength: null,
       gid: "",
       loadingflag: true
+    };
+  },
+  // 替换原来的 watch 和 methods 及生命周期
+  watch: {
+    '$route'(to, from) {
+      // 页面路由一旦变化，重新拉取数据
+      this.fetchMapData();
     }
   },
   methods: {
-    // 添加地址
+    // 核心方法：专门去读地图缓存
+    fetchMapData() {
+      const tempLat = sessionStorage.getItem("temp_map_lat");
+      const tempLng = sessionStorage.getItem("temp_map_lng");
+
+      if (tempLat && tempLng) {
+        this.lat = tempLat;
+        this.lng = tempLng;
+        // 清理缓存
+        sessionStorage.removeItem("temp_map_lat");
+        sessionStorage.removeItem("temp_map_lng");
+      }
+    },
+
     addaddress() {
-      var reg_tel = /^(13[0-9]|14[01456879]|15[0-35-9]|16[2567]|17[0-8]|18[0-9]|19[0-35-9])\d{8}$/;
-      if (this.userName == "") {
-        this.$toast("请填写您的收货人姓名");
-        return
-      }
-      if (!reg_tel.test(this.phone)) {
-        this.$toast("请正确填写您的手机号码");
-        return
-      }
-      if (this.allAddress == "") {
-        this.$toast("请选择您的所在地区");
-        return
-      }
-      if (!this.county_id) {
-        this.$toast("请重新选择您的所在地区");
-        return
-      }
-      if (this.detailAddress == "") {
-        this.$toast("请填写您的详细地址");
-        return
-      }
-      let data = {
-        name: this.userName,  //    是	string	姓名
-        phone: this.phone,//    是	string	手机号
-        city: this.city_id,	//    是	string	市ID
-        area: this.county_id,//    是	string	县/区ID
-        addr: this.detailAddress,//    是	string	详细地址
-        tag: this.labelText ? this.labelText : this.changeText,	//   是	string	标签（家，公司，学校）
-        is_default: this.is_default //是	string	默认地址 1-默认 0-不默认 传1和
-      }
+      const reg_tel = /^(13[0-9]|14[01456879]|15[0-35-9]|16[2567]|17[0-8]|18[0-9]|19[0-35-9])\d{8}$/;
+      if (!this.userName) { return this.$toast("请填写您的收货人姓名"); }
+      if (!reg_tel.test(this.phone)) { return this.$toast("请正确填写您的手机号码"); }
+      if (!this.allAddress || !this.cityName || !this.areaName) { return this.$toast("请选择您的所在地区"); }
+      if (!this.detailAddress || this.detailAddress.trim().length < 2) { return this.$toast("请填写完整的详细地址"); }
+      if (!this.lat || !this.lng) { return this.$toast("请在地图上选择位置"); }
+
+      const data = {
+        name: String(this.userName),
+        phone: String(this.phone),
+        city: String(this.cityName),
+        area: String(this.areaName),
+        addr: String(this.detailAddress.trim()),
+        tag: String(this.tagText || "家"),
+        is_default: String(this.is_default),
+        lat: String(this.lat),
+        lng: String(this.lng)
+      };
+
       if (!this.id) {
-        addscaddress(data).then(res => {
+        addAddress(data).then(res => {
+          this.$toast(res.msg || (res.code == 200 ? "添加成功" : "添加失败"));
           if (res.code == 200) {
-            this.$toast(res.data)
             setTimeout(() => {
-              if (this.change == 0 && this.listlength == 0) {
-                this.$router.go(-2)
-              } else {
-                this.$router.go(-1)
-              }
-            }, 1000)
-          } else {
-            this.$toast(res.data)
+              // ✅ 核心修改：不要用 go(-1)，直接指定跳转到列表页
+              this.$router.replace({
+                path: '/cakeAddressList',
+                query: { change: 0 } // 带上 change=0 参数，通知列表页刷新
+              });
+            }, 1000); // 延迟 1 秒让用户看清提示
           }
-        })
+        });
       } else {
-        editscaddress({
-          ...data,
-          id: this.id,
-          gid: this.gid
-        }).then(res => {
+        // 编辑地址成功后的跳转
+        editAddress({ ...data, id: this.id, gid: this.gid }).then(res => {
+          this.$toast(res.msg || (res.code == 200 ? "修改成功" : "修改失败"));
           if (res.code == 200) {
-            this.$toast(res.data)
             setTimeout(() => {
-              this.$router.go(-1)
-            }, 1000)
-          } else {
-            this.$toast(res.data)
+              // ✅ 同样直接跳转
+              this.$router.replace({
+                path: '/cakeAddressList',
+                query: { change: 0 }
+              });
+            }, 1000);
           }
-        })
+        });
       }
     },
-    changeSwitch(e) {
-      if (e) {
-        this.is_default = 1
-      } else {
-        this.is_default = 0
-      }
-    },
-    chanegTown(e) {
-      this.changeAddress = e
-    },
+
+    changeSwitch(e) { this.is_default = e ? 1 : 0; },
+    chanegTown(e) { this.changeAddress = e; },
     getAddress(e, ids) {
-      this.allAddress = e
-      this.city_id = ids.city_id
-      this.county_id = ids.county_id
+      this.allAddress = e;
+      this.cityId = ids.city_id || "";
+      this.cityName = ids.city_name || "";
+      this.areaId = ids.county_id || "";
+      this.areaName = ids.county_name || "";
     },
-    changeLabel() {
-      if (this.labelText != "") {
-        this.labelColor = "#DF5756"
-      } else {
-        this.labelColor = "#EAEAEA"
-      }
-    },
+    changeLabel() { this.labelColor = this.labelText !== "" ? "#DF5756" : "#EAEAEA"; },
     changeSelect(id, text) {
-      this.isChange = false
+      this.isChange = false;
       if (!this.isChange && this.isExit) {
-        this.labelColor = "#2D2D2D"
-        this.labelColor2 = "#F6F6F6"
-        this.Color = "#000000"
+        this.labelColor = "#2D2D2D";
+        this.labelColor2 = "#F6F6F6";
+        this.Color = "#000000";
       }
-      // if (this.selectId == 0) {
-      this.selectId = id
-      this.changeText = text
-      // } else {
-      //   this.selectId = 0
-      // }
-      this.labelList.filter((item) => {
-        if (item.id != id) {
-          item.checked = false
-          // 通过checked的值改变按钮颜色
-        }
-      })
-      this.labelList.filter((item) => {
-        if (item.id === id) {
-          item.checked = !item.checked
-          // 通过checked的值改变按钮颜色
-        }
-      })
+      this.selectId = id;
+      this.changeText = text;
+      this.labelList.forEach(item => {
+        if (item.id != id) item.checked = false;
+      });
+      this.labelList.forEach(item => {
+        if (item.id === id) item.checked = !item.checked;
+      });
+      const hit = this.labelList.find(i => i.id === id);
+      this.tagText = hit && hit.checked ? hit.text : "";
     },
     changeAdd() {
-      this.isAdd = true
-      this.selectId = 0
+      this.isAdd = true;
+      this.selectId = 0;
+      this.labelList.forEach(i => (i.checked = false));
+      this.tagText = "";
     },
     comfire() {
-      this.selectId = 0
-      this.changeText = ""
-      if (this.labelText == "") {
-        return
-      }
-      this.isExit = true
-      this.isChange = true
-      if (this.isChange) {
-        this.labelColor = "#3392FE"
-        this.labelColor2 = "#3392FE"
-        this.Color = "#fff"
-      } else {
-        this.labelColor = "#2D2D2D"
-      }
-
+      this.selectId = 0;
+      this.changeText = "";
+      if (this.labelText === "") return;
+      this.isExit = true;
+      this.isChange = true;
+      this.labelColor = "#3392FE";
+      this.labelColor2 = "#3392FE";
+      this.Color = "#fff";
+      this.tagText = this.labelText;
     },
     changeWrite() {
-      this.isChange = !this.isChange
+      this.isChange = !this.isChange;
       if (this.isChange) {
-        this.labelColor = "#3392FE"
-        this.labelColor2 = "#3392FE"
-        this.Color = "#fff"
-        this.selectId = 0
+        this.labelColor = "#3392FE";
+        this.labelColor2 = "#3392FE";
+        this.Color = "#fff";
+        this.selectId = 0;
+        this.tagText = this.labelText;
       } else {
-        this.labelColor = "#2D2D2D"
-        this.labelColor2 = "#F6F6F6"
-        this.Color = "#000000"
+        this.labelColor = "#2D2D2D";
+        this.labelColor2 = "#F6F6F6";
+        this.Color = "#000000";
       }
+    },
+    goMapPicker() {
+      sessionStorage.setItem("cakeAddressDraft", JSON.stringify({
+        userName: this.userName, phone: this.phone, detailAddress: this.detailAddress,
+        allAddress: this.allAddress, cityId: this.cityId, cityName: this.cityName,
+        areaId: this.areaId, areaName: this.areaName, tagText: this.tagText,
+        selectId: this.selectId, is_default: this.is_default, checked: this.checked,
+        labelText: this.labelText, isAdd: this.isAdd, isExit: this.isExit,
+        lat: this.lat, lng: this.lng, gid: this.gid,
+        mapAddress: this.mapAddress
+      }));
+      this.$router.push("/MapPickercake");
     },
     exit() {
-      this.selectId = 0
-      this.isExit = false
-      this.labelColor = "#DF5756"
+      this.selectId = 0;
+      this.isExit = false;
+      this.labelColor = "#DF5756";
     },
-    getLocation() {
-      if (this.detailAddress || this.isCancel) {
-        return
-      }
-      this.showAddress = true
-    },
-    cancellation() {
-      this.showAddress = false
-      this.isCancel = true
-    },
-    filling() {
-      this.detailAddress = this.address
-      this.isCancel = true
-      this.showAddress = false
-    },
-    //   编辑的时候回显
     getshowscaddress(id) {
-      showscaddress({
-        id
-      }).then(res => {
-        this.loadingflag = false
+      getAddressDetail(id).then(res => {
         if (res.code == 200) {
-          let address = res.data.address
-          let city = res.data.address.city
-          let county = res.data.address.area
-          this.city_id = city
-          this.county_id = county
-          this.userName = address.name
-          this.gid = address.gid
-          this.phone = address.phone
-          this.detailAddress = address.addr
-          if (address.tag) {
-            if (this.labelList.filter(item => address.tag == item.text).length == 0) {
-              this.labelText = address.tag
-              this.isAdd = true
-              this.isExit = true
-              this.labelColor = "#3392FE"
-              this.labelColor2 = "#3392FE"
-              this.Color = "#fff"
+          const a = res.data.address;
+          this.cityId = a.city_id;
+          this.cityName = a.city;
+          this.areaName = a.area;
+          this.userName = a.name;
+          this.gid = a.gid;
+          this.phone = a.phone;
+          this.detailAddress = a.addr;
+          this.allAddress = `${a.city} ${a.area} `;
+          if (a.tag) {
+            const hit = this.labelList.find(i => i.text === a.tag);
+            if (hit) {
+              this.selectId = hit.id;
+              hit.checked = true;
+              this.tagText = a.tag;
             } else {
-              this.selectId = this.labelList.filter(item => address.tag == item.text)[0].id
-              this.labelList.filter(item => address.tag == item.text)[0].checked = true
+              this.labelText = a.tag;
+              this.tagText = a.tag;
+              this.isAdd = true;
+              this.isExit = true;
+              this.labelColor = "#3392FE";
+              this.labelColor2 = "#3392FE";
+              this.Color = "#fff";
             }
           }
-          this.is_default = address.is_default
-          this.checked = address.is_default == 1 ? true : false
-          this.allAddress = city + " " + county + " "
+          this.is_default = a.is_default;
+          this.checked = a.is_default == 1;
+        } else {
+          this.$toast(res.msg || "获取地址失败");
         }
-      })
+      }).catch(() => { }).finally(() => {
+        this.loadingflag = false;
+      });
     }
   },
-  created() {
-    this.address = sessionStorage.getItem("streetNumber")
-    this.id = this.$route.query.id
-    this.change = this.$route.query.change
-    this.listlength = this.$route.query.length
-    if (this.$route.query.id) {
-      document.title = "编辑地址"
-      this.getshowscaddress(this.$route.query.id)
+
+  mounted() {
+    // 1. 最先读 URL 上的经纬度
+    const q = this.$route.query;
+    if (q.lat && q.lng) {
+      this.lat = q.lat;
+      this.lng = q.lng;
+      this.mapAddress = q.address || "已选择位置";
+    }
+
+    // 2. 回填草稿（注意：如果 URL 有经纬度，千万别用草稿里的空值覆盖）
+    const draftStr = sessionStorage.getItem("cakeAddressDraft");
+    if (draftStr) {
+      try {
+        const d = JSON.parse(draftStr);
+        this.userName = d.userName || this.userName;
+        this.phone = d.phone || this.phone;
+        this.detailAddress = d.detailAddress || this.detailAddress;
+        this.allAddress = d.allAddress || this.allAddress;
+        this.cityId = d.cityId || this.cityId;
+        this.cityName = d.cityName || this.cityName;
+        this.areaId = d.areaId || this.areaId;
+        this.areaName = d.areaName || this.areaName;
+        this.tagText = d.tagText || this.tagText;
+        this.selectId = d.selectId || this.selectId;
+        this.is_default = d.is_default || this.is_default;
+        this.checked = d.checked !== undefined ? !!d.checked : this.checked;
+        this.labelText = d.labelText || this.labelText;
+        this.isAdd = d.isAdd !== undefined ? !!d.isAdd : this.isAdd;
+        this.isExit = d.isExit !== undefined ? !!d.isExit : this.isExit;
+        this.gid = d.gid || this.gid;
+
+        // ⚠️ 这里非常关键：只有 URL 里没经纬度时，才用草稿的
+        if (!this.lat) this.lat = d.lat || "";
+        if (!this.lng) this.lng = d.lng || "";
+        if (!this.mapAddress) this.mapAddress = d.mapAddress || "";
+
+      } catch (e) { }
+      setTimeout(() => sessionStorage.removeItem("cakeAddressDraft"), 1000);
+    }
+
+    // 3. 兜底
+    this.fetchMapData();
+    this.checkTimer = setInterval(() => this.fetchMapData(), 500);
+
+    // 4. 编辑回显/新增
+    this.id = this.$route.query.id;
+    this.change = this.$route.query.change;
+    this.listlength = this.$route.query.length;
+    if (this.id) {
+      document.title = "编辑地址";
+      this.getshowscaddress(this.id);
     } else {
-      document.title = "新增地址"
-      this.loadingflag = false
+      document.title = "新增地址";
+      this.loadingflag = false;
+    }
+  },
+  beforeDestroy() {
+    // 离开页面时清理定时器，防止内存泄漏
+    if (this.checkTimer) {
+      clearInterval(this.checkTimer);
     }
   }
-}
+
+};
 </script>
 
 <style scoped lang="less">
+/* 样式保持不变（原文件 style 全部保留即可） */
 .conPage {
   min-height: 100vh;
   background-color: #F0F0F0;
@@ -434,7 +448,6 @@ export default {
   }
 
   .selectAddress2 {
-    //padding-left: 16px;
     white-space: nowrap;
     text-overflow: ellipsis;
     width: 50%;
@@ -477,7 +490,7 @@ export default {
         width: 90%;
         background-color: #F6F6F6;
         height: 30px;
-        padding: 0px 8px;
+        padding: 0 8px;
         font-size: 13px;
 
         .comfireInp {
@@ -510,7 +523,7 @@ export default {
   background-color: white;
   position: fixed;
   width: 100%;
-  left: 0px;
+  left: 0;
   bottom: 0;
   box-sizing: border-box;
   padding: 13px 15px;
@@ -532,63 +545,6 @@ export default {
 
 /deep/ .van-switch--on .van-switch__node {
   transform: translateX(20px);
-}
-
-.popupBox2 {
-  /deep/ .van-overlay {
-    display: none;
-  }
-
-  /deep/ .van-popup--top {
-    top: -17px;
-    left: 43%;
-    background-color: #fff0;
-    transition: none;
-    position: absolute;
-    max-height: 223%;
-  }
-
-  .popup {
-    padding: 30px 25px;
-    background-image: url("../../assets/mine/xb.png");
-    //width: 227px;
-    //height: 134px;
-    box-sizing: border-box;
-    background-size: 100% 100%;
-    position: relative;
-  }
-
-  .brandBox {
-    font-size: 14px;
-    color: #6c6b6b;
-    line-height: 25px;
-  }
-
-  .retract {
-    border: 1px solid #DF5756;
-    color: #DF5756;
-    width: 57px;
-    font-size: 13px;
-    text-align: center;
-    height: 28px;
-    line-height: 28px;
-    border-radius: 5px;
-  }
-
-  .retractBox {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 5px;
-    justify-content: flex-end;
-    position: relative;
-    bottom: -12px;
-  }
-
-  .retract2 {
-    background-color: #DF5756;
-    color: #fff;
-  }
 }
 
 .popupBox3 {

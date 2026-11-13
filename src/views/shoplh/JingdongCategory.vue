@@ -1,4 +1,4 @@
-<template>
+ <template>
   <div class="category-page">
     <!-- 1. 顶部搜索 -->
     <div class="header-area">
@@ -18,33 +18,30 @@
       <div class="sidebar">
         <div class="menu-item" v-for="(item, index) in topCategories" :key="item.id"
           :class="{ active: activeCategoryId === item.id }" @click="selectCategory(item, index)">
-          {{ item.title }}
+          {{ item.name }}
         </div>
       </div>
 
       <!-- 右侧：内容区 -->
       <div class="content-area">
         <!-- 分类标题 -->
-        <div class="content-title">{{ currentCategory.title }}</div>
+        <div class="content-title">{{ currentCategory.name }}</div>
 
         <!-- 如果有子分类，展示子分类网格 -->
         <template v-if="currentCategory.children && currentCategory.children.length > 0">
           <div class="sub-grid">
             <div class="sub-item" v-for="(sub, idx) in currentCategory.children" :key="sub.id"
               @click="selectChildCategory(sub)">
-              <img class="sub-img" :src="sub.img || defaultImg" alt="" />
-              <div class="sub-name">{{ sub.title }}</div>
+              <img class="sub-img" :src="sub.tbimg || defaultImg" alt="" />
+              <div class="sub-name">{{ sub.name }}</div>
             </div>
           </div>
         </template>
 
         <!-- 如果没有子分类，展示商品列表 -->
-
       </div>
     </div>
 
-
-    
     <!-- 3. 底部导航 -->
     <div class="tab-bar">
       <div class="tab-item" @click="goToHome" :class="{ active: $route.path === '/JingdongChannel' }">
@@ -73,7 +70,7 @@ export default {
       platform: 1,
       searchKeyword: '',
       activeCategoryId: null,
-      activeCategoryIndex: 0,    // 新增
+      activeCategoryIndex: 0,
       categories: [],
       topCategories: [],
       currentCategory: {},
@@ -81,15 +78,15 @@ export default {
       defaultImg: require('../../assets/lh/jdzy/b.png'),
       page: 1,
       limit: 10,
-      loading: false,            // 新增
+      loading: false,
     }
   },
   methods: {
-    // 图片 http 转 https
+    // 图片 http 转 https（字段改为 tbimg）
     fixTreeImg(list) {
       return list.map(item => ({
         ...item,
-        img: item.img ? item.img.replace('http://', 'https://') : '',
+        tbimg: item.tbimg ? item.tbimg.replace('http://', 'https://') : '',
         children: item.children ? this.fixTreeImg(item.children) : []
       }));
     },
@@ -115,12 +112,20 @@ export default {
       }
       return null;
     },
+
     // 获取分类列表
     IndexcategoryList() {
       categoryList({ platform: 1, jd_type: 2 }).then(res => {
-        if (res.code == 200) {
-          this.categories = this.fixTreeImg(res.data || []);
-          this.topCategories = this.categories.filter(item => item.pid === 0);
+        if (Number(res.code) === 200) {
+          // 接口返回结构是 res.data.data（分页对象里的 data 数组）
+          const list = res.data && res.data.data
+            ? res.data.data
+            : (Array.isArray(res.data) ? res.data : []);
+
+          this.categories = this.fixTreeImg(list);
+          this.topCategories = this.categories.filter(item => String(item.pid) === '0');
+
+          if (this.topCategories.length === 0) return;
 
           // 默认选中第一个有子分类的顶层分类
           const firstWithChildren = this.topCategories.find(c => c.children && c.children.length > 0);
@@ -141,7 +146,6 @@ export default {
       })
     },
 
-
     selectCategory(category, index) {
       this.activeCategoryId = category.id;
       this.activeCategoryIndex = index;
@@ -150,27 +154,19 @@ export default {
       // 不跳转，只切换右侧显示
     },
 
-    // 选择子分类
-    // selectChildCategory(child) {
-    //   this.$router.push({
-    //     path: '/productList',
-    //     query: { cate_id: child.id, t: Date.now() }
-    //   });
-    // },
+    // 选择子分类 → 跳商品列表
     selectChildCategory(child) {
       this.$router.push({
         path: '/productList',
         query: {
-          cate_id: child.id,
+          shop_cate_id: child.id,
+          // cate_id: child.id,
           platform: 1,
           jd_type: 2,
           t: Date.now()
         }
       });
     },
-
-    // 加载分类下的商品
-
 
     // 搜索
     handleSearch() {
@@ -202,7 +198,6 @@ export default {
   }
 }
 </script>
-
 <style scoped lang="less">
 .category-page {
   min-height: 100vh;

@@ -1,32 +1,29 @@
-<template>
+ <template>
   <div class="location">
     <NProgress v-if="loadingflag"/>
-    <!--  头部-->
+    <!-- 头部 -->
     <div class="topBox">
       <div class="leftBox cartText">
-        <div class="nowrap">购物车<span style="font-size: 14px">({{ cartList.length }})</span></div>
-        <div class="leftBox address">
-          <div class="iconBox">
-            <van-icon name="location-o"/>
-          </div>
+        <div class="nowrap">2购物车<span style="font-size: 14px">({{ cartList.length }})</span></div>
+        <!-- <div class="leftBox address">
+          <div class="iconBox"><van-icon name="location-o"/></div>
           <div>{{ address }}</div>
-        </div>
+        </div> -->
       </div>
       <div class="manage nowrap" @click="manage" v-if="cartList.length>0">{{ !isDelete ? "管理" : "完成" }}</div>
     </div>
-    <!--    无商品-->
-    <div class="noneShop" v-if="cartList.length==0&&noneList.length==0&&isShow">
+
+    <!-- 无商品 -->
+    <div class="noneShop" v-if="cartList.length==0 && isShow">
       <div>
-        <div class="noneImg">
-          <img class="img" src="../../assets/tubiao/gn.png" alt="">
-        </div>
+        <div class="noneImg"><img class="img" src="@/assets/tubiao/gn.png" alt=""></div>
         <div class="noneText">您的购物车是空的，快去逛逛吧</div>
         <div class="Strolling" @click="toStrolling">去逛逛</div>
       </div>
     </div>
-    <!--    有商品-->
+
+    <!-- 有商品 -->
     <div class="haveShop" v-else>
-      <!--      <van-checkbox-group v-model="result">-->
       <van-checkbox
           @click="checkOnce(item)"
           class="checkbox"
@@ -36,66 +33,28 @@
           v-for="(item, index) in cartList"
           :key="item.id"
           :name="item"
-          :disabled="(item.product.can_buy != 1 || item.product.status != 1 || item.xinghao.can_buy != 1)&&item.cpbs==2&&!isDelete"
+          :disabled="isDisabled(item)"
       >
-        <div class="shopBox" @click.stop="todetail">
+        <div class="shopBox">
           <div class="shopImg" @click.stop="toDetail2(item.product_id)">
-            <img class="img" style="border-radius: 5px;"
-                 :src="item.cpbs==1?item.product.thumbnailimage:item.product.image_path" alt="">
+            <img class="img" style="border-radius: 5px;" :src="item.product.image_path" alt="">
           </div>
           <div class="rightBox">
-            <div class="shopName" v-if="item.product">{{ item.cpbs == 1 ? item.product.name : item.product.title }}</div>
-            <div class="bottle" v-if="item.xinghao">{{ item.cpbs == 1 ? item.xinghao.xinghao : item.xinghao.name }}</div>
-            <div class="bottle"
-                 v-if="(item.product.can_buy != 1 || item.product.status != 1 || item.xinghao.can_buy != 1)&&item.cpbs==2">
-              该商品不支持购买
-            </div>
+            <div class="shopName" v-if="item.product">{{ item.product.title }}</div>
+            <div class="bottle" v-if="item.xinghao">{{ item.xinghao.name }}</div>
+            <div class="bottle" v-if="isDisabled(item)">该商品不支持购买</div>
             <div class="priceBox" v-if="item.xinghao">
-              <div class="price">￥{{ changePrice1(item.xinghao.price) }}.<span
-                  style="font-size: 15px">{{ changePrice2(item.xinghao.price) }}</span></div>
-              <div @click="changeNumber(item.id)">
-                <van-stepper @change="changeValue" v-model="item.quantity"/>
+              <div class="price">￥{{ formatPrice(item.xinghao.price) }}</div>
+              <div>
+                <van-stepper @change="(val) => changeNumber(item.id, val)" v-model="item.quantity" :min="1"/>
               </div>
             </div>
           </div>
         </div>
       </van-checkbox>
-      <!--      </van-checkbox-group>-->
-      <!--      <div class="noneList" v-if="noneList.length>0">-->
-      <!--        <div class="model">-->
-      <!--&lt;!&ndash;          <div class="modelText">该商品不可售</div>&ndash;&gt;-->
-      <!--        </div>-->
-      <!--        <van-checkbox-->
-      <!--            @click="checkOnce(item)"-->
-      <!--            class="checkbox"-->
-      <!--            :label-disabled="true"-->
-      <!--            checked-color="#FA6174"-->
-      <!--            v-model="item.isCheckout"-->
-      <!--            v-for="(item, index) in noneList"-->
-      <!--            :key="item.id"-->
-      <!--            :name="item"-->
-      <!--        >-->
-      <!--          <div class="shopBox" @click.stop="todetail">-->
-      <!--            <div class="shopImg" @click.stop="toDetail2(item.product_id)">-->
-      <!--              <img class="img" style="border-radius: 5px;" :src="item.cpbs==1?item.product.thumbnailimage:item.product.image_path" alt="">-->
-      <!--            </div>-->
-      <!--            <div class="rightBox">-->
-      <!--              <div class="shopName">{{ item.cpbs==1?item.product.name:item.product.title }}</div>-->
-      <!--              <div class="bottle">{{ item.cpbs==1?item.xinghao.xinghao:item.xinghao.name }}</div>-->
-      <!--              <div class="priceBox">-->
-      <!--                <div class="price">￥{{ changePrice1(item.xinghao.price) }}.<span-->
-      <!--                    style="font-size: 15px">{{ changePrice2(item.xinghao.price) }}</span></div>-->
-      <!--                <div @click="changeNumber(item.id)">-->
-      <!--                  <van-stepper  @change="changeValue" v-model="item.quantity"/>-->
-      <!--                </div>-->
-      <!--              </div>-->
-      <!--            </div>-->
-      <!--          </div>-->
-      <!--        </van-checkbox>-->
-      <!--      </div>-->
     </div>
 
-    <!--    去结算-->
+    <!-- 去结算 -->
     <div class="footer">
       <div class="allNumber">
         <van-checkbox :disabled="cartList.length==0" @click="selectAll" checked-color="#FA6174" v-model="allChecked">
@@ -105,24 +64,23 @@
       <div class="rightBox">
         <div v-if="!isDelete">
           <div class="all">合计:
-            <span class="price">{{ changePrice1(fullPrice) }}</span>
-            <span class="priceNum">.{{ changePrice2(fullPrice) }}</span>
+            <span class="price">{{ formatPrice(fullPrice) }}</span>
           </div>
         </div>
-        <div class="toPay" :class="{toPay1:result.length==0}" @click="comfireCart">{{
-            !isDelete ? '去结算' : "移除商品"
-          }}
+        <div class="toPay" :class="{toPay1: result.length==0}" @click="comfireCart">
+          {{ !isDelete ? '去结算' : "移除商品" }}
           <span v-if="result.length>0">({{ result.length }})</span>
         </div>
       </div>
     </div>
-    <!--  tabbar-->
-    <NavigationTab :active="1"></NavigationTab>
+    <NavigationTab :active="2"></NavigationTab>
   </div>
 </template>
+
 <script>
 import NavigationTab from "@/components/NavigationTab.vue";
-import {delCart, editCartNumber, getCartList} from "@/api/cart";
+// 引入你接口文档里的最新方法
+import { getCart, editCart, delCart, checkoutByCart } from "@/api/lehuicake";
 
 export default {
   name: "ShopCart",
@@ -134,192 +92,161 @@ export default {
       allChecked: false,
       isDelete: false,
       fullPrice: 0,
-      numberValue: 0,
-      noneList: [],
       loadingflag: true,
       address: "",
-      isShow: true
+      isShow: true,
+      cid: "", // 城市ID
     }
   },
   methods: {
     toDetail2(id) {
-      //   this.$router.push({path: "/productDetail", query: {id}})
+      // 跳转商品详情
+      this.$router.push({path: "/CakeproductDetail", query: {id, cid: this.cid}})
     },
-    // 结束
+
+    // 判断商品是否不可购买 (status=0 或 can_buy=0)
+    isDisabled(item) {
+      if (this.isDelete) return false; // 管理模式不限制勾选
+      if (!item.product || !item.xinghao) return true;
+      return item.product.status != 1 || item.product.can_buy != 1 || item.xinghao.can_buy != 1;
+    },
+
+    // 格式化价格，保留两位小数
+    formatPrice(price) {
+      if (!price) return "0.00";
+      return Number(price).toFixed(2);
+    },
+
+    // 结算或删除
     comfireCart() {
-      if (this.result.length == 0) {
-        return
-      }
-      var cartIds = []
-      this.result.forEach(item => {
-        cartIds.push(item.id)
-      })
+      if (this.result.length == 0) return;
+      
+      const cartIds = this.result.map(item => item.id).join(",");
+
+      // 管理模式 -> 删除
       if (this.isDelete) {
         this.$dialog.confirm({
           message: '是否删除这' + this.result.length + "个商品",
           confirmButtonColor: 'red'
         }).then(() => {
-          this.isShow = false
-          delCart({
-            cartIds: cartIds.join(",")
-          }).then(res => {
-            this.$toast(res.data)
+          this.isShow = false;
+          delCart(cartIds).then(res => {
             if (res.code == 200) {
-              this.getCart()
-              this.manage()
+              this.$toast("删除成功");
+              this.getCartList();
+              this.manage(); // 退出管理状态
+            } else {
+              this.$toast(res.msg || "删除失败");
             }
-          })
-        }).catch(() => {
-        })
+          });
+        }).catch(() => {});
         return;
       }
-      sessionStorage.removeItem("StoreName")
-      sessionStorage.removeItem("radio")
-      sessionStorage.removeItem("radio")
-      sessionStorage.removeItem("isPhone")
-      sessionStorage.removeItem("phoneNum")
-      sessionStorage.removeItem("dateList")
-      sessionStorage.removeItem("greetingList")
-      sessionStorage.removeItem("deliveryChargeList")
-      var data = {
-        cartIds: cartIds.join(","),
-        act: 1
-      }
-      this.$router.push({path: "/confirmOrder", query: {data: JSON.stringify(data)}})
-    },
-    changeValue(e) {
-      this.numberValue = e
-    },
-    changeNumber(id) {
-      editCartNumber({
-        id,
-        num: this.numberValue
-      }).then(res => {
-        if (res.code == 200) {
-          this.getFullPrice()
-        }
-      })
-    },
-    todetail() {
 
+      // 正常结算 -> 跳转确认订单，带上 cartIds 和 cid
+      this.$router.push({
+        path: "/CakeconfirmOrder",
+        query: { 
+          cartIds: cartIds, 
+          act: 1, 
+          cid: this.cid 
+        }
+      });
     },
-    // 价格处理
-    changePrice1(price) {
-      return price.toString().includes(".") ? price.toString().split('.')[0] : price
+
+    // 修改数量
+    changeNumber(id, num) {
+      if (num <= 0) return;
+      editCart(id, num).then(res => {
+        if (res.code == 200) {
+          this.getFullPrice();
+        }
+      });
     },
-    changePrice2(price) {
-      return price.toString().includes(".") ? Number(price).toFixed(2).toString().split('.')[1] : "00"
-    },
-    // 计算价格
+
+    // 计算选中总价
     getFullPrice() {
-      this.fullPrice = 0
-      this.result = this.cartList.filter(item => item.isCheckout == true)
+      this.fullPrice = 0;
+      this.result = this.cartList.filter(item => item.isCheckout === true);
       this.result.forEach(item => {
-        this.fullPrice += Number(item.xinghao.price) * Number(item.quantity)
-      })
+        if (item.xinghao && item.xinghao.price) {
+          this.fullPrice += Number(item.xinghao.price) * Number(item.quantity);
+        }
+      });
     },
+
     // 全选
     selectAll() {
-      if (this.cartList.length == 0) {
+      if (this.cartList.length == 0) return;
+      this.allChecked = !this.allChecked;
+      
+      this.cartList.forEach(item => {
+        if (!this.isDisabled(item)) {
+          item.isCheckout = this.allChecked;
+        }
+      });
+      this.getFullPrice();
+    },
+
+    // 单选
+    checkOnce(item) {
+      if (this.isDisabled(item)) return;
+      item.isCheckout = !item.isCheckout;
+      
+      const availableItems = this.cartList.filter(item2 => !this.isDisabled(item2));
+      this.allChecked = availableItems.every(item2 => item2.isCheckout === true);
+      this.getFullPrice();
+    },
+
+    // 管理模式
+    manage() {
+      this.isDelete = !this.isDelete;
+      this.cartList.forEach(item => { item.isCheckout = false; });
+      this.allChecked = false;
+      this.result = [];
+      this.fullPrice = 0;
+    },
+
+    // 去逛逛
+    toStrolling() {
+      this.$router.replace('/CakeView');
+    },
+
+    // 获取购物车列表 (使用 cake/cart 接口)
+    getCartList() {
+      this.cid = sessionStorage.getItem("cityId");
+      if (!this.cid) {
+        this.$toast("请先选择城市");
+        this.$router.replace('/CakeView');
         return;
       }
-      this.allChecked = !this.allChecked
-      if (this.allChecked == true) {
-        this.cartList.forEach(item => {
-          if ((item.product.can_buy != 1 || item.product.status != 1 || item.xinghao.can_buy != 1) && item.cpbs == 2 && !this.isDelete) {
-            return
-          }
-          item.isCheckout = true
-        })
-      } else {
-        this.cartList.forEach(item => {
-          item.isCheckout = false
-        })
-      }
-      this.getFullPrice()
-    },
-    //   复选
-    checkOnce(item) {
-      if ((item.product.can_buy != 1 || item.product.status != 1 || item.xinghao.can_buy != 1) && item.cpbs == 2 && !this.isDelete) {
-        return
-      }
-      var srry = []
-      item.isCheckout = !item.isCheckout
-      this.result = this.cartList.filter(item => item.isCheckout == true)
-      srry = this.cartList.filter(item2 => {
-        if (item2.cpbs == 1 || this.isDelete) {
-          return item2
-        } else {
-          return item2.product.can_buy == 1 && item2.product.status == 1 && item2.xinghao.can_buy == 1
+      
+      this.cartList = [];
+      this.loadingflag = true;
+      
+      getCart(this.cid).then(res => {
+        this.loadingflag = false;
+        this.isShow = true;
+        if (res.code == 200 && res.data.cart_list) {
+          // 给每个商品添加 isCheckout 字段
+          this.cartList = res.data.cart_list.map(item => ({
+            ...item,
+            isCheckout: false
+          }));
         }
-      })
-      // console.log(this.result.length , srry.length)
-      if (this.result.length == srry.length) {
-        this.allChecked = true
-      } else {
-        this.allChecked = false
-      }
-      this.getFullPrice()
-    },
-    //  管理
-    manage() {
-      this.isDelete = !this.isDelete
-      this.cartList.forEach(item => {
-        item.isCheckout = false
-      })
-      this.allChecked = false
-      this.result = []
-      this.fullPrice = 0
-    },
-    //   去逛逛
-    toStrolling() {
-      this.$router.replace('/index')
-    },
-    // 购物车列表
-    getCart() {
-      this.cartList = []
-      this.noneList = []
-      getCartList().then(res => {
-        this.loadingflag = false
-        this.isShow = true
-        if (res.code == 200) {
-          if (res.data.cart_list) {
-            res.data.cart_list.forEach(item => {
-              if (item.product) {
-                this.cartList.push({
-                  ...item,
-                  isCheckout: false
-                })
-              }
-            })
-            var cartList = this.cartList
-            this.cartList = cartList.filter(item => {
-              if (item.cpbs == 1) {
-                return item.xinghao
-              } else {
-                return item.product.can_buy == 1 && item.product.status == 1 && item.xinghao.can_buy == 1&&item.xinghao
-              }
-            })
-            this.noneList = cartList.filter(item => {
-              if (item.cpbs == 1) {
-                return !item.xinghao
-              } else {
-                return item.product.can_buy != 1 || item.product.status != 1 || item.xinghao.can_buy != 1 || !item.xinghao
-              }
-            })
-            this.cartList = this.cartList.concat(this.noneList)
-          }
-        }
-      })
+      }).catch(() => {
+        this.loadingflag = false;
+      });
     }
   },
   created() {
-    this.getCart()
-    this.address = sessionStorage.getItem("streetNumber")
+    this.address = sessionStorage.getItem("streetNumber") || "请选择收货地址";
+    this.getCartList();
   }
 }
 </script>
 
+ 
 <style scoped lang="less">
 .location {
   padding: 10px 15px;
@@ -328,7 +255,7 @@ export default {
   background-color: #F7F7F7;
   padding-bottom: 120px;
 }
-
+ 
 .leftBox {
   display: flex;
   align-items: center;

@@ -5,7 +5,7 @@
 
     <!-- 2. 顶部黄色 Banner -->
     <div class="banner-area">
-      <img class="banner-img" src="../../assets/lh/tm/b5.png" alt="Banner" />
+      <img class="banner-img" :src="baners" alt="Banner" />
     </div>
 
     <!-- 3. 商品列表 -->
@@ -29,7 +29,7 @@
               <span class="price">{{ item.sell_price }}</span>
               <span class="original-price" v-if="item.sell_price < item.market_price">¥{{ item.market_price }}</span>
             </div>
-            <div class="add-btn" @click.stop="addToCart(item)">+</div>
+            <!-- <div class="add-btn" @click.stop="addToCart(item)">+</div> -->
           </div>
         </div>
       </div>
@@ -49,6 +49,7 @@ export default {
   name: "TmallExclusiveNew",
   data() {
     return {
+      baners:'',
       platform: 2,
       loading: false,
       defaultImg: require('../../assets/lh/730.png'),
@@ -58,31 +59,27 @@ export default {
   methods: {
     // 获取独家上新数据（channelDetail 接口）
     getNewData() {
-      this.loading = true;
-      channelDetail({ id: 16 }).then(res => {
-        console.log('独家上新数据:', res);
-        if (res.code == 200) {
-          const data = res.data || {};
-          let newData = [];
+  this.loading = true;
 
-          if (data.sections && data.sections.length > 0) {
-            // 优先找 title === '独家上新'
-            // 找不到就退而取第二个 grid section
-            const newSection =
-              data.sections.find(s => s.title === '独家上新') ||
-              data.sections.filter(s => s.type === 'grid')[1];
+  channelDetail({ id: 16 }).then(res => {
+    if (res.code !== 200) return;
 
-            if (newSection && newSection.items) {
-              newData = newSection.items;
-            }
-          }
+    const modules = res.data?.modules || [];
 
-          this.goodsList = newData;
-        }
-      }).finally(() => {
-        this.loading = false;
-      })
-    },
+    // 直接在 modules 里找 title='独家上新' 的 grid 模块
+    const newModule = modules.find(m => m.type === 'grid' && m.title === '独家上新');
+this.baners = newModule.banner_img
+    if (newModule && newModule.items) {
+      this.goodsList = newModule.items;
+    } else {
+      this.goodsList = [];
+    }
+  }).catch(err => {
+    console.error('获取独家上新失败:', err);
+  }).finally(() => {
+    this.loading = false;
+  });
+},
 
     formatSaleNum(num) {
       if (num >= 10000) return (num / 10000).toFixed(1) + '万';

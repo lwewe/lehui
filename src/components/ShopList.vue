@@ -1,15 +1,21 @@
 <template>
   <div class="shop-card" @click="toDetail">
     <div class="img-wrapper">
-      <img class="shop-img" :src="listItem.img  || defaultImg" :alt="listItem.title" loading="lazy"  @error="handleImgError">
+      <img 
+        class="shop-img" 
+        :src="imgSrc" 
+        :alt="listItem.title" 
+        loading="lazy"  
+        referrerpolicy="no-referrer" 
+        @error="handleImgError"
+      >
     </div>
     <div class="shop-info">
       <div class="shop-title"> {{ listItem.title }}</div>
       <span style=" 
        background-color: #DD0A09;color: #ffffff;border-radius: 2px;font-size: 10px;font-weight: 400;
        line-height: 14px;padding: 1px 2px; "> {{ getPlatformName(listItem.platform, listItem.jd_type) }}</span>
-      <!-- <div class="shop-subtitle" v-if="listItem.subtitle">{{ listItem.subtitle }}</div> -->
-
+      
       <div class="shop-price-box">
         <span class="price-symbol">¥</span>
         <span class="price">{{ formatPrice(listItem.sell_price) }}</span>
@@ -17,15 +23,6 @@
           ¥{{ formatPrice(listItem.market_price) }}
         </span>
       </div>
-
-      <!-- <div class="shop-bottom">
-        <span class="source-tag" v-if="getSourceName()">
-          {{ getSourceName() }}
-        </span>
-        <span class="sale-num" v-if="listItem.sale_num > 0">
-          已售{{ formatSaleNum(listItem.sale_num) }}
-        </span>
-      </div> -->
     </div>
   </div>
 </template>
@@ -33,8 +30,8 @@
 <script>
 import { getPlatformName } from '@/utils/platform'
 import defaultImg from '@/assets/no-img.png'
+
 export default {
-  
   name: "ShopList",
   props: {
     listItem: {
@@ -49,6 +46,12 @@ export default {
     }
   },
   computed: {
+    imgSrc() {
+      return this.listItem.img
+        || this.listItem.thumbnailimage
+        || this.listItem.thumbnail
+        || this.defaultImg;
+    },
     showMarketPrice() {
       const marketPrice = parseFloat(this.listItem.market_price || '0');
       const sellPrice = parseFloat(this.listItem.sell_price || '0');
@@ -57,11 +60,11 @@ export default {
   },
   methods: {
     handleImgError(e) {
-    // 防止默认图也失败时无限触发 error
-    if (e.target.dataset.fallback) return
-    e.target.dataset.fallback = '1'
-    e.target.src = this.defaultImg
-  },
+      // 如果当前 src 已经是默认图了，直接 return，防止死循环
+      if (e.target.src.includes(this.defaultImg)) return;
+      // 否则替换为默认图
+      e.target.src = this.defaultImg;
+    },
     formatPrice(price) {
       const num = parseFloat(price || '0');
       return num.toFixed(2);
@@ -88,11 +91,10 @@ export default {
 
       // 盒马
       if (platform === 4) {
-        // 盒马 → 跳盒马详情
         this.$router.push({
           path: '/HemaDetail',
           query: {
-            product_id: item.product_id || item.third_product_id
+            product_id: item.product_id || item.third_product_id,homeFlg:1
           }
         })
         return
@@ -100,24 +102,9 @@ export default {
 
       // 京东/天猫/京造
       if (item) {
-
         this.$goDetail(item);
-        // this.$router.push({
-        //   path: "/productDetail",
-        //   query: { id: item.id }
-        // });
-
-
       }
     }
-    // toDetail() {
-    //   if (this.listItem.id) {
-    //     this.$router.push({
-    //       path: "/productDetail",
-    //       query: { id: this.listItem.id }
-    //     })
-    //   }
-    // }
   }
 }
 </script>
@@ -156,16 +143,12 @@ export default {
       font-size: 14px;
       color: #333;
       line-height: 20px;
-      /* 固定行高 */
       display: -webkit-box;
       -webkit-line-clamp: 2;
-      /* 最多显示2行 */
       -webkit-box-orient: vertical;
       overflow: hidden;
       margin-bottom: 1px;
       word-break: break-all;
-      /* 允许单词内换行 */
-      /* 不设置固定高度，让内容自动撑开 */
     }
 
     .platform-tag {

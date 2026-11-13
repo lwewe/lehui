@@ -6,7 +6,9 @@
       <van-swipe :autoplay="3000" indicator-color="white" @change="onChange">
         <van-swipe-item class="bannerImg" v-for="(item, index) in detail.imgs.length > 0 ? detail.imgs : [detail.img]"
           :key="index">
-          <img class="img" :src="item" alt="">
+          <!-- <img class="img" :src="item" alt=""> -->
+          <img class="img" :src="item" alt="" referrerpolicy="no-referrer">
+
         </van-swipe-item>
       </van-swipe>
       <div class="bannerNum">{{ onIndex }}/{{ detail.imgs ? detail.imgs.length : 0 }}</div>
@@ -321,7 +323,6 @@ export default {
     },
 
     addNewAddress() { this.$router.push("/addAddress") },
-
     getDetail(id) {
       productDetail({ id }).then(res => {
         this.loadingflag = false
@@ -332,8 +333,18 @@ export default {
             return
           }
 
+          // ========= 核心修改开始 =========
+          let rawData = res.data;
+
+          // 1. 处理商品详情富文本里的所有 <img> 标签
+          if (rawData.content) {
+            // 给所有 <img 标签强制加上 referrerpolicy="no-referrer"
+            rawData.content = rawData.content.replace(/<img/g, '<img referrerpolicy="no-referrer"');
+          }
+          // ========= 核心修改结束 =========
+
           // 渲染详情数据
-          this.detail = res.data
+          this.detail = rawData
 
           // 设置默认规格
           if (this.detail.specs && this.detail.specs.length > 0) {
@@ -355,7 +366,43 @@ export default {
           this.getDetail(this.$route.query.id)
         }
       })
-    }, getAddressList() {
+    },
+    // getDetail(id) {
+    //   productDetail({ id }).then(res => {
+    //     this.loadingflag = false
+    //     if (res.code == 200) {
+    //       if (!res.data) {
+    //         this.$toast(res.msg || '商品不存在')
+    //         setTimeout(() => { this.$router.go(-1) }, 800)
+    //         return
+    //       }
+
+    //       // 渲染详情数据
+    //       this.detail = res.data
+
+    //       // 设置默认规格
+    //       if (this.detail.specs && this.detail.specs.length > 0) {
+    //         this.modelId = this.detail.specs[0].id
+    //         this.modelName = this.detail.specs[0].spec_name || this.detail.specs[0].xinghao
+    //         this.modelPrice = this.detail.specs[0].price || this.detail.sell_price
+    //         this.selectList[0].text = this.modelName
+    //       } else {
+    //         this.modelName = this.detail.title
+    //         this.modelPrice = this.detail.sell_price
+    //         this.selectList[0].text = this.detail.title
+    //       }
+
+    //       // 单独获取地址列表（使用独立接口）
+    //       this.getAddressList()
+
+    //     } else {
+    //       localStorage.removeItem("token")
+    //       this.getDetail(this.$route.query.id)
+    //     }
+    //   })
+    // },
+    
+    getAddressList() {
       addressList().then(res => {
         if (res.code == 200) {
           this.addList = []

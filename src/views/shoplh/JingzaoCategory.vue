@@ -24,7 +24,7 @@
         <div class="sidebar">
           <div class="menu-item" v-for="(item, index) in topCategories" :key="item.id"
             :class="{ active: String(activeCategoryId) === String(item.id) }" @click="selectCategory(item, index)">
-            {{ item.title }}
+            {{ item.name }}
             <div class="active-line" v-if="String(activeCategoryId) === String(item.id)"></div>
           </div>
         </div>
@@ -35,29 +35,29 @@
             <!-- 顶部 BANNER 图 -->
             <div class="sub-banner">
               <div class="banner-bg">
-                <span class="sub-title">{{ currentCategory.title }}</span>
-                <img class="banner-img" :src="currentCategory.img" alt="" v-if="currentCategory.img" />
+                <span class="sub-title">{{ currentCategory.name }}</span>
+                <img class="banner-img" :src="currentCategory.tbimg" alt="" v-if="currentCategory.tbimg" />
               </div>
             </div>
 
             <!-- 如果有子分类，展示子分类网格 -->
             <template v-if="currentCategory.children && currentCategory.children.length > 0">
-              <div class="sub-header-title">{{ currentCategory.title }}</div>
+              <div class="sub-header-title">{{ currentCategory.name }}</div>
               <div class="sub-goods-grid">
                 <div class="sub-goods-item" v-for="(child, childIndex) in currentCategory.children" :key="child.id"
                   @click="toMore2(currentCategory.id, child.id, activeCategoryIndex, childIndex)">
-                  <img class="sub-goods-img" :src="child.img || defaultImg" alt="" />
-                  <div class="sub-goods-name">{{ child.title }}</div>
+                  <img class="sub-goods-img" :src="child.tbimg || defaultImg" alt="" />
+                  <div class="sub-goods-name">{{ child.name }}</div>
                 </div>
               </div>
             </template>
 
             <!-- 如果没有子分类，展示商品列表（需要调用商品接口） -->
             <template v-else>
-              <div class="sub-header-title">{{ currentCategory.title }}</div>
+              <div class="sub-header-title">{{ currentCategory.name }}</div>
               <div class="sub-goods-grid" v-if="goodsList.length > 0">
                 <div class="sub-goods-item" v-for="(goods, idx) in goodsList" :key="idx">
-                  <img class="sub-goods-img" :src="goods.img || defaultImg" alt="" />
+                  <img class="sub-goods-img" :src="goods.img || goods.tbimg || defaultImg" alt="" />
                   <div class="sub-goods-name">{{ goods.name || goods.title }}</div>
                 </div>
               </div>
@@ -102,15 +102,13 @@ export default {
       topCategories: [],           // 顶层分类（pid=0）
       currentCategory: null,       // 当前选中的分类对象
       goodsList: [],               // 当前分类下的商品列表
-      defaultImg: 'https://via.placeholder.com/50'  // 默认占位图
+      defaultImg: 'https://via.placeholder.com/50',  // 默认占位图
+      loaded: false                // 是否已请求过分类
     };
   },
-  computed: {
-    // 可以保留，但逻辑已放到方法中
-  },
   activated() {
-    console.log('JingzaoCategory activated');
-    if (this.topCategories.length === 0) {
+    // keep-alive 场景下只请求一次；若需要每次进入刷新，可改为不判断 loaded
+    if (!this.loaded) {
       this.IndexcategoryList();
     }
   },
@@ -130,9 +128,12 @@ export default {
       categoryList({ platform: 1, jd_type: 3 }).then(res => {
         console.log('分类数据:', res);
         if (res.code === 200) {
-          this.categories = res.data || [];
+          // 注意：接口返回结构是 res.data.data（分页对象里的 data 数组）
+          const list = res.data && res.data.data ? res.data.data : (Array.isArray(res.data) ? res.data : []);
+          this.categories = list;
           // 顶层分类：pid 用字符串比较，避免类型不一致
           this.topCategories = this.categories.filter(item => String(item.pid) === '0');
+          this.loaded = true;
 
           // 默认选中第一个
           if (this.topCategories.length > 0) {
@@ -150,6 +151,7 @@ export default {
         }
       });
     },
+
     // 跳转到子分类商品
     toMore2(id, id2, index1, index2) {
       console.log('大分类id:', id, '子分类id:', id2)
@@ -159,14 +161,19 @@ export default {
       }
       this.navigateToProductList({ cate_id: Number(id2) });
     },
-    // 统一跳转方法
+
     navigateToProductList(query) {
+      console.log(query)
+      // return false
       sessionStorage.setItem('fromClassification', 'true');
       this.$router.push({
         path: "/productList",
         query: {
           ...query,
-          t: Date.now() // 添加时间戳，确保路由变化
+          shop_cate_id: query.cate_id,
+          platform: 1,
+          jd_type: 3,
+          t: Date.now()
         }
       });
     },
@@ -180,7 +187,8 @@ export default {
       productList(params).then(res => {
         console.log('商品数据:', res);
         if (res.code === 200) {
-          this.goodsList = res.data || [];
+          const list = res.data && res.data.data ? res.data.data : (Array.isArray(res.data) ? res.data : []);
+          this.goodsList = list;
         }
       });
     },
@@ -217,13 +225,8 @@ export default {
     goToHome() {
       this.$router.push('/JingzaoHome');
     }
-  },
-
-  mounted() {
-
-    console.log('JingzaoCategory mounted');
-    this.IndexcategoryList();
   }
+  // 已移除 mounted，避免与 activated 重复请求
 };
 </script>
 
@@ -478,6 +481,7 @@ export default {
     }
   }
 }
+
 .tab-item {
   .tab-text {
     font-size: 10px;

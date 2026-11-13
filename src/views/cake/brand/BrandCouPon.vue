@@ -53,7 +53,7 @@
             </div>
             <div class="againstBox vectorBox">
               <div class="vector">
-                <img class="img" src="../../assets/dangao/Vector.png" alt="">
+                <img class="img" src="@/assets/dangao/Vector.png" alt="">
               </div>
               <div>{{item.price}}</div>
             </div>
@@ -71,45 +71,73 @@
   </div>
 </template>
 
-<script>
-import {getCouPonDetail} from "@/api/coupon";
+ <script>
+// 1. 引入正确的品牌详情接口
+import { getCouponsBrandShow } from "@/api/lehuicake";
 
 export default {
   name: "BrandCouPon",
   data() {
     return {
       isPackUp: false,
-      detail:{},
-      banner:{},
-      couponsList:[],
-      bgColor:"",
-      loadingflag:true
-    }
+      detail: {},
+      banner: {},
+      couponsList: [],
+      bgColor: "",
+      loadingflag: true,
+      cid: "2", // 城市ID，你可以从路由 query 或 Vuex 取，这里先默认写2测试
+    };
   },
-  methods:{
-    toCouPonDetail(id){
-   this.$router.push({path:"/couPonDetail",query:{id}})
+  methods: {
+    toCouPonDetail(id) {
+      // 这里跳转商品详情，带上城市ID
+      this.$router.push({ path: "/CouPonDetail", query: { id, cid: this.cid } });
     },
-    getCouPonDetail(brand_id){
-      getCouPonDetail({
-        brand_id
-      }).then(res=>{
-        this.loadingflag = false
-        if(res.code == 200){
-          this.banner = res.data.banner
-          this.detail = res.data.brand_show
-          this.couponsList = res.data.coupons
-          this.bgColor = this.detail.yanse
-        }
+
+    // 获取品牌详情
+    getBrandDetailData(brand_id) {
+      this.loadingflag = true;
+      getCouponsBrandShow({
+        cid: this.cid,
+        brand_id: brand_id,
       })
-    }
+        .then((res) => {
+          this.loadingflag = false;
+          // 兼容 axios 拦截器是否多包了一层 data
+          const resData = res.data?.data || res.data;
+
+          if (res.code == 200) {
+            this.banner = resData.banner || {};
+            this.detail = resData.brand_show || {};
+            this.couponsList = resData.coupons || [];
+            this.bgColor = this.detail.yanse || "#BBD3EF"; // 如果接口没给颜色，给个默认色
+          } else {
+            this.$toast(res.msg || "获取品牌详情失败");
+          }
+        })
+        .catch((err) => {
+          this.loadingflag = false;
+          console.error("品牌详情接口报错:", err);
+        });
+    },
   },
   created() {
-    this.getCouPonDetail(this.$route.query.id)
-  }
-}
-</script>
+    // 2. 从路由参数获取 brand_id
+    const brand_id = this.$route.query.id || this.$route.query.brand_id;
+    
+    // 如果城市 ID 也是从路由带过来的，可以这样取
+    if (this.$route.query.cid) {
+      this.cid = this.$route.query.cid;
+    }
 
+    if (brand_id) {
+      this.getBrandDetailData(brand_id);
+    } else {
+      this.$toast("缺少品牌ID");
+    }
+  },
+};
+</script>
 <style scoped lang="less">
 .conPage {
   min-height: 100vh;

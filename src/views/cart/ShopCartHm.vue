@@ -106,7 +106,7 @@
 <script>
 import NavigationTab from "@/components/NavigationTab.vue";
 import { cartList, cartCheck, cartUpdateQuantity, cartDelete } from "@/api/lhjdtm";
-// import { getPlatformName } from '@/utils/platform'
+ 
 import { getPlatformName, PLATFORM } from '@/utils/platform'
 export default {
   name: "ShopCart",
@@ -211,7 +211,7 @@ export default {
           this.isLoading = false
           if (res.code == 200) {
             this.$router.push({
-              path: "/confirmOrder",
+              path: "/confirmOrderhm",
               query: {
                 data: JSON.stringify({ cartIds: idsStr }),
                 cartIds: idsStr   // ✅ 顶层再带一份

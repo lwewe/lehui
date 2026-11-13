@@ -29,9 +29,9 @@
             <div class="prod-spec">{{ item.spec_name || '规格: 5L' }}</div>
             <div class="prod-price-row">
               <span class="prod-price">￥{{ item.sell_price }}</span>
-              <div class="add-btn" @click.stop="addToCart(item)">
+              <!-- <div class="add-btn" @click.stop="addToCart(item)">
                 +
-              </div>
+              </div> -->
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import filmRoutes from './lehuifilmrouter'
 import performRoutes from './lehuiyanchurouter'
-//import cakeRoutes from './lehuicake'    
+import cakeRoutes from './lehuicake'
+
 import Vue from 'vue'
 import Router from 'vue-router'
 import HelloWorld from "@/HelloWorld.vue";
@@ -18,6 +19,8 @@ import Classification from "@/views/classification/Classification.vue";
 import ProductList from "@/views/product/ProductList.vue";
 import ProductDetail from "@/views/product/ProductDetail.vue";
 import ConfirmOrder from "@/views/order/ConfirmOrder.vue";
+import ConfirmOrderhm from "@/views/order/ConfirmOrderHm.vue";
+
 import AddressManagement from "@/views/mine/AddressManagement.vue";
 import AddAdress from "@/views/mine/AddAdress.vue";
 import AddAdresshm from "@/views/mine/AddAdresshm.vue";
@@ -46,6 +49,8 @@ import FeedBackdetails from "@/views/shoplh/FeedBackdetails.vue";
 import FeedBack from "@/views/shoplh/FeedBack.vue";
 import payOrder from "@/views/lhpay/payOrder.vue";
 import payOrderZhf from "@/views/lhpay/payOrderZhf.vue";
+import foodpayOrder from "@/views/lhpay/foodpayOrder.vue";
+
 import UseExplain from "@/views/agreement/UseExplain.vue";
 import YinsiZhengce from "@/views/agreement/YinsiZhengce.vue";
 import NearbyShop from "@/views/shoplh/NearbyShop.vue";
@@ -59,6 +64,14 @@ import FoodDelivery from "@/views/shoplh/FoodDelivery.vue";
 import JingzaoHome from "@/views/shoplh/JingzaoHome.vue";
 import JingzaoCategory from "@/views/shoplh/JingzaoCategory.vue";
 import JingzaoSuperValue from "@/views/shoplh/JingzaoSuperValue.vue";
+import JingzaoSuperValuenew from "@/views/shoplh/JingzaoSuperValuenew.vue";
+import Morediancan from "@/views/shoplh/Morediancan.vue";
+import ServiceNew from "@/views/shoplh/ServiceNew.vue";
+import StoreNew from "@/views/shoplh/StoreNew.vue";
+
+
+
+
 import JingdongChannel from "@/views/shoplh/JingdongChannel.vue";
 import JingdongCategory from "@/views/shoplh/JingdongCategory.vue";
 import JingdongSuperValueList from "@/views/shoplh/JingdongSuperValueList.vue";
@@ -70,10 +83,15 @@ import HemaFresh from "@/views/shoplh/HemaFresh.vue";
 import HemaFreshnew from "@/views/shoplh/HemaFreshnew.vue";
 import ApplianceChannel from "@/views/shopcate/ApplianceChannel.vue";
 import AppBrandRecommend from "@/views/shopcate/AppBrandRecommend.vue";
+import AppBrandRecommendnew from "@/views/shopcate/AppBrandRecommendnew.vue";
+
 import ApplianceRecommend from "@/views/shopcate/ApplianceRecommend.vue";
 import DrinkZone from "@/views/shopcate/DrinkZone.vue";
 import DrinkFreshMilkPage from "@/views/shopcate/DrinkFreshMilkPage.vue";
+import DrinkFreshMilkPageadd from "@/views/shopcate/DrinkFreshMilkPageadd.vue";
 import DrinkHotRankList from "@/views/shopcate/DrinkHotRankList.vue";
+import DrinkHotRankListadd from "@/views/shopcate/DrinkHotRankListadd.vue";
+
 import DrinkTabZone from "@/views/shopcate/DrinkTabZone.vue";
 import SnackZone from "@/views/shopcate/SnackZone.vue";
 import SnackHotProductPage from "@/views/shopcate/SnackHotProductPage.vue";
@@ -86,9 +104,12 @@ import TissueSuperHotRankList from "@/views/shopcate/TissueSuperHotRankList.vue"
 import TissueCleanGoodsList from "@/views/shopcate/TissueCleanGoodsList.vue";
 import HomeFlashSalePage from "@/views/shoplh/HomeFlashSalePage.vue";
 import BeautyZoneNewList from "@/views/shopcate/BeautyZoneNewList.vue";
+import HomeActives from "@/views/shoplh/HomeActives.vue";
 
 
 
+import TissZoneLightFoodZone from "@/views/shopcate/TissZoneLightFoodZone.vue";
+import TissueAddNew from "@/views/shopcate/TissueAddNew.vue";
 
 //ff
 
@@ -157,7 +178,7 @@ const routes = [
             title: '盒马购物车'
         }
     },
-    
+
     {
         path: '/freeca',
         component: Freeca,
@@ -246,7 +267,15 @@ const routes = [
         meta: {
             title: '确认订单'
         }
-    }, {
+    }, 
+    {
+        path: '/confirmOrderhm',
+        component: ConfirmOrderhm,
+        meta: {
+            title: '盒马确认订单'
+        }
+    }, 
+    {
         path: '/orderInfo',
         component: OrderInfo,
         meta: {
@@ -267,7 +296,7 @@ const routes = [
         }
     },
 
-{
+    {
         path: '/addAddresshm',
         component: AddAdresshm,
         meta: {
@@ -302,6 +331,14 @@ const routes = [
             title: '收银台'
         }
     },
+    {
+        path: '/foodpayOrder',
+        component: foodpayOrder,
+        meta: {
+            title: '收银台'
+        }
+    },
+
     {
         path: '/payOrderZhf',
         component: payOrderZhf,
@@ -437,6 +474,39 @@ const routes = [
         }
     },
     {
+        path: '/JingzaoSuperValuenew',
+        component: JingzaoSuperValuenew,
+        meta: {
+            title: '推荐',
+            keepAlive: true
+        }
+    },
+    {
+        path: '/Morediancan',
+        component: Morediancan,
+        meta: {
+            title: '点餐',
+            keepAlive: true
+        }
+    },
+{
+        path: '/ServiceNew',
+        component: ServiceNew,
+        meta: {
+            title: '服务',
+            keepAlive: true
+        }
+    },
+
+{
+        path: '/StoreNew',
+        component: StoreNew,
+        meta: {
+            title: '服务',
+            keepAlive: true
+        }
+    },
+    {
         path: '/JingdongChannel',
         component: JingdongChannel,
         meta: {
@@ -524,6 +594,15 @@ const routes = [
         }
     },
     {
+        path: '/AppBrandRecommendnew',
+        component: AppBrandRecommendnew,
+        meta: {
+            title: '推荐',
+            keepAlive: true
+        }
+    },
+
+    {
         path: '/ApplianceRecommend',
         component: ApplianceRecommend,
         meta: {
@@ -548,13 +627,33 @@ const routes = [
             keepAlive: true
         }
     }, {
+        path: '/DrinkFreshMilkPageadd',
+        component: DrinkFreshMilkPageadd,
+        meta: {
+            title: '饮品专区',
+            keepAlive: true
+        }
+    },
+
+
+    {
         path: '/DrinkHotRankList',
         component: DrinkHotRankList,
         meta: {
             title: '爆款',
             keepAlive: true
         }
-    }, {
+    },
+    {
+        path: '/DrinkHotRankListadd',
+        component: DrinkHotRankListadd,
+        meta: {
+            title: '爆款',
+            keepAlive: true
+        }
+    },
+
+    {
         path: '/DrinkTabZone',
         component: DrinkTabZone,
         meta: {
@@ -589,6 +688,23 @@ const routes = [
         component: SnackLightFoodZone,
         meta: {
             title: '零食区',
+            keepAlive: true
+        }
+    },
+    {
+        path: '/TissZoneLightFoodZone',
+        component: TissZoneLightFoodZone,
+        meta: {
+            title: '纸巾区',
+            keepAlive: true
+        }
+    },
+
+    {
+        path: '/TissueAddNew',
+        component: TissueAddNew,
+        meta: {
+            title: '纸巾区',
             keepAlive: true
         }
     },
@@ -633,6 +749,16 @@ const routes = [
             keepAlive: true
         }
     },
+    {
+        path: '/HomeActives',
+        component: HomeActives,
+        meta: {
+            title: '首页',
+            keepAlive: true
+        }
+    },
+
+
 
     {
         path: '/BeautyZoneNewList',
@@ -811,7 +937,7 @@ const routes = [
     // ==================== 电影模块 ====================
     ...filmRoutes,
     ...performRoutes,
-    //  ...cakeRoutes,   
+    ...cakeRoutes,
 ]
 
 const router = new Router({

@@ -31,7 +31,7 @@
                   <span class="symbol">¥</span>
                   <span class="price">{{ item.sell_price }}</span>
                 </div>
-                <div class="add-btn">+</div>
+                <!-- <div class="add-btn">+</div> -->
               </div>
             </div>
           </div>
@@ -58,7 +58,7 @@
                   <span class="symbol">¥</span>
                   <span class="price">{{ item.sell_price }}</span>
                 </div>
-                <div class="add-btn">+</div>
+                <!-- <div class="add-btn">+</div> -->
               </div>
             </div>
           </div>
@@ -83,7 +83,7 @@
                   <span class="symbol">¥</span>
                   <span class="price">{{ item.sell_price }}</span>
                 </div>
-                <div class="add-cart-btn">+</div>
+                <!-- <div class="add-cart-btn">+</div> -->
               </div>
             </div>
           </div>

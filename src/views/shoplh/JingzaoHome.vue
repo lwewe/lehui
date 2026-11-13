@@ -27,7 +27,8 @@
       </div>
 
       <!-- 3. 分类图标（接口 nav） -->
-      <div style="padding: 10px;">
+      <div style="padding: 10px;    position: relative;
+    top: -25px;">
         <div class="category-grid">
           <div class="cat-item" v-for="(item, index) in categoryList" :key="index" @click="goToCategoryWithId(item)">
             <img class="cat-icon" :src="item.img" alt="" />
@@ -35,7 +36,10 @@
           </div>
         </div>
       </div>
-
+<div style="  position: relative;
+    top: -25px;">
+    
+  
       <!-- 4. 超值推荐 -->
       <div class="section-card pink-card" v-if="hotList.length > 0">
         <div class="section-header">
@@ -78,7 +82,7 @@
                 <span class="price">{{ item.sell_price }}</span>
                 <span class="market-price" v-if="item.sell_price < item.market_price">¥{{ item.market_price }}</span>
               </div>
-              <div class="add-cart" @click.stop="addToCart(item)">+</div>
+              <!-- <div class="add-cart" @click.stop="addToCart(item)">+</div> -->
             </div>
           </div>
         </div>
@@ -87,8 +91,21 @@
       <div class="empty-tip" v-else-if="!loading">
         暂无商品
       </div>
+</div>
 
+      <!-- 加载状态提示 -->
+      <div class="load-more-status" style="text-align: center; padding: 15px 0; font-size: 13px; color: #999;">
+        <span v-if="goodsLoading">正在加载中...</span>
+        <span v-else-if="goodsFinished && goodsList.length > 0">没有更多商品了</span>
+        <span v-else-if="!goodsLoading && goodsList.length === 0">暂无商品</span>
+      </div>
       <div class="bottom-safe-area"></div>
+
+      <div ref="loadMoreTrigger" style="height: 10px; visibility: hidden;"></div>
+
+
+
+
     </div>
 
     <!-- 6. 底部固定导航栏 -->
@@ -111,7 +128,7 @@
 </template>
 
 <script>
-import { channelDetail } from "@/api/lhjdtm";
+import { channelDetail, productList } from "@/api/lhjdtm";
 
 export default {
   name: "JingzaoHome",
@@ -126,54 +143,151 @@ export default {
       categoryList: [],
       hotList: [],
       goodsList: [],
+      // 分页
+      goodsPage: 1,
+      goodsFinished: false,
+      goodsLoading: false,
+      // 并发/生命周期控制
+      goodsReqId: 0,       // 请求序号，防并发覆盖
+      inited: false,       // 首次是否已拉过底部流
+      scrollTimer: null,
+      scrollEl: null,      // 实际滚动容器
+      isRequestingMore: false,
+      observer: null,
     }
   },
   methods: {
-    // 获取频道详情（banner + nav + sections）
-    channelDetailIndex() {
-      channelDetail({ id: 13 }).then(res => {
-        if (res.code == 200) {
-          const data = res.data;
+    fetchBottomGoods(isLoadMore = false) {
+      // 只要正在加载，或者已经到底，直接拦截
+      if (this.goodsLoading || this.goodsFinished) return;
 
-          // 1. 返回按钮图标（用 banner 图，或者你单独配一个返回图标）
-          if (data.banner && data.banner.length > 0) {
-            this.baners = data.banner[0].img;
-            this.bannerImg = data.banner[0].img;
+      this.goodsLoading = true;
+      const reqId = ++this.goodsReqId;
+      const page = isLoadMore ? this.goodsPage : 1;
+
+      productList({
+        platform: 1,
+        jd_type: 3,
+        page: page,
+        limit: 10,
+        sort: 'px',
+        order: 'desc'
+      }).then(res => {
+        if (reqId !== this.goodsReqId) return;
+
+        if (res.code === 200) {
+          const payload = res.data || {};
+          let list = [];
+          if (Array.isArray(payload.data)) list = payload.data;
+          else if (Array.isArray(payload.list)) list = payload.list;
+
+          if (list.length && list.some(p => p.jd_type !== undefined)) {
+            const onlyJingzao = list.filter(p => Number(p.jd_type) === 3);
+            if (onlyJingzao.length) list = onlyJingzao;
           }
 
-          // 2. 分类图标：直接用 nav
-          if (data.nav && data.nav.length > 0) {
-            this.categoryList = data.nav.map(item => ({
-              id: item.cate_id || item.id,
-              img: item.img,
-              title: item.title,
-              link: item.link
-            }));
+          const fixImg = url => (url ? String(url).replace(/^http:\/\//, 'https://') : '');
+          const formatList = list.map(p => ({ ...p, img: fixImg(p.img) }));
+
+          if (isLoadMore) {
+            const existingIds = new Set(this.goodsList.map(item => item.id));
+            const uniqueList = formatList.filter(item => !existingIds.has(item.id));
+            this.goodsList = this.goodsList.concat(uniqueList);
+          } else {
+            this.goodsList = formatList;
           }
 
-          // 3. sections 里如果有 items，可以在这里处理
-          // 目前接口 items 为空，所以 hotList / goodsList 保持空
-          if (data.sections && data.sections.length > 0) {
-            data.sections.forEach(section => {
-              if (section.items && section.items.length > 0) {
-                // 根据 section.type 或 title 区分
-                if (section.title === '超值购') {
-                  this.hotList = section.items.slice(0, 4);
-                } else if (section.title === '热销推荐' || section.title === '上新') {
-                  this.goodsList = section.items;
-                }
-              }
-            });
+          const currentPage = Number(payload.current_page || page);
+          const lastPage = Number(payload.last_page || 1);
+
+          if (currentPage >= lastPage || list.length === 0 || list.length < 10) {
+            this.goodsFinished = true;
+          } else {
+            this.goodsPage = currentPage + 1;
           }
         }
-      })
+      }).catch(err => {
+        console.error('[productList] 获取商品流失败:', err);
+      }).finally(() => {
+        if (reqId === this.goodsReqId) {
+          // 延迟 100ms 解锁，给页面渲染留出充足时间
+          setTimeout(() => {
+            this.goodsLoading = false;
+          }, 100);
+        }
+      });
+    },
+
+
+    handleScroll() {
+      if (this.scrollTimer) clearTimeout(this.scrollTimer);
+
+      this.scrollTimer = setTimeout(() => {
+        // 正在加载，或者已经没数据了，直接返回
+        if (this.goodsLoading || this.goodsFinished) return;
+
+        const el = this.scrollEl;
+        const scrollTop = el ? el.scrollTop : (window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0);
+        const clientHeight = el ? el.clientHeight : (window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight || 0);
+        const scrollHeight = el ? el.scrollHeight : (document.documentElement.scrollHeight || document.body.scrollHeight || 0);
+
+        if (scrollHeight <= clientHeight) return;
+
+        // ✅ 距离底部 200px 时触发（不要太小，防止连续触发）
+        if (scrollTop + clientHeight >= scrollHeight - 200) {
+          this.fetchBottomGoods(true);
+        }
+      }, 200); // 200ms 防抖
+    },
+
+    /* ---------------- 频道数据 ---------------- */
+    channelDetailIndex() {
+      const fixImg = url => (url ? String(url).replace(/^http:\/\//, 'https://') : '');
+
+      channelDetail({ id: 13 }).then(res => {
+        if (!res || res.code !== 200) {
+          console.warn('[channelDetail] code != 200:', res);
+          return;
+        }
+        const modules = (res.data && res.data.modules) || [];
+
+        // 1. Banner
+        const bannerModule = modules.find(m => m.type === 'banner');
+        if (bannerModule) {
+          const img = fixImg(bannerModule.banner_img);
+          this.baners = img;
+          this.bannerImg = img || this.bannerImg;
+        }
+
+        // 2. 分类图标
+        const iconModule = modules.find(m => m.type === 'entry' && m.list_type === 'icon');
+        if (iconModule) {
+          this.categoryList = (iconModule.items || []).map(item => ({
+            id: item.cate_id || item.id,
+            img: fixImg(item.img),
+            title: item.title,
+            link: item.link,
+            shopCateId: item.shop_cate_id || item.cate_id || item.id
+          }));
+        }
+
+        // 3. 超值推荐
+        const recommendModule = modules.find(m => m.type === 'grid' && m.title === '推荐');
+        if (recommendModule) {
+          const items = (recommendModule.items || []).map(p => ({
+            ...p,
+            img: fixImg(p.img)
+          }));
+          this.hotList = items.slice(0, 4);
+        }
+      }).catch(err => {
+        console.error('[channelDetail] 获取京造频道数据失败:', err);
+      });
     },
 
     formatSaleNum(num) {
-      if (num >= 10000) {
-        return (num / 10000).toFixed(1) + '万';
-      }
-      return num;
+      const n = Number(num) || 0;
+      return n >= 10000 ? (n / 10000).toFixed(1) + '万' : n;
     },
 
     handleSearch() {
@@ -183,17 +297,17 @@ export default {
       }
     },
 
-    // goToCategoryWithId(item) {
-    //   this.$router.push({
-    //     path: '/JingzaoCategory',
-    //     query: { categoryId: item.id, categoryTitle: item.title }
-    //   });
-    // },
     goToCategoryWithId(item) {
+      const shopCateId = item.shopCateId || item.shop_cate_id || item.cate_id || item.id;
+      if (!shopCateId) {
+        console.warn('[goToCategoryWithId] 没有 shop_cate_id', item);
+        return;
+      }
       this.$router.push({
         path: '/productList',
         query: {
-          keyword: item.title,
+          // shop_cate_id: shopCateId,
+          shop_cate_id: item.id,
           platform: 1,
           jd_type: 3,
           t: Date.now()
@@ -203,7 +317,6 @@ export default {
 
     goToDetail(item) {
       this.$goDetail(item);
-      // this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
     },
 
     addToCart(item) {
@@ -228,15 +341,74 @@ export default {
 
     goToCategory() {
       this.$router.push('/JingzaoCategory');
+    },
+
+    /* ---------------- 滚动容器/监听 ---------------- */
+    getScrollEl() {
+      const root = this.$el;
+      if (!root) return null;
+      const candidates = root.querySelectorAll('.scroll-content');
+      for (const el of candidates) {
+        const style = window.getComputedStyle(el);
+        if (/(auto|scroll)/.test(style.overflowY) && el.scrollHeight > el.clientHeight) {
+          return el;
+        }
+      }
+      return null;
+    },
+    bindScroll() {
+      this.scrollEl = this.getScrollEl();
+      const target = this.scrollEl || window;
+      target.addEventListener('scroll', this.handleScroll, true);
+    },
+    unbindScroll() {
+      const target = this.scrollEl || window;
+      target.removeEventListener('scroll', this.handleScroll, true);
+      this.scrollEl = null;
     }
-  },
-  activated() {
-    // 每次进入都重新请求
-    this.channelDetailIndex();
   },
   mounted() {
     this.channelDetailIndex();
+    this.fetchBottomGoods(false);
+
+    // ✅ 初始化 IntersectionObserver 监听底部哨兵
+    this.$nextTick(() => {
+      const trigger = this.$refs.loadMoreTrigger;
+      if (trigger) {
+        this.observer = new IntersectionObserver((entries) => {
+          // 如果哨兵出现在屏幕内，说明到底了
+          if (entries[0].isIntersecting) {
+            if (!this.goodsLoading && !this.goodsFinished) {
+              this.fetchBottomGoods(true);
+            }
+          }
+        }, { threshold: 0.1 }); // 出现 10% 就触发
+        this.observer.observe(trigger);
+      }
+    });
+  },
+
+  activated() {
+    // keep-alive 回来时刷新上半部分即可，数据保活就不需要重新拉分页
+    this.channelDetailIndex();
+  },
+
+  deactivated() {
+    // 离开页面销毁观察器，防止在其他页面触发了当前页面的请求
+    if (this.observer) {
+      this.observer.disconnect();
+      this.observer = null;
+    }
+  },
+
+  beforeDestroy() {
+    if (this.observer) {
+      this.observer.disconnect();
+      this.observer = null;
+    }
   }
+
+
 }
 </script>
 

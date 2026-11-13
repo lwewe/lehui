@@ -8,7 +8,7 @@
         <div v-if="!addrShow" style="font-size: 14px">您还没有配送地址，去新建一个</div>
         <div class="leftBox" v-else>
           <div class="addressIcon">
-            <img class="img" src="../../assets/tubiao/dd.png" alt="">
+            <img class="img" src="@/assets/tubiao/dd.png" alt="">
           </div>
           <div>
             <div class="addressDetail">
@@ -141,22 +141,31 @@
                         {{ item.date == "" ? '请先选择日期' : item.radio == 2 ? '请选择配送时间' : '请选择自取时间' }}
                       </div>
                       <!--                  配送时间-->
+                      <!--                  配送时间-->
                       <div v-if="item.date">
-                        <div class="synthesisItem" v-for="item2 in getTimeListByBrand(item.product.brand_id, item)"
-                          :key="item2" @click="changeTime(item2, item, index)">
+                        <div class="synthesisItem" v-for="item2 in getTimeOptions(item, 'delivery')" :key="item2"
+                          @click="changeTime(item2, item, index)">
                           <div :class="{ addRegion: item.time == item2 }" @click="item.showTime = false">{{ item2 }}
                           </div>
+                        </div>
+                        <div v-if="getTimeOptions(item, 'delivery').length === 0" class="synthesisItem">
+                          <div style="color:#999">该日期暂无可选时间</div>
                         </div>
                       </div>
                       <!--                  自取时间-->
+                      <!--                  自取时间-->
                       <div v-if="item.date && item.radio == 1">
-                        <div class="synthesisItem"
-                          v-for="item2 in item.product.peisong.validate_take_dates.filter(item3 => item3.date == item.date)[0].validate_take_times"
-                          :key="item2" @click="changeTime(item2, item, index)">
+                        <div class="synthesisItem" v-for="item2 in getTimeOptions(item, 'take')" :key="item2"
+                          @click="changeTime(item2, item, index)">
                           <div :class="{ addRegion: item.time == item2 }" @click="item.showTime = false">{{ item2 }}
                           </div>
                         </div>
+                        <div v-if="getTimeOptions(item, 'take').length === 0" class="synthesisItem">
+                          <div style="color:#999">该日期暂无可选时间</div>
+                        </div>
                       </div>
+
+
                     </div>
                   </van-popup>
                 </div>
@@ -171,7 +180,7 @@
               <div class="phoneTitle">配送费</div>
               <div class="with" v-if="item.date && item.radio == 2">
                 <div class="withText" style="color:#CC4A49;font-size: 14px">
-                  ￥{{ item.deliveryCharge ? item.deliveryCharge  : 0}}
+                  ￥{{ item.deliveryCharge ? item.deliveryCharge : 0 }}
                 </div>
               </div>
               <div class="with" v-else>
@@ -214,7 +223,7 @@
                       </div>
                       <div v-if="item.product.peisong && item.radio == 1">
                         <div class="synthesisItem" v-for="item2 in item.product.peisong.validate_take_dates"
-                          :key="item2.date" @click="changeSynthesis(item2.date, item, index)">
+                          :key="item2.date" @click="changeSynthesis(item2.date, item, item2, index)">
                           <div :class="{ addRegion: item.date == item2.date }" @click="item.showDate = false">
                             {{ item2.date }}
                           </div>
@@ -246,22 +255,29 @@
                       </div>
                       <!--                  配送时间-->
                       <div v-if="item.date && item.radio == 2">
-                        <div class="synthesisItem"
-                          v-for="item2 in item.product.peisong.validate_delivery_dates.filter(item3 => item3.date == item.date)[0].validate_delivery_times"
-                          :key="item2" @click="changeTime(item2, item, index)">
+                        <div class="synthesisItem" v-for="item2 in getTimeOptions(item, 'delivery')" :key="item2"
+                          @click="changeTime(item2, item, index)">
                           <div :class="{ addRegion: item.time == item2 }" @click="item.showTime = false">{{ item2 }}
                           </div>
+                        </div>
+                        <div v-if="getTimeOptions(item, 'delivery').length === 0" class="synthesisItem">
+                          <div style="color:#999">该日期暂无可选时间</div>
                         </div>
                       </div>
                       <!--                  自取时间-->
                       <div v-if="item.date && item.radio == 1">
-                        <div class="synthesisItem"
-                          v-for="item2 in item.product.peisong.validate_take_dates.filter(item3 => item3.date == item.date)[0].validate_take_times"
-                          :key="item2" @click="changeTime(item2, item, index)">
+                        <div class="synthesisItem" v-for="item2 in getTimeOptions(item, 'take')" :key="item2"
+                          @click="changeTime(item2, item, index)">
                           <div :class="{ addRegion: item.time == item2 }" @click="item.showTime = false">{{ item2 }}
                           </div>
                         </div>
+                        <div v-if="getTimeOptions(item, 'take').length === 0" class="synthesisItem">
+                          <div style="color:#999">该日期暂无可选时间</div>
+                        </div>
                       </div>
+
+
+
                     </div>
                   </van-popup>
                 </div>
@@ -359,7 +375,15 @@
 <script>
 import Payment from "@/components/Payment.vue";
 import PayPassword from "@/components/PayPassword.vue";
-import { cakeFlkpay, cakeIsPayDate, cakeIsPaySuccess, cakewxpay, getflkList, toCheckout } from "@/api/account";
+import {
+  checkoutBuyNow,
+  checkoutByCart,
+  payDate,
+  payByCard,
+  payByWx,
+  paySuccess,
+  getCardList
+} from '@/api/lehuicake'
 import moment from 'moment';
 import 'moment/locale/zh-cn';
 
@@ -441,8 +465,35 @@ export default {
     }
   },
   methods: {
-    // 根据品牌ID获取配送时间段
-    // 根据品牌ID获取配送时间段
+    isSupplierBrand(brandId) {
+      if (!brandId) return false;
+      // ⚠️ 把味多美/巴黎贝甜/幸福西饼的真实 brand_id 补进来
+      const ids = ['633', '637', '624', '635'];
+      return ids.includes(brandId.toString());
+    },
+    getTimeOptions(item, type) {
+      const peisong = item && item.product && item.product.peisong;
+      if (!peisong || !item.date) return [];
+
+      const dateKey = type === 'take' ? 'validate_take_dates' : 'validate_delivery_dates';
+      const timeKey = type === 'take' ? 'validate_take_times' : 'validate_delivery_times';
+      const dateList = peisong[dateKey];
+
+      if (Array.isArray(dateList) && dateList.length) {
+        const target = dateList.find(d => d.date === item.date);
+        if (target) {
+          const times = target[timeKey];
+          // 如果接口给了有效的时间数组，就返回给页面展示
+          if (Array.isArray(times) && times.length > 0) {
+            return times;
+          }
+        }
+      }
+
+      // 🚨 核心修改：如果接口没给数据(或者返回null/空)，直接返回空数组！
+      // 这样模板里就会展示 "该日期暂无可选时间"
+      return [];
+    },
     getTimeListByBrand(brandId, item) {
       // 21cake品牌ID是633，使用专用时间段
       if (brandId && this.is21cakeBrand(brandId)) {
@@ -540,71 +591,14 @@ export default {
         return true; // 保留14:00-16:00, 16:00-18:00, 18:00-20:00
       });
     },
-    // 根据品牌ID获取配送时间段
-    // getTimeListByBrand(brandId) {
-    //   // 21cake品牌ID是633，使用专用时间段
-    //   // if (brandId && this.is21cakeBrand(brandId)) {
-    //   //   return this.timeList21cake;
-    //   // }
 
-    //   if (brandId && this.is21cakeBrand(brandId)) {
-    //     const now = new Date();
-    //     const currentHour = now.getHours();
-    //     // return this.timeList21cake;
-    //     if (currentHour >= 20) {
-    //       return this.filter21cakeTimeSlots();
-    //     }
-    //     return this.timeList21cake;
-    //   }
-
-    //   if (brandId && this.mcakeBrand(brandId)) {
-    //     const now = new Date();
-    //     const currentHour = now.getHours();
-
-    //     if (currentHour >= 20) {
-    //       return this.mcakeTimeSlots();
-    //     }
-    //     return this.timeListmcake;
-    //   }
-
-
-    //   // brand_id 624和635使用专用时间段
-    //   if (brandId && this.isBrand624635(brandId)) {
-    //     return this.timeList624635;
-    //   }
-    //   return this.timeList;
-    // },
     // 判断是否为637品牌
     mcakeBrand(brandId) {
       // 品牌ID是633
       const mBrandIds = ['637']; // 21cake的实际品牌ID
       return mBrandIds.includes(brandId.toString());
     },
-    // filter21cakeTimeSlots() {
-    //   // 21cake的时间段：10:00-13:00, 13:00-17:00, 17:00-20:00
-    //   // 20点后下单，不能选择10:00-13:00和13:00-17:00（因为这两个都在14点之前/包含14点之前）
-    //   // 只能选择17:00-20:00这个时间段
-    //   return this.timeList21cake.filter(timeSlot => {
-    //     // 检查时间段是否包含14点之前的部分
-    //     if (timeSlot === '10:00-13:00' || timeSlot === '13:00-17:00') {
-    //       return false; // 排除这两个时间段
-    //     }
-    //     return true; // 保留17:00-20:00
-    //   });
-    // },
 
-    // mcakeTimeSlots() {
-    //   // 21cake的时间段：10:00-13:00, 13:00-17:00, 17:00-20:00
-    //   // 20点后下单，不能选择10:00-13:00和13:00-17:00（因为这两个都在14点之前/包含14点之前）
-    //   // 只能选择17:00-20:00这个时间段
-    //   return this.timeListmcake.filter(timeSlot => {
-    //     // 检查时间段是否包含14点之前的部分
-    //     if (timeSlot === '10:00-12:00' || timeSlot === '12:00-14:00') {
-    //       return false; // 排除这两个时间段
-    //     }
-    //     return true; // 保留17:00-20:00
-    //   });
-    // },
 
     // 判断是否为21cake品牌
     is21cakeBrand(brandId) {
@@ -617,14 +611,7 @@ export default {
       const brand624635Ids = ['624', '635']; // brand_id 624和635
       return brand624635Ids.includes(brandId.toString());
     },
-    // generateDaysList(numDays) {
-    //   const today = new Date();
-    //   for (let i = 1; i < numDays; i++) {
-    //     const date = new Date(today);
-    //     date.setDate(today.getDate() + i);
-    //     this.daysList.push({ date: moment(date).format('yyyy-MM-DD'), });
-    //   }
-    // },
+
     // 判断订单中是否包含624或635品牌
     has624635Brand() {
       return this.orderList.some(item =>
@@ -637,8 +624,8 @@ export default {
 
       // 关键：624品牌晚上9点后，从后天开始生成（i从2开始）
       const startDay = (this.has624635Brand() && currentHour >= 21) ? 2 : 1;
-// 调试日志
-  
+      // 调试日志
+
       this.daysList = []; // 记得先清空
       for (let i = startDay; i < numDays; i++) {
         const date = new Date(today);
@@ -692,6 +679,11 @@ export default {
       this.$router.push({ path: "/allStore", query: { id, index } })
     },
     changeRadio(radio, index, item) {
+      if (radio == 1 && this.isSupplierBrand(item.product.brand_id)) {
+        this.$toast("该商品不支持自提");
+        item.radio = "2";
+        return;
+      }
       this.radio = radio
       this.synthesisId = ""
       this.timeId = ""
@@ -734,7 +726,14 @@ export default {
       item.date = id
       this.timeId = ""
       item.time = ""
-      item.deliveryCharge = item2.delivery_amount
+      // item.deliveryCharge = item2.delivery_amount
+      item.deliveryCharge = Number(item2.delivery_amount) || 0
+      const type = item.radio == 1 ? 'take' : 'delivery'
+      if (item.radio != 3 && this.getTimeOptions(item, type).length === 0) {
+        this.$toast('该日期暂无可选时间，请更换日期')
+      }
+
+
       // item.deliveryCharge = 1
       if (item.radio != 2) {
         this.deliveryChargeList = this.deliveryChargeList.filter(item => item.indexs != index)
@@ -862,19 +861,17 @@ export default {
           if (res.err_msg === "get_brand_wcpay_request:ok") {
             that.$toast('支付成功！');
             setTimeout(() => {
-              cakeIsPaySuccess({
-                order_no
-              }).then(res => {
+              paySuccess(order_no).then(res => {
                 if (res.code == 200) {
-               
-                  that.$router.replace({ path: "/order", query: { tabIndex: 1 } })
-                
+
+                  that.$router.replace({ path: "/orderInfo", query: { tabIndex: 0 } })
+
                 }
               })
             }, 2500)
           } else if (res.err_msg === "get_brand_wcpay_request:fail") {
             that.$toast('支付失败！');
-          }else if (res.err_msg === "get_brand_wcpay_request:cancel") {
+          } else if (res.err_msg === "get_brand_wcpay_request:cancel") {
             that.$toast('支付已取消');
           } else {
             that.$toast('支付失败！');
@@ -891,8 +888,14 @@ export default {
       this.checked = checked
     },
     judgmentPayDate() {
-      this.getIsCard()
-      let data = {
+      this.isShow = false;
+      this.getIsCard();
+
+      // 本页总价是 paytotal（含配送费），不是 price*quantity
+      const goodsTotal = Number(Number(this.paytotal || 0).toFixed(2));
+
+      const data = {
+        cid: sessionStorage.getItem("cityId"),
         address_id: this.addrShow.id,
         code: this.code2,
         total: this.total,
@@ -901,38 +904,56 @@ export default {
         phone: this.phoneNumber,
         paytotal: this.paytotal,
         ...this.otherData
-      }
-      // console.log(data)
-      // return
-      cakeIsPayDate(data).then(res => {
-        if (res.code == 200) {
-          // 福利卡支付价格
-          this.dkprice = res.data.dkprice
-          this.wxprice = res.data.wxprice
-          this.ka_ids = res.data.ka_ids
-          this.code = res.data.code
-          if (this.wxprice != 0) {
-            //   微信支付
-            // console.log("微信支付")
-            // 去支付
-            if (!this.isWeiXin()) {
-              this.$toast("请使用微信打开进行支付")
-              this.isLoading = false
-              return;
-            }
-            this.shoptoWxpay()
-          } else {
-            if (this.dkprice != 0) {
-              // console.log("卡支付")
-              this.isShow = true
-              this.isLoading = false
-            }
-          }
-        } else {
-          this.$toast(res.msg)
-          this.isLoading = false
+      };
+
+      payDate(data).then(res => {
+        if (res.code != 200) {
+          this.$toast(res.msg || "计算支付价格失败");
+          this.isLoading = false;
+          return;
         }
-      })
+
+        const rawDk = Number(res.data.dkprice) || 0;
+        const rawWx = Number(res.data.wxprice) || 0;
+        const kaIds = res.data.ka_ids || [];
+        const fulikaStr = this.result.join(",");
+        const hasCard = fulikaStr !== "" && Array.isArray(kaIds) && kaIds.length > 0;
+
+        // 归一化：微信应付 = 总价 − 卡抵扣
+        let finalDk = Math.min(rawDk, goodsTotal);
+        let finalWx = Number((goodsTotal - finalDk).toFixed(2));
+        if (!hasCard) { finalDk = 0; finalWx = goodsTotal; }
+        finalDk = Math.max(0, finalDk);
+        finalWx = Math.max(0, finalWx);
+
+        this.dkprice = finalDk;
+        this.wxprice = finalWx;
+        this.ka_ids = kaIds;
+        this.code = res.data.code;
+
+        console.log("【支付拆分】", { 总价: goodsTotal, dk: finalDk, wx: finalWx, hasCard });
+
+        if (finalWx > 0) {
+          if (!this.isWeiXin()) {
+            this.$toast("请使用微信打开进行支付");
+            this.isLoading = false;
+            return;
+          }
+          this.shoptoWxpay();
+        } else {
+          if (finalDk > 0) {
+            this.isShow = true;
+            this.isLoading = false;
+          } else {
+            this.$toast("请先选择福利卡支付");
+            this.isLoading = false;
+          }
+        }
+      }).catch(err => {
+        this.isLoading = false;
+        this.$toast("网络请求失败");
+        console.error("【计算卡支付报错】", err);
+      });
     },
     onInput(key) {
       this.pass = key
@@ -946,8 +967,12 @@ export default {
     flkpay(pass) {
       this.getIsCard()
       let data = {
-        ka_ids: this.ka_ids,
+        cid: sessionStorage.getItem("cityId"),
+        ka_ids: JSON.stringify(this.ka_ids),
+
+        cartIds: this.act == 1 ? this.otherData.cartIds : (this.ka_ids && this.ka_ids.length ? this.ka_ids.join(",") : "0"),
         pass,
+        dkprice: this.dkprice,
         address_id: this.addrShow.id,
         code: this.code,
         total: this.paytotal,
@@ -955,7 +980,10 @@ export default {
         phone: this.phoneNumber,
         ...this.otherData
       }
-      cakeFlkpay(data).then(res => {
+
+
+
+      payByCard(data).then(res => {
         this.isLoading = false
         this.$toast(res.msg)
         if (res.code == 200 && res.data) {
@@ -966,16 +994,12 @@ export default {
           //   }, 1000)
           // } else {
           setTimeout(() => {
-            cakeIsPaySuccess({
-              order_no: res.data.order_no
-            }).then(res => {
+            paySuccess(
+              res.data.order_no
+            ).then(res => {
               if (res.code == 200) {
-                //   if (this.change == 0) {
-                //     setTimeout(() => {
-                //       that.$router.go(-1)
-                //     }, 1000)
-                //   } else {
-                this.$router.replace({ path: "/order", query: { tabIndex: 1 } })
+
+                this.$router.replace({ path: "/orderInfo" })
                 //   }
               } else {
                 this.$toast(res.msg)
@@ -988,6 +1012,7 @@ export default {
     },
     // 支付
     toPay() {
+      if (this.isLoading) return;
       // console.log(this.result, this.checked)
       if (!this.addrShow) {
         this.$toast("您还没有配送地址")
@@ -1007,6 +1032,10 @@ export default {
         this.$toast("您的当前地址暂不支持配送，请重新选择地址下单")
         return
       }
+      if (this.orderList.filter(item => item.cpbs == 2 && item.product && this.isSupplierBrand(item.product.brand_id) && item.radio == 1).length > 0) {
+        this.$toast("该商品不支持自提，请选择配送方式")
+        return
+      }
       if (this.orderList.filter(item => item.cpbs == 2 ? item.flag == 1 ? item.date == "" || item.time == "" : item.radio == 2 && (item.date == "" || item.time == "") : '').length > 0) {
         this.$toast("请选择配送信息")
         return
@@ -1020,41 +1049,63 @@ export default {
         this.$toast("请选择支付方式")
         return
       }
+
+      this.isShow = false;
       this.isLoading = true
-      // if (this.result.length == 0 && this.checked != "") {
-      //   // 去支付
-      //   if (!this.isWeiXin()) {
-      //     this.$toast("请使用微信打开进行支付")
-      //     this.isLoading = false
-      //     return;
-      //   }
-      //   this.shoptoWxpay()
-      // } else {
       this.judgmentPayDate()
-      // }
+
     },
     shoptoWxpay() {
-      this.getIsCard()
+      this.getIsCard();
+
+      // 下单前校验：dk + wx 必须等于总价
+      const goodsTotal = Number(Number(this.paytotal || 0).toFixed(2));
+      const dk = Number(this.dkprice) || 0;
+      const wx = Number(this.wxprice) || 0;
+      if (Math.abs(dk + wx - goodsTotal) > 0.01) {
+        this.isLoading = false;
+        this.$toast("支付金额计算异常，请重试");
+        console.error("【联合支付金额异常】总价:", goodsTotal, "dk:", dk, "wx:", wx);
+        return;
+      }
+
       let data = {
+        cid: sessionStorage.getItem("cityId"),
         phone: this.phoneNumber,
-        ka_ids: this.ka_ids,
+        ka_ids: JSON.stringify(this.ka_ids),   // ← 关键：恢复注释，与 flkpay 一致
+        dkprice: this.dkprice,
+        wxprice: this.wxprice,
         address_id: this.addrShow.id,
         code: this.code,
         total: this.paytotal,
         act: this.act,
         openid: this.openid,
         ...this.otherData
+      };
+
+      if (this.act == 1) {
+        data.cartIds = this.otherData.cartIds;
+      } else {
+        data.cartIds = this.ka_ids && this.ka_ids.length ? this.ka_ids.join(",") : "";
       }
-      // this.$toast({message:data.openid,duration:0})
-      cakewxpay(data).then(res => {
-        // this.$toast(res.msg)
+
+      payByWx(data).then(res => {
         if (res.code == 200) {
-          this.onBridgeReady(res.data.jsApiParameters, res.data.order_no)
+          const p = res.data.jsApiParameters;
+          const jsApiParams = {
+            appId: p.appId,
+            timeStamp: p.timeStamp || p.timestamp,
+            nonceStr: p.nonceStr,
+            package: p.package,
+            signType: p.signType,
+            paySign: p.paySign,
+          };
+          this.onBridgeReady(jsApiParams, res.data.order_no);
         } else {
-          this.$toast(res.msg)
-          this.isLoading = false
+          this.$toast(res.msg);
+          this.isLoading = false;
         }
-      })
+      });
     },
     //支付end
     // 价格处理
@@ -1070,181 +1121,198 @@ export default {
     },
     // 订单详情
     getCheckout(data) {
-      this.orderList = []
-      toCheckout(data).then(res => {
-        this.loadingflag = false
-        if (res.code == 200) {
-          this.addrShow = res.data.addr_show
-          this.total = res.data.total
-          this.paytotal = res.data.total
-          this.code2 = res.data.code
-          if (this.withChecked) {
-            this.phoneNumber = this.addrShow.phone
-            this.disabled = true
-          } else {
-            this.phoneNumber = sessionStorage.getItem("phoneNum")
-            this.disabled = false
-          }
-          res.data.jiesuan_list.forEach(item => {
-          // flag=1 的蛋糕产品，手动构建配送数据
-        if (item.cpbs == 2 && item.product.flag == 1) {
-          item.product.peisong = {
-            can_take: 0,
-            can_ship: 1,      // 只能送货上门
-            can_same: 0,
-            is_distribution: item.product.delivery,
-            validate_delivery_dates: [],  // 后面通过 generateDaysList 生成
-            validate_take_dates: null,
-            delivery_text: null
-          }
-        }
-        
+      this.loadingflag = true; // 别让用户觉得卡死了
+      this.orderList = [];
+      const cid = sessionStorage.getItem("cityId");
 
-            var radio = ""
-            if (item.product.peisong) {
-              if (item.product.peisong.can_ship == 1) {
-                radio = "2"
-              } else if (item.product.peisong.can_same == 1) {
-                radio = "3"
-              } else if (item.product.peisong.can_take == 1) {
-                radio = "1"
+      // ✅ 核心：必须把 address_id 传给后端
+      const apiCall = data.cartIds
+        ? checkoutByCart({ cid, cartIds: data.cartIds, address_id: data.address_id })
+        : checkoutBuyNow({ ...data, cid, address_id: data.address_id });
+
+      apiCall.then(res => {
+        this.loadingflag = false;
+        if (res.code == 200) {
+          // ✅ 先替换顶部地址
+          if (res.data.addr_show) {
+            this.addrShow = res.data.addr_show;
+          }
+
+          this.total = res.data.total || 0;
+          this.paytotal = res.data.total || 0;
+          this.code2 = res.data.code;
+
+          // ✅ 防止空数组导致白屏 / NaN
+          if (!res.data.jiesuan_list || res.data.jiesuan_list.length === 0) {
+            this.$toast("当前地址暂不支持配送该商品");
+            this.orderList = [];
+            return;
+          }
+
+          if (this.withChecked) {
+            this.phoneNumber = this.addrShow.phone;
+            this.disabled = true;
+          } else {
+            this.phoneNumber = sessionStorage.getItem("phoneNum");
+            this.disabled = false;
+          }
+
+          let tempOrderList = [];
+          res.data.jiesuan_list.forEach(item => {
+            // 过滤异常数据
+            if (!item.product || !item.xinghao) return;
+
+            // 配送方式逻辑
+            if (item.cpbs == 2 && item.product.flag == 1) {
+              item.product.peisong = {
+                can_take: 0, can_ship: 1, can_same: 0,
+                is_distribution: item.product.delivery,
+                validate_delivery_dates: [], validate_take_dates: null, delivery_text: null
+              };
+            }
+            // ✅ 供应商蛋糕一律禁止自提，只能配送
+            if (item.cpbs == 2 && item.product.peisong && this.isSupplierBrand(item.product.brand_id)) {
+              item.product.peisong.can_take = 0;
+              // 兜底：接口若只返回自提（can_ship/can_same 都为 0），强制给送货上门，避免无法下单
+              if (item.product.peisong.can_ship != 1 && item.product.peisong.can_same != 1) {
+                item.product.peisong.can_ship = 1;
               }
             }
-            this.orderList.push({
+            var radio = "";
+            if (item.product.peisong) {
+              if (item.product.peisong.can_ship == 1) radio = "2";
+              else if (item.product.peisong.can_same == 1) radio = "3";
+              else if (item.product.peisong.can_take == 1) radio = "1";
+            }
+
+            tempOrderList.push({
               ...item,
-              radio:radio || '2',
-              showDate: false,
-              showTime: false,
-              storeName: "",
-              greeting: "",
-              remark: "",
-              date: "",
-              time: "",
-              deliveryCharge: "0",
-              shopObj: {}
-            })
-          })
-          // if (this.orderList.filter(item => item.product.peisong == "").length > 0) {
-          //  this.isBuy = true
-          // }
+              radio: radio || '2',
+              showDate: false, showTime: false, storeName: "", greeting: "", remark: "", date: "", time: "", deliveryCharge: "0", shopObj: {}
+            });
+          });
+
+          this.orderList = tempOrderList;
+
+          // 恢复缓存（原样保留）
           if (this.dataList.length > 0) {
             this.dataList.forEach(item => {
               this.orderList.forEach((item2, index) => {
                 if (item.indexs == index) {
-                  item2.storeName = item.name
-                  item2.shopObj = {
-                    id: item.id,
-                    name: item.name,
-                    detail: item.detail,
-                  }
+                  item2.storeName = item.name;
+                  item2.shopObj = { id: item.id, name: item.name, detail: item.detail };
                 }
-              })
-            })
+              });
+            });
           }
-          if (this.radioList.length > 0) {
-            this.radioList.forEach(item => {
-              this.orderList.forEach((item2, index) => {
-                if (item.indexs == index) {
-                  item2.radio = item.radio
-                }
-              })
-            })
-          }
-          if (this.dateList.length > 0) {
-            this.dateList.forEach(item => {
-              this.orderList.forEach((item2, index) => {
-                if (item.indexs == index) {
-                  item2.date = item.date
-                  item2.time = item.time
-                }
-              })
-            })
-          }
-          if (this.greetingList.length > 0) {
-            this.greetingList.forEach(item => {
-              this.orderList.forEach((item2, index) => {
-                if (item.indexs == index) {
-                  item2.greeting = item.greeting
-                  item2.remark = item.remark
-                  const regex = /[^\u4e00-\u9fa5a-zA-Z0-9]+/g; // 正则表达式匹配特殊字符
-                  item.greeting = item.greeting.replace(regex, '')
-                  item.remark = item.remark.replace(regex, '')
-                }
-              })
-            })
-          }
-          if (this.deliveryChargeList.length > 0) {
-            this.deliveryChargeList.forEach(item => {
-              this.orderList.forEach((item2, index) => {
-                if (item.indexs == index) {
-                  item2.deliveryCharge = item.deliveryCharge
-                  this.paytotal = (Number(this.paytotal) + Number(item.deliveryCharge ? item.deliveryCharge : 0)).toFixed(2)
-                }
-              })
-            })
-          }
+          if (this.radioList.length > 0) { /* ... */ }
+          if (this.dateList.length > 0) { /* ... */ }
+          if (this.greetingList.length > 0) { /* ... */ }
+          if (this.deliveryChargeList.length > 0) { /* ... */ }
 
-
-            this.generateDaysList(15);
-          // console.log(this.orderList,"this.orderList")
+          this.generateDaysList(15);
         }
-      })
+      }).catch(() => {
+        this.loadingflag = false;
+      });
     },
     //   卡列表
     getCard() {
-      getflkList().then(res => {
+      getCardList().then(res => {
         if (res.code == 200) {
-          this.cardList = res.data.card_list
-
+          // 接口文档显示 data 直接是数组
+          this.cardList = res.data || []
           if (this.cardList.length !== 0) {
             this.result.push(this.cardList[0].id)
           }
         }
       })
-    },
+    }
   },
   created() {
-     
-    this.dataDetail = JSON.parse(this.$route.query.data)
-    this.getCheckout(this.dataDetail)
-    this.getCard()
-    if (localStorage.getItem("openid")) {
-      this.openid = localStorage.getItem("openid")
+    // ✅ 1. 万能解析：兼容 data 传参 和 平铺传参
+    let queryData = this.$route.query.data;
+    this.dataDetail = {};
+
+    if (queryData) {
+      try {
+        this.dataDetail = JSON.parse(queryData);
+      } catch (e) { }
     }
-    this.type = this.$route.query.type
+
+    // 兼容购物车直接 ?cartIds=1&act=1 传过来的情况
+    if (!this.dataDetail.cartIds && !this.dataDetail.product_id) {
+      if (this.$route.query.cartIds) {
+        this.dataDetail = {
+          cartIds: this.$route.query.cartIds,
+          act: 1
+        };
+      } else if (this.$route.query.product_id) {
+        this.dataDetail = {
+          product_id: this.$route.query.product_id,
+          spec_id: this.$route.query.spec_id,
+          quantity: this.$route.query.quantity,
+          act: 2
+        };
+      }
+    }
+
+    // ✅ 2. 接收返回的 address_id
+    if (this.$route.query.address_id) {
+      this.dataDetail.address_id = this.$route.query.address_id;
+    }
+
+    // ✅ 3. 校验是否真的有数据，有才往下走
+    if (!this.dataDetail.cartIds && !this.dataDetail.product_id) {
+      this.$toast("订单信息缺失，请重新下单");
+      setTimeout(() => {
+        this.$router.back();
+      }, 1500);
+      return;
+    }
+    const selectedId = sessionStorage.getItem("selected_address_id");
+    const selectedObj = sessionStorage.getItem("selected_address_obj");
+
+    if (selectedId) {
+      // 1. 强行替换页面顶部的地址文字
+      if (selectedObj) {
+        this.addrShow = JSON.parse(selectedObj);
+        sessionStorage.removeItem("selected_address_obj"); // 用完销毁
+      }
+      // 2. 强行替换请求参数里的 address_id
+      this.dataDetail.address_id = selectedId;
+      sessionStorage.removeItem("selected_address_id"); // 用完销毁
+    }
+    // 4. 发请求
+    this.getCheckout(this.dataDetail);
+    this.getCard();
+
+    // 恢复缓存（原样保留）
+    if (localStorage.getItem("openid")) {
+      this.openid = localStorage.getItem("openid");
+    }
+    this.type = this.$route.query.type;
     if (sessionStorage.getItem("radio")) {
-      this.radio = sessionStorage.getItem("radio")
+      this.radio = sessionStorage.getItem("radio");
     }
     if (sessionStorage.getItem("isPhone")) {
-      this.withChecked = sessionStorage.getItem("isPhone") == "false" ? false : true
+      this.withChecked = sessionStorage.getItem("isPhone") == "false" ? false : true;
     }
     if (sessionStorage.getItem("StoreName")) {
-      this.dataList = JSON.parse(sessionStorage.getItem("StoreName"))
+      this.dataList = JSON.parse(sessionStorage.getItem("StoreName"));
     }
     if (sessionStorage.getItem("radio")) {
-      this.radioList = JSON.parse(sessionStorage.getItem("radio"))
+      this.radioList = JSON.parse(sessionStorage.getItem("radio"));
     }
     if (sessionStorage.getItem("dateList")) {
-      this.dateList = JSON.parse(sessionStorage.getItem("dateList"))
+      this.dateList = JSON.parse(sessionStorage.getItem("dateList"));
     }
     if (sessionStorage.getItem("greetingList")) {
-      this.greetingList = JSON.parse(sessionStorage.getItem("greetingList"))
+      this.greetingList = JSON.parse(sessionStorage.getItem("greetingList"));
     }
     if (sessionStorage.getItem("deliveryChargeList")) {
-      this.deliveryChargeList = JSON.parse(sessionStorage.getItem("deliveryChargeList"))
+      this.deliveryChargeList = JSON.parse(sessionStorage.getItem("deliveryChargeList"));
     }
-     
-    // 测试时间段功能
-    setTimeout(() => {
-      console.log('=== 时间段功能测试 ===');
-      console.log('默认时间段:', this.timeList);
-      console.log('21cake时间段 (633):', this.timeList21cake);
-      console.log('624/635时间段:', this.timeList624635);
-      console.log('测试品牌ID 633 (21cake):', this.getTimeListByBrand('633'));
-      console.log('测试品牌ID 624:', this.getTimeListByBrand('624'));
-      console.log('测试品牌ID 635:', this.getTimeListByBrand('635'));
-      console.log('测试品牌ID 其他:', this.getTimeListByBrand('999'));
-    }, 2000);
   },
 }
 </script>

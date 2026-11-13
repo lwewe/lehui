@@ -78,26 +78,21 @@
         <img class="goods-img" :src="item.img" alt="" />
         <div class="goods-info">
           <div class="goods-name">{{ item.title }}</div>
-          <!-- <div class="goods-subtitle" v-if="item.subtitle">{{ item.subtitle }}</div> -->
-          <!-- <div class="goods-tags">
-            <span class="tag" v-if="item.sale_num">已售{{ formatSaleNum(item.sale_num) }}</span>
-            <span class="tag" v-if="item.stock > 0">有货</span>
-          </div> -->
           <div class="goods-bottom">
             <div class="price-box">
               <span class="symbol">¥</span>
               <span class="price">{{ item.sell_price }}</span>
-              <!-- <span class="market-price" v-if="item.sell_price < item.market_price">¥{{ item.market_price }}</span> -->
             </div>
-            <div class="add-cart" @click.stop="addToCart(item)">+</div>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- 空状态 -->
-    <div class="empty-tip" v-else-if="!loading">
-      暂无商品
+    <div ref="loadMoreTrigger" style="height: 10px; width: 100%;"></div>
+    <!-- 加载状态提示 -->
+    <div class="load-more-status" style="text-align: center; padding: 15px 0; font-size: 13px; color: #999;">
+      <span v-if="goodsLoading">正在加载中...</span>
+      <span v-else-if="goodsFinished && goodsList.length > 0">没有更多商品了</span>
+      <span v-else-if="!goodsLoading && goodsList.length === 0">暂无商品</span>
     </div>
 
     <!-- 6. 底部导航 -->
@@ -106,13 +101,13 @@
         <img class="tab-icon"
           :src="$route.path === '/JingdongChannel' ? require('../../assets/lh/jdzy/hm1-1.png') : require('../../assets/lh/jdzy/hm1-0.png')"
           alt="首页" />
-        <div class="tab-text"  >首页</div>
+        <div class="tab-text">首页</div>
       </div>
-      <div class="tab-item" @click="goToCategory"  :class="{ active: $route.path === '/JingdongCategory' }">
+      <div class="tab-item" @click="goToCategory" :class="{ active: $route.path === '/JingdongCategory' }">
         <img class="tab-icon"
           :src="$route.path === '/JingdongCategory' ? require('../../assets/lh/jdzy/hm2-2.png') : require('../../assets/lh/jdzy/hm2-2.png')"
           alt="分类" />
-        <div class="tab-text"  >分类</div>
+        <div class="tab-text">分类</div>
       </div>
     </div>
   </div>
@@ -123,57 +118,155 @@ import { home, categoryList, productList, channelDetail } from "@/api/lhjdtm";
 export default {
   name: "JingdongChannel",
   data() {
-    return {                                                // 返回按钮图标（可选）
+    return {
+      observer: null,
       bannerImg: '',
-      platform: 1,           // 京东平台
-      searchKeyword: '',     // 搜索关键词
-      page: 1,               // 当前页码
-      currentSort: 'px',     // 排序方式
-      loading: false,        // 加载状态
-      defaultImg: require('../../assets/lh/jdzy/b.png'),  // 默认图片
-
-      // 本地默认分类图标（兜底用）
-      localCategoryIcons: [
-        
-      ],
-
-      categoryList: [],       // 分类列表（接口获取）
-      hotList: [],           // 热销推荐（home接口的hot）
-      recommendList: [],      // 超值购（home接口的recommend）
-      newList: [],           // 上新了（home接口的new）
-      goodsList: [],          // 商品列表（productList接口）
+      platform: 1,
+      searchKeyword: '',
+      page: 1,
+      currentSort: 'px',
+      loading: false,
+      defaultImg: require('../../assets/lh/jdzy/b.png'),
+      categoryList: [],
+      hotList: [],
+      recommendList: [],
+      newList: [],
+      goodsList: [],
+      // 分页控制
+      goodsPage: 1,
+      goodsFinished: false,
+      goodsLoading: false,
+      goodsReqId: 0,
+      scrollTimer: null,
     }
   },
   methods: {
-     goToCategoryWithId(item) {
+    // ✅ 抽离出来的 fetch 请求
+    fetchBottomGoods(isLoadMore = false) {
+      // 只要正在加载，或者已经到底，直接拦截
+      if (this.goodsLoading || this.goodsFinished) return;
+
+      this.goodsLoading = true;
+      const reqId = ++this.goodsReqId;
+      const page = isLoadMore ? this.goodsPage : 1;
+
+      productList({
+        platform: 1,
+        jd_type: 2,
+        page: page,
+        limit: 10,
+        sort: 'px',
+        order: 'desc'
+      }).then(res => {
+        if (reqId !== this.goodsReqId) return;
+
+        if (res.code === 200) {
+          const payload = res.data || {};
+          let list = [];
+          if (Array.isArray(payload.data)) list = payload.data;
+          else if (Array.isArray(payload.list)) list = payload.list;
+
+          const formatList = list.map(p => ({
+            ...p,
+            img: p.img ? String(p.img).replace(/^http:\/\//, 'https://') : ""
+          }));
+
+          if (isLoadMore) {
+            const existingIds = new Set(this.goodsList.map(item => item.id));
+            const uniqueList = formatList.filter(item => !existingIds.has(item.id));
+            this.goodsList = this.goodsList.concat(uniqueList);
+          } else {
+            this.goodsList = formatList;
+          }
+
+          const currentPage = Number(payload.current_page || page);
+          const lastPage = Number(payload.last_page || 1);
+
+          if (currentPage >= lastPage || list.length < 10) {
+            this.goodsFinished = true;
+          } else {
+            this.goodsPage = currentPage + 1;
+          }
+        }
+      }).catch(err => {
+        if (reqId !== this.goodsReqId) return;
+        console.error('获取商品流失败:', err);
+      }).finally(() => {
+        if (reqId === this.goodsReqId) {
+          // 延迟解锁，确保页面渲染完毕，撑开高度
+          setTimeout(() => {
+            this.goodsLoading = false;
+          }, 150);
+        }
+      });
+    },
+
+    // ✅ IntersectionObserver 初始化
+    initObserver() {
+      this.disconnectObserver();
+      const trigger = this.$refs.loadMoreTrigger;
+      if (trigger && window.IntersectionObserver) {
+        this.observer = new IntersectionObserver((entries) => {
+          // 如果哨兵出现在屏幕内，说明到底了
+          if (entries[0].isIntersecting) {
+            if (!this.goodsLoading && !this.goodsFinished) {
+              this.fetchBottomGoods(true);
+            }
+          }
+        }, { threshold: 0.1 });
+        this.observer.observe(trigger);
+      } else {
+        // 兜底处理（旧浏览器）
+        window.addEventListener('scroll', this.handleScroll, true);
+      }
+    },
+
+    // ✅ IntersectionObserver 销毁
+    disconnectObserver() {
+      if (this.observer) {
+        this.observer.disconnect();
+        this.observer = null;
+      }
+      window.removeEventListener('scroll', this.handleScroll, true);
+    },
+
+    // 兜底用的滚动
+    handleScroll() {
+      if (this.scrollTimer) clearTimeout(this.scrollTimer);
+      this.scrollTimer = setTimeout(() => {
+        if (this.goodsLoading || this.goodsFinished) return;
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+        const windowHeight = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight || 0;
+        const scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight || 0;
+        if (scrollTop + windowHeight >= scrollHeight - 150) {
+          this.fetchBottomGoods(true);
+        }
+      }, 500);
+    },
+
+    goToCategoryWithId(item) {
       this.$router.push({
         path: '/productList',
         query: {
-          keyword: item.title,
+          // keyword: item.title,
+          shop_cate_id: item.id,
           platform: 1,
           jd_type: 2,
           t: Date.now()
         }
       });
     },
-    // 获取首页数据（home接口）
+
     Indexhome() {
       home({ platform: this.platform, limit: 10 }).then(res => {
-        console.log('首页数据:', res);
         if (res.code == 200) {
           const data = res.data;
-
-          // 超值购数据
           if (data && data.recommend && data.recommend.length > 0) {
             this.recommendList = data.recommend;
           }
-
-          // 上新了数据
           if (data && data.new && data.new.length > 0) {
             this.newList = data.new;
           }
-
-          // 热销推荐数据
           if (data && data.hot && data.hot.length > 0) {
             this.hotList = data.hot;
           }
@@ -181,14 +274,11 @@ export default {
       })
     },
 
-    // 获取分类列表（categoryList接口）
     IndexcategoryList() {
       categoryList({ platform: this.platform }).then(res => {
-        console.log('分类数据:', res);
         if (res.code == 200) {
           const apiData = res.data || [];
           const topCategories = apiData.filter(item => item.pid === 0);
-
           if (topCategories.length > 0) {
             this.categoryList = topCategories.slice(0, 10).map((item, index) => {
               return {
@@ -202,7 +292,6 @@ export default {
       })
     },
 
-    // 获取商品列表（productList接口）
     IndexproductList() {
       this.loading = true;
       productList({
@@ -212,7 +301,6 @@ export default {
         sort: this.currentSort,
         order: 'desc',
       }).then(res => {
-        console.log('商品数据:', res);
         if (res.code == 200) {
           if (res.data && res.data.data) {
             this.goodsList = res.data.data;
@@ -225,7 +313,6 @@ export default {
       })
     },
 
-    // 格式化销量
     formatSaleNum(num) {
       if (num >= 10000) {
         return (num / 10000).toFixed(1) + '万';
@@ -233,7 +320,6 @@ export default {
       return num;
     },
 
-    // 搜索
     handleSearch() {
       if (this.searchKeyword.trim()) {
         this.page = 1;
@@ -241,54 +327,6 @@ export default {
       }
     },
 
-    // 点击分类跳转
-    // goToCategoryWithId(item) {
-    //   this.$router.push({
-    //     path: '/JingdongCategory',
-    //     query: { categoryId: item.id, categoryTitle: item.title }
-    //   });
-    // },
-
-//  goToCategoryWithId(item) {
-//   this.$router.push({
-//     path: '/productList',
-//     query: {
-//       keyword: item.title,
-//       platform: 1,
-//       jd_type: 2,
-//       t: Date.now()
-//     }
-//   });
-// },
-    // 跳转超值购列表
-    // goToSuperValue(type) {
-    //   // this.$router.push({
-    //   //   path: '/JingdongSuperValueList',
-    //   //   query: { type: type, platform: this.platform }
-    //   // });
-
-
-
-
-    //   // 超值购
-    //   this.$router.push({
-    //     path: '/JingdongSuperValueList',
-    //     query: { type: 'recommend', platform: this.platform }
-    //   });
-
-    //   // 热销推荐
-    //   this.$router.push({
-    //     path: '/JingdongSuperValueList',
-    //     query: { type: 'hot', platform: this.platform }
-    //   });
-
-    //   // 上新了
-    //   this.$router.push({
-    //     path: '/JingdongSuperValueList',
-    //     query: { type: 'new', platform: this.platform }
-    //   });
-
-    // },
     goToSuperValue(type) {
       this.$router.push({
         path: '/JingdongSuperValueList',
@@ -296,17 +334,8 @@ export default {
       });
     },
 
-    // 查看商品详情
     goToDetail(item) {
-
-
       this.$goDetail(item);
-      
-      // this.$router.push({
-      //   path: '/ProductDetail',
-      //   query: { id: item.id }
-      // });
-
     },
 
     goBack() {
@@ -326,64 +355,81 @@ export default {
         this.$router.push('/JingdongChannel');
       }
     },
+
     channelDetailIndex() {
       const fixImg = (url) => url ? url.replace('http://', 'https://') : '';
 
       channelDetail({ id: 14 }).then(res => {
-        if (res.code == 200) {
-          const data = res.data;
+        if (res.code !== 200) return;
 
-          // 1. Banner
-          if (data.banner && data.banner.length > 0) {
-            this.bannerImg = fixImg(data.banner[0].img);
-          }
+        const modules = res.data?.modules || [];
 
-          // 2. 分类图标（nav）
-          if (data.nav && data.nav.length > 0) {
-            this.categoryList = data.nav.map((item, index) => ({
-              id: item.cate_id || item.id || index,
-              img: fixImg(item.img),
-              title: item.title,
-              link: item.link
-            }));
-          }
-
-          this.hotList =data.sections[0].items
-            this.recommendList = data.sections[1].items
-             this.newList =data.sections[2].items
-             this.goodsList =data.sections[3].items
-
-          // 3. sections：按 title 精确匹配
-          if (data.sections && data.sections.length > 0) {
-            
-            data.sections.forEach(section => {
-              const items = (section.items || []).map(p => ({ ...p, img: fixImg(p.img) }));
-
-              // if (section.title === '热销推荐') {
-              //   this.hotList = items;
-              // } else if (section.title === '超值购') {
-              //   this.recommendList = items.slice(0, 2);   // 双卡片只取前 2 个
-              // } else if (section.title === '上新了') {
-              //   this.newList = items.slice(0, 2);         // 双卡片只取前 2 个
-              // } else if (section.title === '首页下面得') {
-              //   this.goodsList = items;                   // 底部瀑布流
-              // }
-            });
-          }
+        const bannerModule = modules.find(m => m.type === 'banner');
+        if (bannerModule) {
+          this.bannerImg = fixImg(bannerModule.banner_img);
         }
-      })
+
+        const iconModule = modules.find(m => m.type === 'entry' && m.list_type === 'icon');
+        if (iconModule) {
+          this.categoryList = (iconModule.items || []).map(item => ({
+            id: item.cate_id || item.id,
+            img: fixImg(item.img),
+            title: item.title,
+            link: item.link
+          }));
+        }
+
+        const newModule = modules.find(m => m.type === 'grid' && m.title === '上新');
+        if (newModule) {
+          const items = (newModule.items || []).map(p => ({ ...p, img: fixImg(p.img) }));
+          this.newList = items;
+        }
+
+        const hotModule = modules.find(m => m.type === 'grid' && m.title === '热销');
+        if (hotModule) {
+          const items = (hotModule.items || []).map(p => ({ ...p, img: fixImg(p.img) }));
+          this.hotList = items;
+        }
+
+        const superModule = modules.find(m => m.type === 'grid' && m.title === '超值');
+        if (superModule) {
+          const items = (superModule.items || []).map(p => ({ ...p, img: fixImg(p.img) }));
+          this.recommendList = items;
+        }
+
+        // ❌ 删掉了原本第 6 步给 goodsList 赋值的代码，防止和瀑布流互相覆盖！
+      }).catch(err => {
+        console.error('获取京东频道数据失败:', err);
+      });
     }
   },
-activated() {
-  // 每次进入都重新请求
-  this.channelDetailIndex();
-},
-  mounted() {
 
+  mounted() {
     this.channelDetailIndex();
-    // this.Indexhome();          // 获取首页数据（超值购、上新、热销）
-    //this.IndexcategoryList();  // 获取分类列表
-    //this.IndexproductList();   // 获取商品列表
+    this.fetchBottomGoods(false);
+
+    // 初始化交叉观察器
+    this.$nextTick(() => {
+      this.initObserver();
+    });
+  },
+
+  activated() {
+    this.channelDetailIndex();
+    this.$nextTick(() => {
+      this.initObserver();
+    });
+  },
+
+  deactivated() {
+    this.disconnectObserver();
+  },
+
+  beforeDestroy() {
+    this.disconnectObserver();
+    if (this.scrollTimer) {
+      clearTimeout(this.scrollTimer);
+    }
   }
 }
 </script>
@@ -711,7 +757,7 @@ activated() {
     .goods-name {
       font-size: 14px;
       font-weight: 500;
-      margin-bottom:2px;
+      margin-bottom: 2px;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;

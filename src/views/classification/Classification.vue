@@ -50,6 +50,7 @@
 </template>
 
 <script>
+
 import { getClassifyList } from "@/api/classify";
 
 export default {
@@ -60,11 +61,11 @@ export default {
       scrollLock: false,     // 滚动锁
       lockTimer: null,       // 解锁定时器
       rafId: null,           // 滚动优化
-      
+
       classList: [],         // 分类数据
       selectId: null,
       loadingflag: true,     // 首屏加载遮罩
-      
+
       // ===== 分页相关 =====
       page: 1,
       limit: 100,             // 每次只返回 10 条
@@ -188,18 +189,23 @@ export default {
 
     // ========== 路由跳转 ==========
     toMore(id, index1) {
-      this.navigateToProductList({ id, index1 });
+
+
+      this.navigateToProductList({ shop_cate_id: id });
     },
 
+    // 点击二级子分类
     toMore2(id, id2, index1, index2) {
-      this.navigateToProductList({ cate_id: Number(id2) });
+
+      this.navigateToProductList({ shop_cate_id: Number(id2) });
     },
 
     navigateToProductList(query) {
+
       sessionStorage.setItem('fromClassification', 'true');
       this.$router.push({
         path: "/productList",
-        query: { ...query, t: Date.now() }
+        query: { ...query, t: Date.now() } // query 里现在是 shop_cate_id
       });
     },
 

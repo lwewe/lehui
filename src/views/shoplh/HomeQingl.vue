@@ -44,7 +44,7 @@
               <!-- <div class="v-spec">{{ item.subtitle || item.name }}</div> -->
               <div class="v-price-row">
                 <span class="prod-price"><span style="font-size: 10px;">￥</span>{{ item.sell_price }}</span>
-                <div class="add-btn" @click.stop="addToCart(item)">+</div>
+                <!-- <div class="add-btn" @click.stop="addToCart(item)">+</div> -->
               </div>
             </div>
           </div>
@@ -58,7 +58,7 @@
             <!-- <div class="h-spec">{{ item.subtitle || 'CFB' }}</div> -->
             <div class="h-price-row">
               <span class="prod-price"><span style="font-size: 10px;">￥</span>{{ item.sell_price }}</span>
-              <div class="add-btn" @click.stop="addToCart(item)">+</div>
+              <!-- <div class="add-btn" @click.stop="addToCart(item)">+</div> -->
             </div>
           </div>
         </div>

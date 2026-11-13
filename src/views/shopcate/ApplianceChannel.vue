@@ -112,7 +112,7 @@
               <span class="symbol">¥</span>
               <span class="price">{{ item.sell_price }}</span>
             </div>
-            <div class="add-cart-btn" @click.stop="addToCart(item)">+</div>
+            <!-- <div class="add-cart-btn" @click.stop="addToCart(item)">+</div> -->
           </div>
         </div>
       </div>
@@ -319,7 +319,7 @@ export default {
       if (item.title) {
         this.$router.push({
           path: '/productList',
-          query: { keyword: item.title }
+          query: { shop_cate_id: item.id }
         })
       }
     },
@@ -336,6 +336,7 @@ export default {
         path: '/AppBrandRecommend',
         query: {
           brand_id: item.id,
+          channel_id: 4,
           brand_name: item.name, channel_id: this.$route.query.id
         }
       });

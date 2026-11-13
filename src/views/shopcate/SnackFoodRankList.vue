@@ -22,7 +22,7 @@
               <span class="symbol">¥</span>
               <span class="price">{{ item.sell_price }}</span>
             </div>
-            <div class="add-btn" @click.stop="addToCart(item)">+</div>
+            <!-- <div class="add-btn" @click.stop="addToCart(item)">+</div> -->
           </div>
         </div>
       </div>
@@ -42,7 +42,7 @@
               <span class="symbol">¥</span>
               <span class="price">{{ item.sell_price }}</span>
             </div>
-            <div class="add-btn" @click.stop="addToCart(item)">+</div>
+            <!-- <div class="add-btn" @click.stop="addToCart(item)">+</div> -->
           </div>
         </div>
       </div>
@@ -84,39 +84,31 @@ export default {
     },
 
     channelDetailIndex() {
-  this.loading = true;
+      this.loading = true;
 
-  channelDetail({ id: this.$route.query.id || 2 })
-    .then(res => {
-      if (res.code == 200) {
-        const data = res.data || {};
-        const nav = data.nav || [];
+      channelDetail({ id: this.$route.query.id || 5 })
+        .then(res => {
+          if (res.code !== 200) return;
 
-        // 直接按索引取 nav[9]
-        const navItem = nav[9];
+          const modules = res.data?.modules || [];
 
-        // 它的第一个 child
-        const targetChild = navItem?.children?.[0];
+          // 优先按标题找，找不到再按 px=4 兜底
+          let summerModule = modules.find(m => m.type === 'grid' && /夏日/.test(m.title || ''));
+          if (!summerModule) {
+            summerModule = modules.find(m => m.type === 'grid' && m.px === 4);
+          }
 
-        // banner
-        this.baners =
-          targetChild?.banner?.[0]?.img ||
-          data.banner?.[0]?.img ||
-          '';
-
-        // 商品
-        const gridSection = (targetChild?.sections || [])
-          .find(s => s.type === 'grid');
-        const allGoods = gridSection?.items || [];
-
-        this.topList = allGoods.slice(0, 3);
-        this.restList = allGoods.slice(3);
-      }
-    })
-    .finally(() => {
-      this.loading = false;
-    });
-},
+          if (summerModule) {
+            this.baners = summerModule.banner_img || '';
+            const allGoods = summerModule.items || [];
+            this.topList = allGoods.slice(0, 3);
+            this.restList = allGoods.slice(3);
+          }
+        })
+        .finally(() => {
+          this.loading = false;
+        });
+    },
 
     goBack() {
       this.$router.go(-1);
@@ -231,8 +223,15 @@ export default {
       .price-box {
         color: #ed2e33;
 
-        .symbol { font-size: 12px; font-weight: bold; }
-        .price { font-size: 18px; font-weight: bold; }
+        .symbol {
+          font-size: 12px;
+          font-weight: bold;
+        }
+
+        .price {
+          font-size: 18px;
+          font-weight: bold;
+        }
       }
 
       .add-btn {
@@ -299,8 +298,15 @@ export default {
     .price-box {
       color: #ed2e33;
 
-      .symbol { font-size: 12px; font-weight: bold; }
-      .price { font-size: 16px; font-weight: bold; }
+      .symbol {
+        font-size: 12px;
+        font-weight: bold;
+      }
+
+      .price {
+        font-size: 16px;
+        font-weight: bold;
+      }
     }
 
     .add-btn {

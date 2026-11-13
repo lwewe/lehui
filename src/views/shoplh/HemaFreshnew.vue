@@ -31,7 +31,7 @@
               <span class="symbol">¥</span>
               <span class="price">{{ item.price }}</span>
             </div>
-            <div class="add-btn">+</div>
+            <!-- <div class="add-btn">+</div> -->
           </div>
         </div>
       </div>

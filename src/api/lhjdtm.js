@@ -29,6 +29,22 @@ export function hotCity(data) {
 }
 
 
+export function getIndexService(data) {
+    return setaxios.post("/index/service", {
+        channel_no: store.state.channel_no,
+        token: localStorage.getItem("token"),
+        ...data
+    });
+}
+
+export function getOnlineBrand(data) {
+    return setaxios.post("/index/onlineBrand", {
+        channel_no: store.state.channel_no,
+        token: localStorage.getItem("token"),
+        ...data
+    });
+}
+
 
 // ============ 商品相关 ============
 // 商品分类(树形)
@@ -91,6 +107,25 @@ export function channelDetail(data) {
         ...data
     });
 }
+
+export function food(data) {
+    return setaxios.post("/index/food", {
+        channel_no: store.state.channel_no,
+        token: localStorage.getItem("token"),
+        ...data
+    });
+}
+
+ export function diancanIndex(data) {
+    return setaxios.post("/index/diancan", {
+        channel_no: store.state.channel_no,
+        token: localStorage.getItem("token"),
+        ...data
+    });
+}
+ 
+
+
 export function channelChildrenDetaill(data) {
     return setaxios.post("/jdtmshop/channelChildrenDetaill", {
         channel_no: store.state.channel_no,
@@ -332,6 +367,14 @@ export function orderDetail(data) {
         ...data
     });
 }
+export function tuhuOrderDetail(data) {
+    return setaxios.post("/jdtmshop/tuhuOrderDetail", {
+        channel_no: store.state.channel_no,
+        token: localStorage.getItem("token"),
+        ...data
+    });
+}
+
 export function orderSettle(data) {
     return setaxios.post("/jdtmshop/orderSettle", {
         channel_no: store.state.channel_no,

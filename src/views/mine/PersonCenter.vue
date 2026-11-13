@@ -319,6 +319,7 @@ export default {
 
       // 调用新接口：/jdtmshop/productList
       return productList({
+        has_shop_cate:1,
         platform: 1,          // 默认取京东平台
         page: pageno,         // 页码（注意：不能用 pageno，要用 page）
         limit: 10,            // 每页条数

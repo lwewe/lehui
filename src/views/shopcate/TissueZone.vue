@@ -1,7 +1,7 @@
 <template>
   <div class="tissue-zone-page">
     <!-- 1. 顶部导航 -->
-<NProgress v-if="loading" />
+    <NProgress v-if="loading" />
 
     <!-- 2. 顶部绿色大 Banner -->
     <div class="top-banner-area">
@@ -21,39 +21,40 @@
     </div>
 
     <!-- 4. 三个独立的横向卡片 (超值爆款榜、美发攻略、女性护理) -->
-    <!-- 4. 左右双拼卡片 (左侧独立，右侧横向两标题) -->
-    <div class="dual-card-row">
+    <div style="width: 100%;">
+      <div class="dual-card-row">
+        <!-- 左侧：粉色底，超值爆款榜 -->
+        <div class="dual-item pink-bg">
+          <div class="big-title" @click="TissueSuperHotRankList(2, 0, 0)">超值爆款榜</div>
+          <div class="inner-grid">
+            <!-- 左商品 -->
+            <div class="goods-mini" v-for="(item, index) in topTis1" :key="index" @click="goToDetail(item)">
+              <img :src="item.img" alt="" />
+              <div class="mini-tag red-tag">{{ item.title }}</div>
+            </div>
+            <!-- 右商品 -->
 
-      <!-- 左侧：粉色底，超值爆款榜 -->
-      <div class="dual-item pink-bg">
-        <div class="big-title" @click="TissueSuperHotRankList(2, 0, 0)">超值爆款榜</div>
-        <div class="inner-grid">
-          <!-- 左商品 -->
-          <div class="goods-mini" v-for="(item, index) in topTis1" :key="index" @click="goToDetail(item)">
-            <img :src="item.img" alt="" />
-            <div class="mini-tag red-tag">{{ item.title }}</div>
           </div>
-          <!-- 右商品 -->
-
         </div>
+        <!-- 右侧：米黄底，双标题横向排列 -->
+        <div class="dual-item yellow-bg">
+          <div class="split-header">
+            <span class="big-title" @click="SnackLightFoodZone(2, 3, 0)">美发攻略</span>
+            <span class="big-title" @click="SnackLightFoodZone(2, 3, 0)">女性护理</span>
+          </div>
+          <div class="inner-grid">
+            <!-- 左商品 -->
+            <div class="goods-mini" v-for="(item, index) in topTis2" :key="index" @click="goToDetail(item)">
+              <img :src="item.img" alt="" />
+              <div class="mini-tag yellow-tag">{{ item.title }}</div>
+            </div>
+            <!-- 右商品 -->
+
+          </div>
+        </div>
+
       </div>
 
-      <!-- 右侧：米黄底，双标题横向排列 -->
-      <div class="dual-item yellow-bg">
-        <div class="split-header">
-          <span class="big-title" @click="SnackLightFoodZone(2, 3, 0)">美发攻略</span>
-          <span class="big-title" @click="SnackLightFoodZone(2, 3, 0)">女性护理</span>
-        </div>
-        <div class="inner-grid">
-          <!-- 左商品 -->
-          <div class="goods-mini" v-for="(item, index) in topTis2" :key="index" @click="goToDetail(item)">
-            <img :src="item.img" alt="" />
-            <div class="mini-tag yellow-tag">{{ item.title }}</div>
-          </div>
-          <!-- 右商品 -->
-
-        </div>
-      </div>
 
     </div>
 
@@ -104,7 +105,7 @@
               <span class="symbol">¥</span>
               <span class="price">{{ item.sell_price }}</span>
             </div>
-            <div class="add-btn">+</div>
+            <!-- <div class="add-btn">+</div> -->
           </div>
         </div>
       </div>
@@ -162,42 +163,70 @@ export default {
       this.$goDetail(item);
       // this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
     },
-    
     fetchChannelData() {
-  this.loading = true;          // 请求开始
+      this.loading = true;
 
-  channelDetail({ id: this.$route.query.id || 5 })
-    .then(res => {
-      if (res.code == 200) {
-        this.channelData = res.data
+      channelDetail({ id: this.$route.query.id || 2 })
+        .then(res => {
+          if (res.code !== 200) return;
 
-        this.topTis1 = res.data.nav[0].children[0].sections[0].items.slice(0, 2) || []
-        this.topTis2 = res.data.nav[3].children[0].sections[0].items.slice(0, 2) || []
+          this.channelData = res.data;
+          const modules = res.data.modules || [];
 
-        this.navList = (res.data.nav || []).slice(0, 10)
+          // 1. 顶部 Banner：type='banner'
+          const bannerModule = modules.find(m => m.type === 'banner');
+          if (bannerModule) {
+            this.channelData.banner = [{
+              img: bannerModule.banner_img || '',
+              link: bannerModule.link || ''
+            }];
+          }
 
-        const sections = res.data.sections || []
+          // 2. 顶部分类图标：type='entry' && list_type='icon'
+          const iconModule = modules.find(m => m.type === 'entry' && m.list_type === 'icon');
+          this.navList = (iconModule?.items || []).slice(0, 10);
 
-        const gridSection = sections.find(section => section.type === 'grid')
-        if (gridSection && gridSection.items) {
-          this.tissueGoodsList = gridSection.items.slice(0, 6)
-        }
+          // 3. 左侧「超值爆款榜」：取 type='subpage' 且 title 含"超值爆款"的模块
+          const hotModule = modules.find(m => m.type === 'subpage' && /超值爆款/.test(m.title || ''));
+          if (hotModule) {
+            // 取该模块下的第一个 section 里的前两个商品
+            const items = (hotModule.sections && hotModule.sections[0] && hotModule.sections[0].items) || [];
+            this.topTis1 = items.slice(0, 2);
+          }
 
-        const tabsSection = sections.find(section => section.type === 'tabs')
-        if (tabsSection && tabsSection.tabs) {
-          this.tabList = tabsSection.tabs
-          this.tabGoodsList = tabsSection.tabs.map(tab => tab.items || [])
-        }
-      }
-    })
-    .catch(err => {
-      console.error('获取频道数据失败:', err)
-      this.setDefaultData()
-    })
-    .finally(() => {
-      this.loading = false;     // 成功或失败都关掉
-    })
-},
+          // 4. 右侧「美发护理 / 女性护理」：取 type='subpage' 且 title 含"美发"的模块
+          const beautyModule = modules.find(m => m.type === 'subpage' && /美发/.test(m.title || ''));
+          if (beautyModule) {
+            // 这里取第一个 section 的前两个商品（如果你要展示美发和女性各一个，需要再拆分）
+            const items = (beautyModule.sections && beautyModule.sections[0] && beautyModule.sections[0].items) || [];
+            this.topTis2 = items.slice(0, 2);
+          }
+
+          // 5. 中间 3x2 商品区：type='grid' 且 title 含"清洁好物"
+          const cleanGridModule = modules.find(m => m.type === 'grid' && /清洁好物/.test(m.title || ''));
+          if (cleanGridModule) {
+            this.tissueGoodsList = (cleanGridModule.items || []).slice(0, 6);
+          }
+
+          // 6. 底部 Tab + 瀑布流：type='tabs'
+          const tabsModule = modules.find(m => m.type === 'tabs');
+          if (tabsModule && tabsModule.items) {
+            this.tabList = tabsModule.items.map(item => ({
+              name: item.name || '',
+              sub: item.sub || ''
+            }));
+            this.tabGoodsList = tabsModule.items.map(item => item.items || []);
+            this.activeTab = 0;
+          }
+        })
+        .catch(err => {
+          console.error('获取频道数据失败:', err);
+          this.setDefaultData();
+        })
+        .finally(() => {
+          this.loading = false;
+        });
+    },
 
     // 兜底数据（接口失败时使用）
     setDefaultData() {
@@ -212,7 +241,7 @@ export default {
     },
 
     // 处理分类点击
-     handleNavClick(item) {
+    handleNavClick(item) {
       console.log('点击家电图标:', item)
 
       // 有 link 优先跳链接
@@ -225,7 +254,7 @@ export default {
       if (item.title) {
         this.$router.push({
           path: '/productList',
-          query: { keyword: item.title }
+          query: { shop_cate_id: item.id }
         })
       }
     },
@@ -238,7 +267,7 @@ export default {
     // 跳转商品详情
     toProductDetail(item) {
       this.$goDetail(item);
-      
+
       // if (item.id) {
       //   this.$router.push({
       //     path: '/productDetail',
@@ -259,7 +288,7 @@ export default {
     },
 
     SnackLightFoodZone(id, nav, index) {
-      this.$router.push({ path: '/SnackLightFoodZone', query: { id: id, nav: nav, index: index } });
+      this.$router.push({ path: '/TissZoneLightFoodZone', query: { id: id, nav: nav, index: index } });
     },
 
     TissueSuperHotRankList(id, nav, index) {
@@ -267,9 +296,9 @@ export default {
     },
 
     TissueCleanGoodsList() {
-      // this.$router.push('/SnackFoodRankList');
-      
-      this.$router.push({ path: '/SnackFoodRankList', query: { id: this.$route.query.id} });
+
+
+      this.$router.push({ path: '/TissueAddNew', query: { id: this.$route.query.id } });
 
     },
 
@@ -387,9 +416,10 @@ export default {
   padding: 0 10px 12px 10px;
 
   .dual-item {
+    padding-bottom: 8px;
     flex: 1;
     border-radius: 12px;
-    padding: 10px 10px 10px 10px;
+    // padding: 10px 10px 10px 10px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -412,6 +442,7 @@ export default {
       text-align: center;
       width: 100%;
       padding-bottom: 6px;
+      padding-top: 6px;
 
     }
 
@@ -427,8 +458,9 @@ export default {
     /* 内部商品网格 */
     .inner-grid {
       display: flex;
-      width: 100%;
+        width: 90%;
       gap: 10px;
+      
 
       .goods-mini {
         flex: 1;
@@ -437,7 +469,7 @@ export default {
         align-items: center;
         background: #fff;
         border-radius: 10px;
-        padding: 0px 6px 2px 6px;
+        padding: 0px 6px 4px 6px;
         min-width: 0;
 
         img {

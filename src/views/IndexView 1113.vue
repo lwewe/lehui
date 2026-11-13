@@ -49,7 +49,7 @@
 
 
         <div class="sortWrapper" v-if="sortList.length > 0">
-          <div class="sortSwiper" ref="sortSwiper" @scroll="onSortScroll">
+          <!-- <div class="sortSwiper" ref="sortSwiper" @scroll="onSortScroll">
             <div class="sortTop sortCenter" v-for="(page, pageIndex) in sortPages" :key="pageIndex">
               <div class="sortItem" v-for="item in page" :key="item.title" @click="toSort(item)">
                 <div class="iconImg" :style="{ width: $store.state.festivals == 2 ? '50px' : '' }">
@@ -59,80 +59,139 @@
               </div>
             </div>
           </div>
+
           <div class="sortPagination" v-if="sortPages.length > 1">
             <span v-for="(page, index) in sortPages" :key="index" class="paginationDot"
               :class="{ active: index === currentSortPage }" @click="goToSortPage(index)"></span>
+          </div> -->
+
+          <div class="sortSwiper" ref="sortSwiper" @scroll="onSortScroll">
+            <div class="sortTop sortCenter" v-for="(page, pageIndex) in flIndexPages" :key="pageIndex">
+              <div class="sortItem" v-for="item in page" :key="item.id" @click="toSortFl(item)">
+                <div class="iconImg" :style="{ width: $store.state.festivals == 2 ? '50px' : '' }">
+                  <img class="img" :src="item.tbimg" alt="" />
+                </div>
+                <div class="sortText">{{ item.name }}</div>
+              </div>
+            </div>
           </div>
+
+          <div class="sortPagination" v-if="flIndexPages.length > 1">
+            <span v-for="(page, index) in flIndexPages" :key="index" class="paginationDot"
+              :class="{ active: index === currentSortPage }" @click="goToSortPage(index)"></span>
+          </div>
+
+
+
+
+
         </div>
 
       </div>
       <!--      甄选-->
 
+      <!-- 222 -->
+      <div class="addbg2">
 
-      <!--      限时抢购 addff-->
-      <div class="imageSlider">
-        <div class="sliderContainer">
-          <div class="sliderItem" v-for="(item, index) in imageList" :key="index">
-            <img :src="item.img" @click="goToFour(item)" alt="" class="sliderImg">
-          </div>
-        </div>
-      </div>
-
-
-      <!--  -->
-      <div class="product-row">
-        <!-- 特价好物 -->
-        <div class="product-card">
-          <div class="card-header" @click="HomeFlashSalePage()">
-            <span style="display: flex; align-items: center;">
-              <img src="../assets/lh/tj-1.png" alt="" style="margin-right: 6px;">
-              <span class="title">特价好物</span>
-            </span>
-            <span class="sub">热抢中</span>
-          </div>
-          <div class="product-list">
-            <div class="product-item" v-for="(item, index) in zoneGoods1" :key="item.id" @click="goToDetail(item)">
-              <img class="product-img" :src="item.img" alt="">
-              <div class="tag-row">
-                <span class="name">{{ item.title }}</span>
-              </div>
-              <div class="price-row">
-                <span class="current"><span style="font-size: 10px;">￥</span>{{ item.sell_price }}</span>
+        <div
+          style="font-weight: 600;font-size: 15px;color: #FFFFFF;padding-bottom: 8px; text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.4); ">
+          超级补贴<span style="font-size: 12px;font-weight: normal;"> | 爆款低价 ~</span></div>
+        <!--      限时抢购 addff-->
+        <div class="bgfff pd10 bdr10 mb10">
+          <div class="imageSlider">
+            <div class="sliderContainer">
+              <div class="sliderItem" v-for="(item, index) in imageList" :key="index">
+                <img :src="item.img" @click="goToFour(index)" alt="" class="sliderImg">
               </div>
             </div>
           </div>
         </div>
 
-        <!-- 热卖好物 -->
-        <div class="product-card">
-          <div class="card-header" @click="JingzaoSuperValue()">
-            <span style="display: flex; align-items: center;">
-              <img src="../assets/lh/tj-2.png" alt="" style="margin-right: 6px;">
-              <span class="title">热卖好物</span>
-            </span>
-            <span class="sub">门店热销</span>
-          </div>
+        <!--  -->
+        <div class="product-row">
+          <!-- 特价好物 -->
+          <div class="product-card">
+            <div class="card-header" @click="HomeFlashSalePage()">
+              <span style="display: flex; align-items: center;">
 
-
-          <div class="product-list">
-            <div class="product-item" v-for="(item, index) in zoneGoods2" :key="item.id" @click="goToDetail(item)">
-              <img class="product-img" :src="item.img" alt="">
-              <div class="tag-row1">
-                <span class="name">{{ item.title }}</span>
-              </div>
-              <div class="price-row">
-                <span class="current"><span style="font-size: 10px;">￥</span>{{ item.sell_price }}</span>
+                <span class="title">特价好物</span>
+              </span>
+              <span class="sub">热抢中...<img src="../assets/idjt.png" style="width: 10px;height: 10px;"> </span>
+            </div>
+            <div class="product-list">
+              <div class="product-item" v-for="(item, index) in arr1" :key="item.id" @click="goToDetail(item)">
+                <img class="product-img" :src="item.img" alt="">
+                <div class="tag-row">
+                  <span class="name">{{ item.title }}</span>
+                </div>
+                <div class="price-row">
+                  <span class="current"><span style="font-size: 10px;">￥</span>{{ item.sell_price }}</span>
+                </div>
               </div>
             </div>
           </div>
 
+          <!-- 热卖好物 -->
+          <div class="product-card">
+            <div class="card-header" @click="JingzaoSuperValue()">
+              <span style="display: flex; align-items: center;">
 
+                <span class="title">热卖好物</span>
+              </span>
+              <span class="sub">门店热销 <img src="../assets/jtlff.png" style="width: 10px;height: 10px;"></span>
+            </div>
+
+
+            <div class="product-list">
+              <div class="product-item" v-for="(item, index) in arr2" :key="item.id" @click="goToDetail(item)">
+                <img class="product-img" :src="item.img" alt="">
+                <div class="tag-row1">
+                  <span class="name">{{ item.title }}</span>
+                </div>
+                <div class="price-row">
+                  <span class="current"><span style="font-size: 10px;">￥</span>{{ item.sell_price }}</span>
+                </div>
+              </div>
+            </div>
+
+
+          </div>
         </div>
       </div>
+
       <!--  -->
-      <div>
+      <!-- ================= 新增：多分类聚合板块 ================= -->
+
+      <div class="multiCategorySection">
+        <div class="category-block" v-for="(block, index) in multiCategoryData" :key="index">
+          <!-- 板块头部 -->
+          <div class="block-header">
+            <div class="title-area">
+              <span class="title">{{ block.title }}</span>
+              <span class="desc">{{ block.desc }}</span>
+            </div>
+            <div class="more-btn" v-if="block.showMore" @click="Morediancan(index)">
+              查看更多 <img src="../assets/8.png" style="width: 14px;height: 14px;" alt="">
+            </div>
+          </div>
+
+          <!-- 板块内容网格 -->
+          <div class="block-grid">
+            <div class="grid-item" v-for="(item, idx) in block.list" :key="idx" @click="handleMultiCategoryClick(item)">
+              <div class="icon-box">
+                <img :src="item.img" alt="" />
+              </div>
+              <div class="item-name">{{ item.name }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- ================= 新增结束 ================= -->
+      <!-- ================= 新增结束 ================= -->
+      <!--  -->
+      <!-- <div>
         <div class="brandSection">
-          <!-- 品牌推荐 -->
+          
           <div class="brandTitle"><span>品牌推荐</span><span style="font-size: 12px;color: #707070;"
               @click="BrandSeasonPage()">更多<img src="../../src/assets/lh/more.png"
                 style="width: 10px;height: 10px;opacity: 0.6;" alt=""></span>
@@ -144,7 +203,7 @@
             </div>
           </div>
 
-          <!-- 第一个滚动图片区（7张） -->
+          
           <div class="scrollPicSection">
 
             <div class="picScroll">
@@ -155,7 +214,7 @@
             </div>
           </div>
 
-          <!-- 第二个滚动图片区（7张） -->
+          
           <div class="scrollPicSection">
 
             <div class="picScroll">
@@ -166,19 +225,19 @@
             </div>
           </div>
         </div>
-      </div>
+      </div> -->
 
       <!--  -->
 
     </div>
-     
+
     <!--    tab切换-->
 
 
     <!--    tab切换 (改为: 由 zoneList 过滤出 id=10,11,12,13 的板块) :class="{ tabbar2: show }"  -->
     <div class="tabbar" ref="topScroll" v-if="currentTabs.length > 1">
       <!-- <div v-if="isLoading" class="isTab" :style="'width:' + currentTabs.length * 90 + 'px;'"></div> -->
-      <div class="tabbarBox" :style="'width:' + currentTabs.length * 90 + 'px;'">
+      <div class="tabbarBox" :style="'width:' + currentTabs.length * 86 + 'px;'">
         <div class="tabItem" v-for="(item, index) in currentTabs" :key="item.id" @click="changeTab(item.id, index)">
           <div class="tabTop " :class="{ tabTop2: active == item.id }">{{ item.title }}<span class="lines"></span>
           </div>
@@ -188,13 +247,19 @@
     <!--    列表-->
     <!-- 商品瀑布流列表 -->
     <div class="listMax">
-      <div class="waterfall-container">
+      <div v-if="shopList.length === 0 && !loadingflag && !isLoading && page === 1"
+        style="flex: 1; display: flex; align-items: center; justify-content: center; color: #999; font-size: 14px; padding-top: 50px;">
+        暂无相关商品
+      </div>
+      <div class="waterfall-container" v-if="shopList.length > 0">
+
         <!-- 左列 -->
         <div class="waterfall-column">
-          <div class="bannerBox" v-if="active == 0 && shopSwiper.length > 0">
-            <van-swipe :autoplay="3000" indicator-color="white">
-              <van-swipe-item class="bannerImg" v-for="(item, index) in shopSwiper" :key="item.id || index"
-                @click="toDetail(item)">
+          <div class="bannerBox" v-if="active == 0 && activityList.length > 0">
+            <!-- 如果只有1张图，设置 autoplay 为 0 不轮播；多张图则自动轮播 -->
+            <van-swipe :autoplay="activityList.length > 1 ? 3000 : 0" indicator-color="white">
+              <van-swipe-item class="bannerImg" v-for="(item, index) in activityList" :key="index"
+                @click="handleActivityClick(item)">
                 <img class="img" :src="item.img" alt="">
               </van-swipe-item>
             </van-swipe>
@@ -252,7 +317,16 @@
           </div>
         </div>
       </div>
+      <div v-if="isLoading && shopList.length > 0"
+        style="text-align: center; padding: 20px 0 40px 0; color: #999; font-size: 13px;">
+        加载中...
+      </div>
 
+      <!-- ✅ 已全部展示提示 -->
+      <div v-if="!hasMore && shopList.length > 0 && !isLoading"
+        style="text-align: center; padding: 20px 0 60px 0; color: #999; font-size: 12px;">
+        已全部展示
+      </div>
       <!-- <loading style="margin-top: 2px" v-if="isLoading"></loading> -->
     </div>
 
@@ -261,6 +335,7 @@
 </template>
 <script>
 import City from "@/components/City.vue";
+import { getDiancanBrand } from "@/api/diancan";
 import { getElemaLoginUrlshangcheng } from "@/api/elemashangcheng";
 import { getIndexList } from "@/api/lhcard";
 import { brandList, productLists, categoryList, channelList, homeInd, zoneList } from "@/api/lhjdtm";
@@ -287,6 +362,12 @@ import { getJuheShangchaoLoginUrl } from "@/api/juheshangchao";
 import { getMeituanLoginUrl } from "@/api/meituan";
 import { getTuangouLoginUrl } from "@/api/meituantuangou";
 import { getXiaoxiangLoginUrl } from "@/api/xiaoxiang";
+import { getHemaLoginUrlshangcheng } from "@/api/hemashangcheng";
+
+
+import { getClassifyList } from "@/api/classify";
+
+
 
 export default {
   name: "IndexView",
@@ -294,6 +375,15 @@ export default {
     City,
   },
   computed: {
+    flIndexPages() {
+      const pageSize = 10
+      const list = Array.isArray(this.flIndex) ? this.flIndex : []
+      const pages = []
+      for (let i = 0; i < list.length; i += pageSize) {
+        pages.push(list.slice(i, i + pageSize))
+      }
+      return pages.length > 0 ? pages : [[]]
+    },
     cssVars() {
       const colors = this.backColor.split(',')
       return {
@@ -312,6 +402,39 @@ export default {
   },
   data() {
     return {
+
+
+      flIndex: [],
+      img44: '',
+      img55: '',
+      img66: '',
+      arr1: '',
+      arr3: '',
+      arr2: '',
+      arr4: '',
+      arr5: '',
+      arr6: '',
+      reqId: 0,
+      activityList: [
+        {
+          id: 1,
+          img: require('../assets/11.jpg'), // 记得换成你自己的图片路径
+          link: '/ActivityPage1' // 点击跳转的路径
+        }
+        // 如果想要多个图切换，就把下面的注释放开并修改路径：
+        // ,{
+        //   id: 2,
+        //   img: require('../assets/u.png'),
+        //   link: '/ActivityPage2'
+        // }
+        // ,{
+        //   id: 3,
+        //   img: require('../assets/33.png'),
+        //   link: '/ActivityPage2'
+        // }
+      ],
+      // 新增：多分类聚合板块的数据
+      multiCategoryData: [],
       dingdongPosition: {
         latitude: "",
         longitude: ""
@@ -330,14 +453,9 @@ export default {
       classList: [],
       sortList: [],
       backColor: "",
-     
+
       active: 0,
-      // tabList: [{
-      //   flag: "1",
-      //   id: "0",
-      //   syname: "热门推荐",
-      //   tag: "精选好物",
-      // }],
+
       shopSwiper: [],
       itemHeight: 0,
       swiperHeight: 0,
@@ -369,9 +487,78 @@ export default {
 
       currentTabs: [],     // 存放过滤后的 Tab (id为 10,11,12,13 的板块)
       zoneTabGoods: {},    // 存放各个板块的商品数据 (按 id 索引)
+
+      hasMore: true,   // ✅ 新增
+
+
+      currentTabIsJingxuan: true,
+      currentShopCateId: 0,
+
+      yanse11: '',
+      yanse22: '',
+      yanse33: '',
+      yanse44: '',
+      yanse55: '',
+      yanse66: '',
+      img31: '',
+      img32: '',
+      homeFlg:''
     }
   },
   methods: {
+    Morediancan(idx) {
+
+      if (idx === 0) {
+        this.$router.push('/StoreNew');
+      }
+      if (idx === 1) {
+        this.$router.push('/Morediancan');
+      }
+      if (idx === 2) {
+        this.$router.push('/ServiceNew');
+      }
+
+    },
+    // 跳转到点餐品牌首页
+    async goToDiancan(brandCode) {
+      if (this.isGettingLocation) return;
+      this.isGettingLocation = true;
+
+      try {
+        this.$toast.loading({
+          message: '正在跳转点餐...',
+          forbidClick: true,
+          duration: 0
+        });
+
+        const res = await getDiancanBrand({ brandCode });
+
+        this.$toast.clear();
+        console.log('点餐品牌接口返回:', res);
+
+        // 接口返回 { url, url_token }
+        if (res.code === 200 && res.data && res.data.url) {
+          window.location.href = res.data.url;
+        } else {
+          this.$toast.fail(res.msg || '获取跳转链接失败');
+        }
+      } catch (error) {
+        console.error('点餐跳转失败:', error);
+        this.$toast.clear();
+        this.$toast.fail('跳转失败，请重试');
+      } finally {
+        this.isGettingLocation = false;
+      }
+    },
+    handleActivityClick(item) {
+      console.log('点击了活动图:', item);
+      if (item.link) {
+        // 如果是站内路由：
+        this.$router.push(item.link);
+        // 如果是外部链接，请换成：window.location.href = item.link;
+      }
+    },
+
     // 跳转到美团小象超市免密登录
     async goToXiaoxiang() {
       if (this.isGettingLocation) return;
@@ -947,6 +1134,112 @@ export default {
       }
     },
 
+    // 跳转到叮咚买菜免密登录
+    async goToDingdongLogin() {
+      // 防止重复点击
+      if (this.isGettingLocation) {
+        return;
+      }
+
+      this.isGettingLocation = true;
+
+      try {
+        // 显示加载提示
+        this.$toast.loading({
+          message: '正在获取位置...',
+          forbidClick: true,
+          duration: 0
+        });
+
+        // 获取当前位置
+        const position = await this.getCurrentPosition();
+
+        console.log('获取到的位置:', position);
+
+        // 更新加载提示
+        this.$toast.loading({
+          message: '正在跳转叮咚买菜...',
+          forbidClick: true,
+          duration: 0
+        });
+
+        // 调用免密登录接口
+        const res = await getDingdongLoginUrl({
+          latitude: position.latitude,
+          longitude: position.longitude
+        });
+
+        // 关闭加载提示
+        this.$toast.clear();
+
+        console.log('免密登录接口返回:', res);
+
+        if (res.code === 200 && res.data && res.data.data) {
+          // 获取免密登录URL
+          const loginUrl = res.data.data;
+          console.log('免密登录URL:', loginUrl);
+
+          // 跳转到叮咚买菜
+          window.location.href = loginUrl;
+        } else {
+          this.$toast.fail(res.msg || '获取登录链接失败');
+        }
+      } catch (error) {
+        console.error('免密登录失败:', error);
+        this.$toast.clear();
+        this.$toast.fail('跳转失败，请重试');
+      } finally {
+        this.isGettingLocation = false;
+      }
+    },
+
+    // 获取当前位置
+
+    // 创建叮咚订单
+    async createDingdongOrder(orderData) {
+      try {
+        const res = await createDingdongOrder(orderData);
+
+        if (res.code === 200 && res.success) {
+          // 订单创建成功
+          const { cashierUrl, thirdOrderNo } = res.data;
+
+          // 跳转到收银台
+          if (cashierUrl) {
+            window.location.href = cashierUrl;
+          }
+
+          return res.data;
+        } else {
+          this.$toast.fail('创建订单失败');
+          return null;
+        }
+      } catch (error) {
+        console.error('创建订单失败:', error);
+        this.$toast.fail('创建订单失败');
+        return null;
+      }
+    },
+
+    // 查询支付状态
+    async queryPayStatus(orderNo, tradeNo) {
+      try {
+        const res = await queryDingdongPayStatus({
+          orderNo: orderNo,
+          tradeNo: tradeNo
+        });
+
+        if (res.code === 200) {
+          return res.data;
+        } else {
+          return null;
+        }
+      } catch (error) {
+        console.error('查询支付状态失败:', error);
+        return null;
+      }
+    },
+
     // 跳转到物美展码付
     async goToWumei() {
       if (this.isGettingLocation) return;
@@ -1055,216 +1348,6 @@ export default {
         this.isGettingLocation = false;
       }
     },
-    goToDetail(item) {
-      this.$goDetail(item);
-      // this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
-    },
-    // 跳转到永辉彩食鲜免密登录
-    async goToYonghuiLogin() {
-      if (this.isGettingLocation) {
-        return;
-      }
-
-      this.isGettingLocation = true;
-
-      try {
-        this.$toast.loading({
-          message: '正在跳转永辉彩食鲜...',
-          forbidClick: true,
-          duration: 0
-        });
-
-        // 调用永辉免密登录接口（无需参数）
-        const res = await getYonghuiLoginUrl();
-
-        this.$toast.clear();
-
-        console.log('永辉免密登录接口返回:', res);
-
-        if (res.code === 200 && res.data && res.data.data) {
-          const loginUrl = res.data.data;
-          console.log('永辉免密登录URL:', loginUrl);
-
-          // 跳转到永辉彩食鲜
-          window.location.href = loginUrl;
-        } else {
-          this.$toast.fail(res.msg || '获取登录链接失败');
-        }
-      } catch (error) {
-        console.error('永辉免密登录失败:', error);
-        this.$toast.clear();
-        this.$toast.fail('跳转失败，请重试');
-      } finally {
-        this.isGettingLocation = false;
-      }
-    },
-    // 获取分类列表
-    IndexchannelList() {
-      channelList().then(res => {
-        if (res.code == 200) {
-
-          let tubiaoData = res.data || [];
-
-          tubiaoData.sort((a, b) => {
-            return (a.sort || 0) - (b.sort || 0)
-          })
-
-          this.classList = tubiaoData.slice(0, 9)  // 前8个作为主分类
-
-        }
-      })
-    },
-    indexFourImg() {
-      homeInd().then(res => {
-        if (res.code == 200) {
-
-          this.imageList = res.data.activity
-
-        }
-      })
-    },
-    zoneListIndex() {
-      zoneList().then(res => {
-        if (res.code == 200) {
-          // 把接口返回的专区列表存起来
-          this.zoneData = res.data.list || [];
-          let targetZone = this.zoneData.find(zone => zone.id == 4);
-          console.log(targetZone)
-          // 如果有这个专区，取它的商品
-          if (targetZone && targetZone.goods) {
-            this.zoneGoods2 = targetZone.goods.slice(0, 2) || [];
-          }
-
-          let targetZone1 = this.zoneData.find(zone => zone.id == 5);
-          console.log(targetZone1)
-          // 如果有这个专区，取它的商品
-          if (targetZone1 && targetZone1.goods) {
-            this.zoneGoods1 = targetZone1.goods.slice(0, 2) || [];
-          }
-
-
-
-
-
-          const targetIds = [10, 11, 12, 13];
-          this.currentTabs = this.zoneData.filter(item => targetIds.includes(item.id));
-
-          // 将筛选出的板块的商品数据存起来
-          this.currentTabs.forEach(item => {
-            this.zoneTabGoods[item.id] = item.goods || [];
-          });
-
-          // 默认选中第一个 Tab (id = 10)
-          if (this.currentTabs.length > 0) {
-            this.active = this.currentTabs[0].id;
-
-            // 这里直接调用请求方法，不要用 changeTab！因为DOM还没渲染好
-            this.getGoodPickByCategory(this.active, 1);
-          }
-        }
-      });
-    },
-    IndexcategoryList() {
-      categoryList().then(res => {
-        console.log('天猫分类数据:', res);
-        if (res.code == 200) {
-
-        }
-      })
-    },
-    // 跳转到商品详情
-    toDetail(item) {
-      // if (id) {
-      //   this.$router.push({
-      //     path: "/productDetail",
-      //     query: { id }
-      //   })
-      // }
-      this.$goDetail(item);
-    },
-
-    // 分割商品列表到左右两列
-    splitShopList(list) {
-      console.log('开始分割商品列表，总长度:', list.length)
-
-      this.leftList = []
-      this.rightList = []
-
-      if (!Array.isArray(list) || list.length === 0) {
-        console.warn('商品列表为空或不是数组')
-        return
-      }
-
-      list.forEach((item, index) => {
-        if (index % 2 === 0) {
-          this.leftList.push(item)
-        } else {
-          this.rightList.push(item)
-        }
-      })
-
-      console.log('分割完成 - 左列:', this.leftList.length, '右列:', this.rightList.length)
-    },
-
-    onSortScroll(e) {
-      const scrollLeft = e.target.scrollLeft
-      const pageWidth = e.target.offsetWidth
-      const pageIndex = Math.round(scrollLeft / pageWidth)
-      this.currentSortPage = pageIndex
-    },
-    goToFour(item) {
-      console.log(item)
-      if (item.id == 7) {
-        this.$router.push('DrinkFreshMilkPage?id=8&nav=0&index=0')
-        return
-      }
-      console.log(item.link)
-      this.$router.push(item.link)
-    },
-    goToSortPage(index) {
-      this.currentSortPage = index
-      const sortSwiper = this.$refs.sortSwiper
-      if (sortSwiper) {
-        sortSwiper.scrollLeft = index * sortSwiper.offsetWidth
-      }
-    },
-
-    async initPageData() {
-      if (this.hasLoaded) return
-      this.hasLoaded = true
-
-      console.log('开始初始化数据...')
-
-      try {
-        await this.getIndex()
-        console.log('getIndex 完成')
-
-        // await this.getFlashSaleList()
-        // console.log('getFlashSaleList 完成')
-
-        if (this.$store.state.festivals != 2) {
-          await this.getGoodPick(1)
-          console.log('getGoodPick 完成')
-        }
-
-        console.log('所有数据加载完成，shopList长度:', this.shopList.length)
-      } catch (error) {
-        console.error('数据加载失败:', error)
-      }
-    },
-
-    // showSearch() {
-    //   let scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
-    //   if (scrollTop > this.$refs.topBox.getBoundingClientRect().height) {
-    //     this.show = true;
-    //   } else {
-    //     this.show = false;
-    //   }
-    // },
-
-    toBanner(item) {
-      console.log(item)
-    },
     // 跳转到大润发
     async goToDarunfa() {
       if (this.isGettingLocation) return;
@@ -1337,6 +1420,438 @@ export default {
         this.isGettingLocation = false;
       }
     },
+    // goToDetail(item) {
+    //   this.$goDetail(item);
+
+    // },
+    goToDetail(item) {
+      this.$goDetail(item, {
+        extraQuery: {  homeFlg: 1 }
+      });
+    },
+    // 跳转到永辉彩食鲜免密登录
+    async goToYonghuiLogin() {
+      if (this.isGettingLocation) {
+        return;
+      }
+
+      this.isGettingLocation = true;
+
+      try {
+        this.$toast.loading({
+          message: '正在跳转永辉彩食鲜...',
+          forbidClick: true,
+          duration: 0
+        });
+
+        // 调用永辉免密登录接口（无需参数）
+        const res = await getYonghuiLoginUrl();
+
+        this.$toast.clear();
+
+        console.log('永辉免密登录接口返回:', res);
+
+        if (res.code === 200 && res.data && res.data.data) {
+          const loginUrl = res.data.data;
+          console.log('永辉免密登录URL:', loginUrl);
+
+          // 跳转到永辉彩食鲜
+          window.location.href = loginUrl;
+        } else {
+          this.$toast.fail(res.msg || '获取登录链接失败');
+        }
+      } catch (error) {
+        console.error('永辉免密登录失败:', error);
+        this.$toast.clear();
+        this.$toast.fail('跳转失败，请重试');
+      } finally {
+        this.isGettingLocation = false;
+      }
+    },
+    // 获取分类列表
+    IndexchannelList() {
+      channelList().then(res => {
+        if (res.code == 200) {
+
+          let tubiaoData = res.data || [];
+
+          tubiaoData.sort((a, b) => {
+            return (a.sort || 0) - (b.sort || 0)
+          })
+
+          this.classList = tubiaoData.slice(0, 8)  // 前8个作为主分类
+
+        }
+      })
+    },
+    indexFourImg() {
+      homeInd().then(res => {
+        if (res.code == 200) {
+
+          this.imageList = res.data.activity
+
+        }
+      })
+    },
+    zoneListIndex8() {
+      zoneList({ pid: 0 }).then(res => {
+        if (res.code == 200) {
+          const datas = res.data.list.filter(item => item.id === 44);
+          const datas1 = res.data.list.filter(item => item.id === 45);
+          const datas2 = res.data.list.filter(item => item.id === 46);
+          this.img44 = datas[0].banner;
+
+          this.yanse11 = datas[0].yanse1;
+          this.yanse22 = datas[0].yanse2;
+
+          this.img55 = datas1[0].banner;
+
+          this.yanse33 = datas1[0].yanse1;
+          this.yanse44 = datas1[0].yanse2;
+
+          this.img66 = datas2[0].banner;
+
+          this.yanse55 = datas2[0].yanse1;
+          this.yanse66 = datas2[0].yanse2;
+
+
+
+
+          const datas3 = res.data.list.filter(item => item.id === 31);
+
+          const datas4 = res.data.list.filter(item => item.id === 32);
+
+          this.img31 = datas3[0].banner;
+          this.img32 = datas4[0].banner;
+
+
+
+        }
+      });
+    },
+    zoneListIndex1() {
+      zoneList({ pid: 31 }).then(res => {
+        if (res.code == 200) {
+          this.arr1 = res.data.list[0].goods.slice(0, 2) || [];
+
+        }
+      });
+    },
+    zoneListIndex2() {
+      zoneList({ pid: 32 }).then(res => {
+        if (res.code == 200) {
+          this.arr2 = res.data.list[0].goods.slice(0, 2) || [];
+
+        }
+      });
+    },
+    zoneListIndex3() {
+      zoneList({ pid: 44 }).then(res => {
+        if (res.code == 200) {
+          this.arr3 = res.data.list || [];
+
+        }
+      });
+    },
+    zoneListIndex4() {
+      zoneList({ pid: 45 }).then(res => {
+        if (res.code == 200) {
+          this.arr4 = res.data.list || [];
+
+        }
+      });
+    },
+    zoneListIndex5() {
+      zoneList({ pid: 46 }).then(res => {
+        if (res.code == 200) {
+          this.arr5 = res.data.list || [];
+
+        }
+      });
+    },
+    zoneListIndex6() {
+      zoneList({ pid: 47 }).then(res => {
+        if (res.code == 200) {
+          this.arr6 = res.data.list || [];
+
+        }
+      });
+    },
+    getCategoryTabs() {
+      getClassifyList({          // ✅ 改成 getClassifyList
+        page: 1,
+        limit: 100,
+        per_page: 100,
+        pid: 0,
+        with_children: 1
+      }).then(res => {
+        console.log('[getClassifyList 返回]', res);
+
+        const list = res?.data?.data || res?.data?.list || [];
+        if (res.code == 200 && list.length > 0) {
+          const tabList = list
+            .filter(item => Number(item.rxtuij) === 1)
+            .sort((a, b) => (Number(b.px) || 0) - (Number(a.px) || 0));
+
+          const jingxuanTab = {
+            id: 0,
+            title: '精选推荐',
+            isJingxuanTab: true,
+            shopCateId: 0,
+            children: []
+          };
+
+          const otherTabs = tabList.map(item => ({
+            id: item.id,
+            title: item.name,
+            isJingxuanTab: false,
+            shopCateId: item.id,
+            children: item.children || []
+          }));
+
+          this.currentTabs = [jingxuanTab, ...otherTabs];
+          this.initDefaultTab();
+        } else {
+          this.buildTabsFromZone();
+        }
+      }).catch(err => {
+        console.error('getClassifyList 失败，回退 zoneList:', err);
+        this.buildTabsFromZone();
+      });
+    },
+
+    // ✅ 回退：用 zoneList 10~13
+    buildTabsFromZone() {
+      if (!this.zoneData || this.zoneData.length === 0) return;
+      const targetIds = [10, 11, 12, 13];
+      this.currentTabs = this.zoneData
+        .filter(item => targetIds.includes(item.id))
+        .map((item, idx) => ({
+          id: item.id,
+          title: item.title,
+          isJingxuanTab: idx === 0,
+          shopCateId: item.shop_cate_id || item.cate_id || 0
+        }));
+      this.initDefaultTab();
+    },
+
+    // ✅ 初始化默认 Tab + 首次拉商品
+    initDefaultTab() {
+      if (this.currentTabs.length === 0) return;
+      const defaultTab = this.currentTabs[0];
+      this.active = defaultTab.id;
+      this.currentTabIsJingxuan = defaultTab.isJingxuanTab;
+      this.currentShopCateId = defaultTab.shopCateId || defaultTab.id || 0;
+      this.page = 1;
+      this.hasMore = true;
+      this.isScroll = false;
+      this.getGoodPickByCategory(this.currentShopCateId, 1, this.currentTabIsJingxuan);
+    },
+    IndexcategoryList() {
+      categoryList({
+        page: 1,
+        per_page: 100 // 强行告诉后端，我全都要
+      }).then(res => {
+        if (res.code == 200) {
+          let rawData = res.data;
+
+          // 1. 打印看看，看看到底是 10 条还是 30 条
+          console.log('第一层 data:', rawData);
+
+          let finalList = [];
+
+          // 2. 解析真实数组所在的位置
+          if (Array.isArray(rawData.data)) {
+            // 情况A：axios 拦截器扒了一层皮，真实数组在 res.data.data
+            finalList = rawData.data;
+          } else if (rawData && Array.isArray(rawData.list)) {
+            // 情况B：真实数组叫 list
+            finalList = rawData.list;
+          } else if (Array.isArray(rawData)) {
+            // 情况C：直接就是数组
+            finalList = rawData;
+          }
+
+          console.log('解析出来的数组长度:', finalList.length);
+
+          // 3. 如果确实只有 10 条，说明后端接口有猫腻，直接用循环发请求把 3 页全拿回来
+          if (finalList.length === 10 && rawData.total > 10) {
+            console.warn('后端接口强制分页，开始拉取全部页面数据...');
+
+            // 计算总页数
+            const totalPages = Math.ceil(rawData.total / 10);
+            const requests = [];
+
+            // 从第 1 页请求到最后一页
+            for (let i = 1; i <= totalPages; i++) {
+              requests.push(categoryList({ page: i, per_page: 10 }));
+            }
+
+            // 批量请求，合并结果
+            Promise.all(requests).then(results => {
+              let allList = [];
+              results.forEach(r => {
+                if (r.code == 200 && r.data && Array.isArray(r.data.data)) {
+                  allList = allList.concat(r.data.data);
+                }
+              });
+
+              // this.flIndex = allList;
+              this.flIndex = allList.filter(item => Number(item.tuij) === 1);
+              console.log('==== 强行拉取后，flIndex 总长度 ====:', this.flIndex.length);
+            });
+          } else {
+            // 如果已经有 30 条了，直接赋值
+            this.flIndex = finalList;
+            console.log('==== 直接赋值成功，长度 ====:', this.flIndex.length);
+          }
+        }
+      });
+    },
+    // 跳转到商品详情
+    toDetail(item) {
+      // this.$goDetail(item);
+      this.$goDetail(item, {
+        extraQuery: {   homeFlg: 1  }
+      });
+    },
+
+    // 分割商品列表到左右两列
+    // splitShopList(list) {
+    //   console.log('开始分割商品列表，总长度:', list.length)
+
+    //   this.leftList = []
+    //   this.rightList = []
+
+    //   if (!Array.isArray(list) || list.length === 0) {
+    //     console.warn('商品列表为空或不是数组')
+    //     return
+    //   }
+
+    //   list.forEach((item, index) => {
+    //     if (index % 2 === 0) {
+    //       this.leftList.push(item)
+    //     } else {
+    //       this.rightList.push(item)
+    //     }
+    //   })
+
+    //   console.log('分割完成 - 左列:', this.leftList.length, '右列:', this.rightList.length)
+    // },
+// 分割商品列表到左右两列 (最简单的等高瀑布流分配)
+splitShopList(list) {
+  this.leftList = []
+  this.rightList = []
+  
+  if (!Array.isArray(list) || list.length === 0) return
+
+  let leftHeight = 0
+  let rightHeight = 0
+  
+  // 如果左侧有活动图(Banner)，给左侧一个初始高度权重，防止左侧过长
+  // 如果当时没有显示Banner，这段逻辑也不会报错
+  if (this.active == 0 && this.activityList.length > 0) {
+    leftHeight = 200 // 假设Banner高度占据约200的权重
+  }
+
+  list.forEach((item) => {
+    // 估算每个商品卡片的高度权重 (图片方形+文字，约260左右)
+    const itemWeight = 260 
+
+    // 核心逻辑：谁短，下一个商品就给谁
+    if (leftHeight <= rightHeight) {
+      this.leftList.push(item)
+      leftHeight += itemWeight
+    } else {
+      this.rightList.push(item)
+      rightHeight += itemWeight
+    }
+  })
+},
+    onSortScroll(e) {
+      const scrollLeft = e.target.scrollLeft
+      const pageWidth = e.target.offsetWidth
+      const pageIndex = Math.round(scrollLeft / pageWidth)
+      this.currentSortPage = pageIndex
+    },
+    goToFour(index) {
+      let pid = '';
+      let ys1 = '';
+      let ys2 = '';
+      let imgs = '';
+      // 根据你轮播图的索引，对应不同的专区 ID
+      if (index === 1) {
+
+        pid = 44;
+        imgs = this.img44;
+        ys1 = this.yanse11
+        ys2 = this.yanse22
+
+      } else if (index === 2) {
+        ys1 = this.yanse33
+        ys2 = this.yanse44
+
+        pid = 46;
+        imgs = this.img55;
+
+      } else if (index === 3) {
+        pid = 45;
+        imgs = this.img66;
+        ys1 = this.yanse55
+        ys2 = this.yanse66
+
+
+
+      }
+
+      // 如果传过来的不是索引，而是具体的 item 对象（请检查你模板里是不是 @click="goToFour(item)"）
+      // 如果是对象，你要改成 pid = item.id;
+
+      if (pid) {
+        this.$router.push({ path: 'HomeActives', query: { pid: pid, banners: imgs, bg1: ys1, bg2: ys2 } });
+      }
+    },
+    goToSortPage(index) {
+      this.currentSortPage = index
+      const sortSwiper = this.$refs.sortSwiper
+      if (sortSwiper) {
+        sortSwiper.scrollLeft = index * sortSwiper.offsetWidth
+      }
+    },
+
+    async initPageData() {
+      if (this.hasLoaded) return
+      this.hasLoaded = true
+
+      console.log('开始初始化数据...')
+
+      try {
+        await this.getIndex()
+        console.log('getIndex 完成')
+
+
+      } catch (error) {
+        console.error('数据加载失败:', error)
+      }
+    },
+
+
+
+    toBanner(item) {
+      console.log(item)
+    },
+
+    toSortFl(item) {
+      this.$router.push({
+        path: "/productList",
+        query: {
+
+          shop_cate_id: item.id,
+
+          t: Date.now()
+        }
+      });
+    },
     toSort(item) {
       //   alert(item.id)
       // return false
@@ -1393,7 +1908,8 @@ export default {
         return;
       }
       if (item.id == 13) {
-        this.goToHemashangcheng();
+        // this.goToHemashangcheng();
+        this.$router.push({ path: "/HemaFresh" })
         return;
       }
       if (item.id == 80) {
@@ -1473,32 +1989,55 @@ export default {
     },
 
     JingzaoSuperValue() {
-      this.$router.push('/HomeHot');
+      this.$router.push({ path: '/HomeHot', query: { img: this.img32 } });
     },
 
     toClass(item, index) {
       console.log(item)
+      console.log('点击分类', item.title, 'index=', index, 'ixd=', index + 1)   // ← 加这行
       const ixd = index + 1;
-      if (ixd == 1) this.$router.push({ path: "/FoodDelivery", query: { id: item.id } })
-      if (ixd == 6) this.$router.push({ path: "/ApplianceChannel", query: { id: item.id } })
-      if (ixd == 4) this.$router.push({ path: "/DrinkZone", query: { id: item.id } })
-      if (ixd == 5) this.$router.push({ path: "/BeautyZone", query: { id: item.id } })
-      if (ixd == 7) this.$router.push({ path: "/TissueZone", query: { id: item.id } })
-      if (ixd == 3) this.$router.push({ path: "/SnackZone", query: { id: item.id } })
+      if (item.id == 1) this.$router.push({ path: "/FoodDelivery", query: { id: item.id } })
+      if (item.id == 4) this.$router.push({ path: "/ApplianceChannel", query: { id: item.id } })
+      if (item.id == 8) this.$router.push({ path: "/DrinkZone", query: { id: item.id } })
+      if (item.id == 3) this.$router.push({ path: "/BeautyZone", query: { id: item.id } })
+      if (item.id == 2) this.$router.push({ path: "/TissueZone", query: { id: item.id } })
+      if (item.id == 5) this.$router.push({ path: "/SnackZone", query: { id: item.id } })
+      if (item.id == 9) this.$router.push({ path: "/filmindex" })   // ← 加这行
+      if (item.id == 10) this.$router.push({ path: "/yanchuIndex" })   // ← 加这行
+      if (item.id == 7) this.$router.push({ path: "/CakeView" })   // dangao
     },
 
     toCustomer() {
       window.location.href = this.kefu
     },
 
-    getGoodPickByCategory(cate_id, page = 1) {
-      // ✅ 完全不使用任何 loading 状态，避免页面跳动
-      productLists({
-        cate_id: cate_id,
+    getGoodPickByCategory(shopCateId, page = 1, isJingxuanTab = true) {
+      const currentReqId = ++this.reqId;
+
+      // ✅ 请求开始，开启底部 loading（防止重复上拉）
+      this.isLoading = true;
+
+      const params = {
+        shop_cate_id: shopCateId || 0,
         platform: 0,
-        page: page,
-        pagesize: 10
-      }).then(res => {
+        page,
+        pagesize: 10,
+      };
+      if (isJingxuanTab) {
+        params.jingxuan = 1;
+      } else {
+        params.hot = 1;
+      }
+
+      productLists(params).then(res => {
+        // ✅ 丢弃过期请求
+        if (currentReqId !== this.reqId) {
+          return;
+        }
+
+        this.loadingflag = false;
+        this.isLoading = false;
+
         if (res.code == 200) {
           let productData = []
           if (res.data && Array.isArray(res.data)) {
@@ -1510,52 +2049,65 @@ export default {
           } else if (res.data && res.data.list && Array.isArray(res.data.list)) {
             productData = res.data.list
           }
+
+          // ✅ 关键修复 1：处理为空的情况
           if (productData.length === 0) {
-            this.isScroll = true
-            return
+            this.hasMore = false;
+            this.isScroll = true;
+            // ⚠️ 只有在请求第一页返回为空时，才清空页面显示“暂无商品”
+            // 如果是上拉加载（page > 1）返回空，千万不要清空已有数据！
+            if (page === 1) {
+              this.shopList = [];
+              this.leftList = [];
+              this.rightList = [];
+            }
+            return;
           }
+
+          // ✅ 返回数据小于 10 条，说明是最后一页了
+          if (productData.length < 10) {
+            this.hasMore = false;
+          }
+
+          // ✅ 关键修复 2：如果是第一页，才清空旧数据
           if (page === 1) {
-            this.shopList = []
-            this.leftList = []
-            this.rightList = []
+            this.shopList = [];
+            this.leftList = [];
+            this.rightList = [];
           }
-          if (page === 1) {
-            this.shopList = []
-          }
+
+          // ✅ 追加数据
           productData.forEach(item => {
-            this.shopList.push(item)
+            this.shopList.push(item);
           })
+
           this.splitShopList(this.shopList)
         }
       }).catch(error => {
+        this.loadingflag = false;
+        this.isLoading = false;
         console.error('获取商品失败:', error)
       })
     },
 
     changeTab(id, index) {
-      // this.isHeight = true
       this.loadingflag = false
       this.isScroll = false
-      // this.shopList = []
-      // this.leftList = []
-      // this.rightList = []
-      this.page = 1
+      this.hasMore = true
+      this.page = 1         // ✅ 切 Tab 重置为 1
       this.active = id
-      // this.isTab = true
 
-      // document.documentElement.scrollTop += this.$refs.topScroll.getBoundingClientRect().top + 5
+      // ✅ 瞬间清空旧数据
+      this.shopList = []
+      this.leftList = []
+      this.rightList = []
 
-      // 调用 productList 接口（关键改动）
-      this.getGoodPickByCategory(id, 1)
+      const tab = this.currentTabs.find(t => t.id === id)
+      this.currentTabIsJingxuan = tab ? tab.isJingxuanTab : false
+      this.currentShopCateId = tab ? (tab.shopCateId || tab.id || 0) : 0
 
-      // this.timer2 = null
-      // if ((index + 1) >= 3) {
-      //   this.$refs.topScroll.scrollLeft = 60 * (index + 1)
-      // } else {
-      //   this.$refs.topScroll.scrollLeft = 0
-      // }
+      this.getGoodPickByCategory(this.currentShopCateId, 1, this.currentTabIsJingxuan)
     },
-
 
     toNext(path) {
       this.$router.push(path)
@@ -1644,8 +2196,13 @@ export default {
     },
     schengWeb(items) {
       console.log(items)
+      if (items.id == 16) {
+        this.goToXiaoxiang();
+        return;
+      }
       if (items.id == 17) {
-        this.$router.push({ path: "/HemaFresh" })// 和马
+        // this.$router.push({ path: "/HemaFresh" })// 和马
+        this.goToHemashangcheng();
         return;
       }
 
@@ -1663,7 +2220,7 @@ export default {
     },
 
     HomeFlashSalePage() {
-      this.$router.push('/HomeFlashSalePage');
+      this.$router.push({ path: '/HomeFlashSalePage', query: { img: this.img31 } });
     },
 
     onChange(index) {
@@ -1683,22 +2240,148 @@ export default {
 
     getIndex() {
       return getIndexList().then(res => {
-        if (res.code == 200) {
-          this.brandList = res.data.online.slice(0, 4) || []
-          this.bannerList = res.data.banner || []
-          // this.classList = (res.data.tubiao || []).slice(0, 8)
-          this.picList1 = (res.data.zhanuma || []).slice(0, 6)
-          this.picList2 = (res.data.zhanuma || []).slice(6, 20)
-          this.sortList = (res.data.tubiao || []).slice(8, 100)
+        if (res.code != 200) return
+        const d = res.data
 
-          if (this.bannerList.length > 0 && this.bannerList[0].yanse1) {
-            this.backColor = this.bannerList[0].yanse1 + ',' + this.bannerList[0].yanse2
-          }
+        // banner
+        this.bannerList = d.banner || []
+        if (this.bannerList.length > 0 && this.bannerList[0].yanse1) {
+          this.backColor = this.bannerList[0].yanse1 + ',' + this.bannerList[0].yanse2
         }
-      })
+
+        // 图标下半部分（第 9 条起）
+        this.sortList = (d.tubiao || []).slice(8, 100)
+
+        // 品牌推荐 + 展付码滚动（原 online / zhanuma 已没了，改用真实字段）
+        this.brandList = (d.tubiao || []).slice(0, 4)
+        const life = d.life || []
+        const lifePid3 = life.filter(i => Number(i.pid) === 3)
+        this.picList1 = lifePid3.slice(0, 6)
+        this.picList2 = lifePid3.slice(6, 20)
+
+        // ===== 多分类板块（4 个，合并版）=====
+        const diancan = d.diancan || []
+        const toItem = (i) => ({ id: i.id, name: i.title, img: i.img, url: i.url, pid: i.pid })
+
+        const blocks = []
+        if (life.length) {
+          blocks.push({ title: '本地生活', desc: '| 外卖、生鲜、商超、团购', showMore: true, list: life.map(toItem) })
+        }
+        if (diancan.length) {
+          blocks.push({ title: '在线点餐', desc: '| 奶茶、咖啡、炸鸡、汉堡', showMore: true, list: diancan.map(toItem) })
+        }
+        if ((d.service || []).length) {
+          blocks.push({ title: '便民服务', desc: '| 加油、洗车、酒店、打车', showMore: true, list: d.service.map(toItem) })
+        }
+        // // 会员专区（pid=7）
+        // if ((d.member || []).length) {
+        //   blocks.push({
+        //     title: '会员专区',
+        //     desc: '| 视频、音乐、阅读、网络',
+        //     showMore: true,
+        //     list: d.member.map(toItem)
+        //   })
+        // }
+
+        // // 随心兑（pid=8）
+        // if ((d.dangao || []).length) {
+        //   blocks.push({
+        //     title: '随心兑',
+        //     desc: '| 蛋糕、饮品、甜品',
+        //     showMore: true,
+        //     list: d.dangao.map(toItem)
+        //   })
+        // }
+
+        this.multiCategoryData = blocks
+        console.log('multiCategoryData:', blocks)
+      }).catch(err => console.error('getIndex 失败:', err))
     },
+    handleMultiCategoryClick(item) {
+      const pid = Number(item.pid)
 
 
+      if (item.id == 34) { return this.goToMeituan() }              // 美团外卖
+      if (item.id == 93) { return this.goToTuangou() }             // 美团到店
+      if (item.id == 92) { return this.goToElemaLoginshangcheng() }  // 淘宝闪购 / 饿了么商城
+      if (item.id == 90) { this.$router.push({ path: "/HemaFresh" }); return } // 盒马货盘
+      if (item.id == 33) { this.$router.push({ path: 'TmallSupermarket' }); return } // 天猫超市
+      if (item.id == 91) { /* 京东秒送逻辑, 视情况补 */ return }  // 京东秒送
+      if (item.id == 16) { return this.goToXiaoxiang() }          // 小象超市
+      if (item.id == 17) { return this.goToHemashangcheng() }                  // 盒马鲜生
+      if (item.id == 18) { return this.goToYonghuiLogin() }       // 永辉彩食鲜
+      if (item.id == 19) { return this.goToDingdongLogin() }        // 叮咚买菜
+      if (item.id == 40) { return this.goToMaidelong() }          // 麦德龙
+      if (item.id == 41) { return this.goToHaidilao() }          // 海底捞
+      if (item.id == 38) { return this.goToDarunfa() }           // 大润发
+      if (item.id == 39) { return this.goToYonghuiZhanfuma() }    // 永辉超市(展码付)
+      if (item.id == 37) { return this.goToGuoquan() }            // 锅圈(展码付)
+      if (item.id == 36) { return this.goToWumei() }
+
+      if (item.id == 44) { return this.goToQuchenshi() }
+      if (item.id == 76) { return this.goToHema() }
+
+      if (item.id == 87) {
+        this.goToZhongshihua();
+        return;
+      }
+
+      if (item.id == 86) {
+        this.$router.push({
+          path: "/FlowerZone",
+
+        });
+        return;
+      }
+
+
+      if (item.id == 88) {
+        this.goToDache();
+        return;
+      }
+
+      if (item.id == 89) {
+        this.goToJiudian();
+        return;
+      }
+
+      if (item.id == 89) {
+        this.goToDache();
+        return;
+      }
+
+      if (item.id == 85) {
+        this.$router.push({
+          path: "/TuhuZone",
+
+        });
+        return;
+      }
+
+
+
+      // 在线点餐 / 饮品直充 → 点餐品牌
+      if (pid === 4 || pid === 5) {
+        // sbk-星巴克，kfc-肯德基，mcd-麦当劳，lk-瑞幸，cot-库迪，pzh-必胜客，tas-塔斯汀，nx-奈雪，chagee-霸王茶姬，dicos-德克士，molly-茉莉奶白，guming-古茗
+        const brandMap = {
+          '麦当劳': 'mcd', '星巴克': 'sbk', '肯德基': 'kfc', '瑞幸': 'lk',
+          '必胜客': 'pzh', '霸王茶姬': 'chagee', '德克士': 'dicos',
+          '库迪': 'cot', '塔斯汀': 'tas', '奈雪': 'nx',
+
+        }
+        if (brandMap[item.name]) { this.goToDiancan(brandMap[item.name]); return }
+      }
+
+      // 有 url 走 url
+      if (item.url && item.url !== '#') {
+        if (item.url.startsWith('/')) this.$router.push(item.url)
+        else window.location.href = item.url
+        return
+      }
+
+      // 其他按 id 走 toSort（小象/美团/麦德龙…都在里面）
+      this.toSort(item)
+    },
 
     // 获取商品列表
     getGoodPick(page = this.page) {
@@ -1751,9 +2434,9 @@ export default {
           }
 
           // 添加数据
-          productData.forEach(item => {
-            this.shopList.push(item)
-          })
+          // productData.forEach(item => {
+          //   this.shopList.push(item)
+          // })
 
           // 分割数据到左右两列
           this.splitShopList(this.shopList)
@@ -1790,8 +2473,12 @@ export default {
     toOther(path) {
       this.$router.push(path)
     },
-
     handleScroll(e) {
+      if (!this.hasLoaded) return;
+
+      // ✅ 加上这行：如果没有商品数据，或者已经到底了，直接返回
+      if (this.shopList.length === 0 || this.isScroll || !this.hasMore) return;
+
       let scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
       let scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
       let clientHeight = document.documentElement.clientHeight || document.body.clientHeight;
@@ -1802,14 +2489,17 @@ export default {
     },
 
     onMost() {
-      if (!this.isScroll) {
-        this.page++
-        if (this.active == 0) {
-          this.getGoodPick(this.page)
-        } else {
-
-        }
+      // ✅ 如果正在加载中，或者没数据、已经到底了，直接拦住，防止把 page 疯狂往上加
+      if (this.isLoading || this.shopList.length === 0 || this.isScroll || !this.hasMore) {
+        return;
       }
+
+      this.page++
+      this.getGoodPickByCategory(
+        this.currentShopCateId,
+        this.page,
+        this.currentTabIsJingxuan
+      )
     },
     // 获取当前位置并跳转叮咚免密登录
 
@@ -1856,112 +2546,6 @@ export default {
       });
     },
 
-    // 跳转到叮咚买菜免密登录
-    async goToDingdongLogin() {
-      // 防止重复点击
-      if (this.isGettingLocation) {
-        return;
-      }
-
-      this.isGettingLocation = true;
-
-      try {
-        // 显示加载提示
-        this.$toast.loading({
-          message: '正在获取位置...',
-          forbidClick: true,
-          duration: 0
-        });
-
-        // 获取当前位置
-        const position = await this.getCurrentPosition();
-
-        console.log('获取到的位置:', position);
-
-        // 更新加载提示
-        this.$toast.loading({
-          message: '正在跳转叮咚买菜...',
-          forbidClick: true,
-          duration: 0
-        });
-
-        // 调用免密登录接口
-        const res = await getDingdongLoginUrl({
-          latitude: position.latitude,
-          longitude: position.longitude
-        });
-
-        // 关闭加载提示
-        this.$toast.clear();
-
-        console.log('免密登录接口返回:', res);
-
-        if (res.code === 200 && res.data && res.data.data) {
-          // 获取免密登录URL
-          const loginUrl = res.data.data;
-          console.log('免密登录URL:', loginUrl);
-
-          // 跳转到叮咚买菜
-          window.location.href = loginUrl;
-        } else {
-          this.$toast.fail(res.msg || '获取登录链接失败');
-        }
-      } catch (error) {
-        console.error('免密登录失败:', error);
-        this.$toast.clear();
-        this.$toast.fail('跳转失败，请重试');
-      } finally {
-        this.isGettingLocation = false;
-      }
-    },
-
-    // 获取当前位置
-
-    // 创建叮咚订单
-    async createDingdongOrder(orderData) {
-      try {
-        const res = await createDingdongOrder(orderData);
-
-        if (res.code === 200 && res.success) {
-          // 订单创建成功
-          const { cashierUrl, thirdOrderNo } = res.data;
-
-          // 跳转到收银台
-          if (cashierUrl) {
-            window.location.href = cashierUrl;
-          }
-
-          return res.data;
-        } else {
-          this.$toast.fail('创建订单失败');
-          return null;
-        }
-      } catch (error) {
-        console.error('创建订单失败:', error);
-        this.$toast.fail('创建订单失败');
-        return null;
-      }
-    },
-
-    // 查询支付状态
-    async queryPayStatus(orderNo, tradeNo) {
-      try {
-        const res = await queryDingdongPayStatus({
-          orderNo: orderNo,
-          tradeNo: tradeNo
-        });
-
-        if (res.code === 200) {
-          return res.data;
-        } else {
-          return null;
-        }
-      } catch (error) {
-        console.error('查询支付状态失败:', error);
-        return null;
-      }
-    },
-
 
     // 获取平台名称
     getPlatformName,
@@ -1989,13 +2573,27 @@ export default {
     this.brandLists();
     this.IndexcategoryList();
     this.indexFourImg()
-    this.zoneListIndex()
-    window.addEventListener('scroll', this.handleScroll);
-    // window.addEventListener('scroll', this.showSearch);
+    this.zoneListIndex1()
+    this.zoneListIndex2()
+    this.zoneListIndex3()
+    this.zoneListIndex4()
+    this.zoneListIndex5()
+    this.zoneListIndex6()
+
+    this.zoneListIndex8()
+
+    this.getCategoryTabs()
+    // window.addEventListener('scroll', this.handleScroll);
+    this.$nextTick(() => {
+      setTimeout(() => {
+        window.addEventListener('scroll', this.handleScroll);
+      }, 500);
+    });
+
   },
   beforeDestroy() {
     window.removeEventListener('scroll', this.handleScroll, false);
-    // window.removeEventListener('scroll', this.showSearch, false);
+
   },
 }
 </script>
@@ -2106,7 +2704,7 @@ export default {
 
   .sortBox {
     border-radius: 10px;
-    background-color: #ffffff;
+    background-color: #ffffff6e;
     padding: 19px 7px 10px 7px;
     margin-top: 5px;
 
@@ -2209,7 +2807,7 @@ export default {
     }
   }
 
- 
+
 
   .flexBox {
     width: 100%;
@@ -2385,11 +2983,9 @@ export default {
 .listMax {
   padding: 0px 10px;
   padding-bottom: 10px;
-
-  .bannerBox {
-    width: 48%;
-    margin-top: 10px;
-  }
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
 
   .listBox {
     display: flex;
@@ -2504,7 +3100,7 @@ export default {
 // ffadd
 .imageSlider {
 
-  padding: 10px 0;
+  padding: 0px 0;
 
   .sliderContainer {
     display: flex;
@@ -2521,7 +3117,7 @@ export default {
     scrollbar-width: none;
 
     .sliderItem {
-      flex: 0 0 calc((100% - 30px) / 3.5);
+      flex: 0 0 calc((100% - 66px) / 3.5);
       /* 显示3.5个 */
       scroll-snap-align: start;
 
@@ -2646,7 +3242,7 @@ export default {
 
   background-color: #ffffff;
   border-radius: 10px;
-  padding: 10px 10px 4px 10px;
+  padding: 0px;
 
   overflow: hidden;
 }
@@ -2669,6 +3265,8 @@ export default {
   justify-content: space-between;
   margin-bottom: 6px;
   gap: 4px;
+  // line-height: 30px;
+  background: linear-gradient(242deg, #ECFDFD 0%, #BFE1F9 49.56%, #BFE1F9 100%);
 }
 
 .card-header img {
@@ -2678,21 +3276,31 @@ export default {
 }
 
 .card-header .title {
+
   font-size: 15px;
   font-weight: bold;
   white-space: nowrap;
+  padding: 0 9px;
+  border-radius: 0 13px 0 0;
+  width: 70px;
+  padding-top: 4px;
+  background: url(../assets/b-11.png) no-repeat;
+  background-size: cover;
+  // background: linear-gradient(181deg, rgba(247, 254, 254, 0.8) 0%, #F2FDFD 100%);
+
 }
 
 .card-header .sub {
-  color: #b9b9b9;
-  font-size: 14px;
-  font-weight: 600;
+  color: #304CA3;
+  font-size: 11px;
   white-space: nowrap;
+  padding-right: 8px;
 }
 
 .product-list {
   display: flex;
   gap: 8px;
+  padding: 2px 10px 8px 10px;
 }
 
 .product-item {
@@ -2808,11 +3416,19 @@ export default {
   .card-header .title {
     font-size: 15px;
     font-weight: bold;
-    color: #38393b;
+    color: #304CA3;
+    padding: 0 9px;
+    border-radius: 0 13px 0 0;
+    padding-top: 4px;
+
+    background: url(../assets/b-11.png) no-repeat;
+    background-size: cover;
+    width: 70px;
+    // background: linear-gradient(181deg, rgba(247, 254, 254, 0.8) 0%, #F2FDFD 100%);
   }
 
   .card-header .sub {
-    font-size: 12px;
+    font-size: 11px;
   }
 
   .tag-row .name {
@@ -2830,9 +3446,9 @@ export default {
     gap: 6px; // 小屏幕减小间距
   }
 
-  .product-card {
-    padding: 8px; // 小屏幕减小内边距
-  }
+  // .product-card {
+  //   padding: 8px; // 小屏幕减小内边距
+  // }
 }
 
 /* ================= 自定义搜索框 (仿截图样式) ================= */
@@ -2903,6 +3519,7 @@ export default {
 .waterfall-column {
   flex: 1;
   min-width: 0;
+
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -2912,7 +3529,6 @@ export default {
   width: 100%;
   border-radius: 10px;
   overflow: hidden;
-  margin-top: 10px;
 
   .van-swipe {
     border-radius: 10px;
@@ -2924,6 +3540,7 @@ export default {
     .img {
       width: 100%;
       display: block;
+      object-fit: cover;
     }
   }
 }
@@ -2933,7 +3550,7 @@ export default {
 }
 
 .product-card {
-  background: #fff;
+  background: #F3FCFD;
   border-radius: 10px;
   overflow: hidden;
   cursor: pointer;
@@ -3027,4 +3644,325 @@ export default {
 .listMax {
   padding-bottom: 10px;
 }
+
+
+//2026-10-20
+.addbg2 {
+  margin-top: 10px;
+  padding: 10px;
+  background: linear-gradient(215deg, #D4F4FC 0%, #A8D3F9 42.28%, #98CAF8 100%);
+  border-radius: 10px 10px 10px 10px;
+}
+
+
+
+/* ================= 新增：多分类聚合板块样式 ================= */
+/* ================= 多分类聚合板块样式（纯CSS分离颜色） ================= */
+.multiCategorySection {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  .category-block {
+    border-radius: 12px;
+
+    padding: 0px 0px 10px 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+
+    // 头部样式
+    .block-header {
+      display: flex;
+      justify-content: space-between;
+      // align-items: center;
+      margin-bottom: 12px;
+      // padding: 6px 12px;
+      border-radius: 10px 10px 0 0;
+
+      .title-area {
+        display: flex;
+        align-items: baseline;
+        // line-height: 32px;
+        padding-top: 8px;
+        padding-bottom: 7px;
+        padding-left: 10px;
+        padding-right: 10px;
+        border-radius: 10px 10px 0 0;
+
+        .title {
+          font-size: 15px;
+          font-weight: bold;
+        }
+
+        .desc {
+          font-size: 12px;
+          margin-left: 4px;
+          opacity: 0.8;
+        }
+      }
+
+      .more-btn {
+        font-weight: 600;
+        color: #ffffff;
+        font-size: 11px;
+        padding: 3px 10px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        cursor: pointer;
+
+      }
+    }
+
+    // 网格布局
+    .block-grid {
+      padding: 0 4px;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      row-gap: 12px;
+      column-gap: 1px;
+
+      .grid-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        cursor: pointer;
+
+        .icon-box {
+          width: 54px;
+          height: 54px;
+          border-radius: 8px;
+          overflow: hidden;
+          margin-bottom: 6px;
+          background-color: #ffffff;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+
+          img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+          }
+        }
+
+        .item-name {
+          font-size: 11px;
+          color: #333;
+          text-align: center;
+          width: 100%;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          padding: 0 2px;
+          box-sizing: border-box;
+        }
+      }
+    }
+  }
+
+
+  /* 🌟 1. 本地生活 (黄色系) */
+  .category-block:nth-child(1) {
+    .title-area {
+      width: 65%;
+      // background: linear-gradient(180deg, #FEE246 0%, #FDFED8 100%);
+
+    }
+
+    background: #FEFDDE;
+
+    .block-header {
+      // background: #FED72C;
+      background: url(../assets/b-1.png);
+      background-size: cover;
+
+      .more-btn {
+        color: #591600;
+      }
+
+      .title {
+        color: #591600;
+      }
+
+      .desc {
+        color: #591600;
+      }
+    }
+  }
+
+  /* 🌟 2. 在线点餐 (橙色系) */
+  .category-block:nth-child(2) {
+    .title-area {
+      width: 65%;
+
+
+      // background: linear-gradient(180deg, #FBD4A2 0%, #FEFDE2 100%);
+    }
+
+    background: #FFFEE6;
+
+    .block-header {
+      // background: #FCA95D;
+      background: url(../assets/b-2.png);
+      background-size: cover;
+
+      .more-btn {
+        color: #591600;
+      }
+
+      .title {
+        color: #591600
+      }
+
+      .desc {
+        color: #591600
+      }
+    }
+  }
+
+  /* 🌟 3. 便民服务 (紫色系) */
+  .category-block:nth-child(3) {
+    .title-area {
+      width: 65%;
+      // background: linear-gradient(180deg, #DCC7FC 0%, #FDFDFB 100%);
+
+
+    }
+
+    background: linear-gradient(180deg, #FBF8FF 0%, #F2EBFF 100%);
+
+    .block-header {
+      // background: #B087E9;
+      background: url(../assets/b-3.png);
+      background-size: cover;
+
+      .more-btn {
+        color: #3E0462;
+      }
+
+      .title {
+        color: #3E0462
+      }
+
+      .desc {
+        color: #3E0462
+      }
+    }
+  }
+
+  /* 🌟 如果你后续再加板块，可以继续写 :nth-child(4) 比如 (蓝色系) */
+  .category-block:nth-child(4) {
+    .title-area {
+      width: 65%;
+
+
+      // background: linear-gradient(180deg, #98BFED 0%, #E9F3FC 100%);
+    }
+
+    background: #E9F3FC;
+
+    .block-header {
+      // background: #74AAE9;
+      background: url(../assets/b-4.png);
+      background-size: cover;
+
+      .more-btn {
+        color: #ffffff;
+      }
+
+      .title {
+        color: #246DC4
+      }
+
+      .desc {
+        color: #246DC4
+      }
+    }
+  }
+
+  /* 🌟 如果你后续再加板块，可以继续写 :nth-child(4) 比如 (蓝色系) */
+  .category-block:nth-child(5) {
+    .title-area {
+      width: 65%;
+
+
+      // background: linear-gradient(180deg, #FF75A3 0%, #FFFAFC 100%);
+    }
+
+    background: #FFFAFC;
+
+    .block-header {
+      // background: #FF75A3;
+      background: url(../assets/b-5.png);
+      background-size: cover;
+
+      .more-btn {
+        color: #ffffff;
+      }
+
+      .title {
+        color: #A10E0E
+      }
+
+      .desc {
+        color: #A10E0E
+      }
+    }
+  }
+
+
+
+}
+
+// jieshu
+
+
+.diancanSection {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  background-color: #ffffff;
+
+  .diancanTitle {
+    font-size: 15px;
+    font-weight: bold;
+    color: #000;
+    margin-bottom: 8px;
+  }
+
+  .diancanList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .diancanItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 56px;
+    cursor: pointer;
+
+    .diancanIcon {
+      width: 46px;
+      height: 46px;
+      border-radius: 8px;
+      object-fit: cover;
+      display: block;
+    }
+
+    span {
+      font-size: 11px;
+      color: #333;
+      margin-top: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+  }
+}
+
+// 
 </style>

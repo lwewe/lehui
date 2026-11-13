@@ -32,7 +32,7 @@
       <div class="promo-right">
         <!-- 块1：鲜冷牛奶 -->
         <div class="right-item blue-bg">
-          <div class="right-header" @click="DrinkFreshMilkPage(8, 0, 0)">
+          <div class="right-header" @click="DrinkFreshMilkPage(8, 6, 0)">
             <span class="main">鲜冷牛奶</span>
             <span class="view-btn">GO</span>
           </div>
@@ -83,7 +83,7 @@
               <span class="symbol">¥</span>
               <span class="price">{{ item.sell_price }}</span>
             </div>
-            <div class="add-btn">+</div>
+            <!-- <div class="add-btn">+</div> -->
           </div>
         </div>
       </div>
@@ -110,7 +110,7 @@
               <span class="symbol">¥</span>
               <span class="price">{{ item.sell_price }}</span>
             </div>
-            <div class="add-btn">+</div>
+            <!-- <div class="add-btn">+</div> -->
           </div>
         </div>
       </div>
@@ -158,17 +158,59 @@ export default {
       this.pendingCount++;
       this.loading = true;
 
-      channelDetail({ id: this.$route.query.id })
+      channelDetail({ id: this.$route.query.id || 8 })
         .then(res => {
-          if (res.code == 200) {
-            this.channelData = res.data
-            this.navList = res.data.nav || []
-            this.superTop1 = res.data.nav[0].children[0].sections[0].items.slice(0, 2) || []
-            this.superTop = res.data.nav[1].children[0].sections[0].items.slice(0, 2) || []
-            this.superList = res.data.sections[0].items || []
-            this.moreList = res.data.sections[1].items || []
-            this.bsyx = res.data.nav[2].children[0].img || []
+          if (res.code !== 200) return;
+
+          this.channelData = res.data;
+          const modules = res.data.modules || [];
+
+          // 1. 顶部 Banner (type='banner')
+          const bannerModule = modules.find(m => m.type === 'banner');
+          if (bannerModule?.items?.length) {
+            this.channelData.banner = [{
+              img: bannerModule.items[0].img || '',
+              link: bannerModule.items[0].link || ''
+            }];
           }
+
+          // 2. 分类图标 (type='entry' && list_type='icon')
+          const iconModule = modules.find(m => m.type === 'entry' && m.list_type === 'icon');
+          this.navList = (iconModule?.items || []).slice(0, 10);
+
+          // 3. 左侧大图 (夏日冰霜 subpage 的 img)
+          const summerModule = modules.find(m => m.type === 'subpage' && /夏日冰霜/.test(m.title || ''));
+          if (summerModule) {
+            this.bsyx = summerModule.img || '';
+          }
+
+          // 4. 右侧上：鲜活牛奶 (取 sections[0].items 前 2 个)
+          const milkModule = modules.find(m => m.type === 'subpage' && /鲜活牛奶/.test(m.title || ''));
+          if (milkModule) {
+            const items = (milkModule.sections && milkModule.sections[0] && milkModule.sections[0].items) || [];
+            this.superTop1 = items.slice(0, 2);
+          }
+
+          // 5. 右侧下：超值爆款榜 (type='grid', 取 items 前 2 个)
+          const hotModule = modules.find(m => m.type === 'grid' && /超值爆款/.test(m.title || ''));
+          if (hotModule) {
+            this.superTop = (hotModule.items || []).slice(0, 2);
+          }
+
+          // 6. 超划算 (type='grid', title 含"超划算")
+          const superListModule = modules.find(m => m.type === 'grid' && /超划算/.test(m.title || ''));
+          if (superListModule) {
+            this.superList = superListModule.items || [];
+          }
+
+          // 7. 更多好物 (type='grid', title 含"更多好物")
+          const moreModule = modules.find(m => m.type === 'grid' && /更多好物/.test(m.title || ''));
+          if (moreModule) {
+            this.moreList = moreModule.items || [];
+          }
+        })
+        .catch(err => {
+          console.error('获取饮品频道数据失败:', err);
         })
         .finally(() => {
           this.pendingCount--;
@@ -176,7 +218,7 @@ export default {
             this.pendingCount = 0;
             this.loading = false;
           }
-        })
+        });
     },
 
     productListIndex() {
@@ -197,40 +239,7 @@ export default {
           }
         })
     },
-    // channelDetailIndex() {
-    //   channelDetail({ id: this.$route.query.id }).then(res => {
-    //     console.log('频道详情:', res);
-    //     if (res.code == 200) {
-    //       this.channelData = res.data
-    //       // 处理导航分类数据
-    //       this.navList = res.data.nav || []
-    //       this.superTop1 = res.data.nav[0].children[0].sections[0].items.slice(0, 2) || []
-    //       this.superTop = res.data.nav[1].children[0].sections[0].items.slice(0, 2) || []
-    //       // 处理轮播图
-    //       this.superList = res.data.sections[0].items || [];
-    //       this.moreList = res.data.sections[1].items || [];
-    //       this.bsyx = res.data.nav[2].children[0].img || []
-    //     }
-    //   })
-    // },
-    // productListIndex() {
-    //   productList({ cate_id: this.$route.query.id }).then(res => {
-    //     console.log('商品列表:', res);
-    //     if (res.code == 200) {
-    //       // 解析商品数据
-    //       let productData = []
-    //       if (res.data && Array.isArray(res.data)) {
-    //         productData = res.data
-    //       } else if (res.data && res.data.data && Array.isArray(res.data.data)) {
-    //         productData = res.data.data
-    //       }
-
-    //       // 分配商品到超划算和更多推荐
-    //       // this.superList = productData.slice(0, 6)
-    //       // this.moreList = productData.slice(6, 12)
-    //     }
-    //   })
-    // },
+  
     // 新增方法
     getFirstTwoProducts(nav) {
       if (nav && nav.products && Array.isArray(nav.products)) {
@@ -252,7 +261,7 @@ export default {
       if (item.title) {
         this.$router.push({
           path: '/productList',
-          query: { keyword: item.title }
+          query: { shop_cate_id: item.id }
         })
       }
     },
@@ -265,11 +274,11 @@ export default {
       this.$router.push({ path: '/DrinkTabZone', query: { id: this.$route.query.id } });
     },
     DrinkHotRankList() {
-      this.$router.push({ path: '/DrinkHotRankList', query: { id: this.$route.query.id } }
+      this.$router.push({ path: '/DrinkHotRankListadd', query: { id: this.$route.query.id } }
       );
     },
     DrinkFreshMilkPage(id, nav, index) {
-      this.$router.push({ path: '/DrinkFreshMilkPage', query: { id: id, nav: nav, index: index } });
+      this.$router.push({ path: '/DrinkFreshMilkPageadd', query: { id: id, nav: nav, index: index } });
     },
     goBack() {
       this.$router.go(-1);
@@ -464,7 +473,7 @@ export default {
             text-align: center;
             white-space: nowrap;
             cursor: pointer;
-            max-width: 80px;
+            max-width: 61px;
             /* 限制具体宽度 */
             overflow: hidden;
             text-overflow: ellipsis;

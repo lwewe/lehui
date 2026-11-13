@@ -61,7 +61,7 @@ export default {
   name: "JingzaoSuperValue",
   data() {
     return {
-      baners: '',
+      baners: this.$route.query.img,
       goodsList: [],
       loading: false,
       zoneData: [],        // 存放 zoneList 返回的全部专区列表
@@ -83,27 +83,12 @@ export default {
     zoneListIndex() {
       this.loading = true;          // 请求开始，显示全屏加载
 
-      zoneList()
+      zoneList({pid:32})
         .then(res => {
           if (res.code == 200) {
-            let allZones = res.data.list || [];
+            this.goodsList = res.data.list[0].goods || [];
 
-            let targetZone = allZones.find(zone => zone.id == 4);
-            if (targetZone) {
-              this.baners = targetZone.img;
-            }
-
-            if (targetZone && targetZone.goods) {
-              this.goodsList = targetZone.goods;
-            } else {
-              let allGoods = [];
-              allZones.forEach(zone => {
-                if (zone.goods) {
-                  allGoods = allGoods.concat(zone.goods);
-                }
-              });
-              this.goodsList = allGoods;
-            }
+             
           }
         })
         .finally(() => {
@@ -173,7 +158,7 @@ export default {
 
 .super-value-page {
   min-height: 100vh;
-  background: linear-gradient(to bottom, #FD2104, #FCFCFC);
+  background: #fbfbfb;
   padding-bottom: 0px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
@@ -217,13 +202,13 @@ export default {
 /* ================= 2. 顶部 Banner ================= */
 .banner-area {
   width: 100%;
-  height: 170px;
+  // height: 170px;
   position: relative;
 
 
   .banner-img {
     width: 100%;
-    height: 100%;
+    // height: 100%;
     object-fit: cover;
     display: block;
   }

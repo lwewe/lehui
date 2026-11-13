@@ -18,7 +18,7 @@
         <div class="bottomBox">
           <div class="radio">
             <van-radio checked-color="#ED3036" :name="item.id" style="font-size: 12px;"
-              @click.stop="changeDefault(item.id)">-默认地址</van-radio>
+              @click.stop="changeDefault(item.id)">+-默认地址</van-radio>
           </div>
           <div class="rightBox">
             <div class="deleteBox" @click.stop="deleteAdress(item.id)">
@@ -58,12 +58,14 @@ export default {
     }
   },
   methods: {// ✅ 选中地址回传
-    selectAddress(id) {
-      if (this.change == 0) {
-        sessionStorage.setItem('selectedAddressId', id)
-        this.$router.back()
-      }
-    },
+   selectAddress(id) {
+  if (this.change == 0) {
+    const item = this.addressList.find(a => a.id === id)
+    if (item) sessionStorage.setItem('selectedAddress', JSON.stringify(item))
+    sessionStorage.setItem('selectedAddressId', id)
+    this.$router.back()
+  }
+},
     toAddAddress() {
       if (this.change == 0) {
         this.$router.push({
@@ -98,25 +100,23 @@ export default {
       })
     },
 
-    // 修改默认地址
     changeDefault(id) {
-      this.radio = id
-
-      addressSetDefault({ id }).then(res => {
-        if (res.code == 200) {
-          this.$toast(res.msg || '设置成功')
-          this.getAddressList()
-
-          if (this.change == 0) {
-            sessionStorage.setItem('selectedAddressId', id)   // ✅ 加这行
-            this.$router.go(-1)
-
-          }
-        } else {
-          this.$toast(res.msg || '设置失败')
-        }
-      })
-    },
+  this.radio = id
+  addressSetDefault({ id }).then(res => {
+    if (res.code == 200) {
+      this.$toast(res.msg || '设置成功')
+      this.getAddressList()
+      if (this.change == 0) {
+        const item = this.addressList.find(a => a.id === id)
+        if (item) sessionStorage.setItem('selectedAddress', JSON.stringify(item))
+        sessionStorage.setItem('selectedAddressId', id)
+        this.$router.go(-1)
+      }
+    } else {
+      this.$toast(res.msg || '设置失败')
+    }
+  })
+},
     // 删除地址
     deleteAdress(id) {
       this.$dialog.confirm({

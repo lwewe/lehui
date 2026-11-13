@@ -81,8 +81,8 @@
       <!--    底部button-->
       <div>
         <van-goods-action>
-          <van-goods-action-mini-btn @click="toCart" :icon="require('../../assets/tubiao/gc.png')" text="购物车" />
-          <van-goods-action-mini-btn @click="toKefu" :icon="require('../../assets/tubiao/kfz.png')" text="客服" />
+          <van-goods-action-mini-btn @click="toCart" :icon="require('@/assets/tubiao/gc.png')" text="购物车" />
+          <van-goods-action-mini-btn @click="toKefu" :icon="require('@/assets/tubiao/kfz.png')" text="客服" />
           <van-goods-action-big-btn class="goCart" :class="{ goCart2: detail.can_buy != 1 || detail.status != 1 || can_buy != 1 }"
             text="加入购物车" @click="open('b', 1)" />
           <van-goods-action-big-btn class="toPay" :class="{ toPay2: detail.can_buy != 1 || detail.status != 1 || can_buy != 1 }"
@@ -169,9 +169,14 @@
 </template>
 <script>
 import ShopList from "@/components/ShopList.vue";
-import { addCart, dgseladdress, getCakeDetails } from "@/api/detail";
-import { mrscaddress } from "@/api/cakeAddress";
-
+ import { 
+  addCart, 
+  checkDelivery, 
+  getCakeShow, 
+  setDefaultAddress, 
+  getAddressList, 
+  addAddress 
+} from '@/api/lehuicake'
 export default {
   name: "ProductDetail",
   components: { ShopList },
@@ -185,19 +190,19 @@ export default {
       selectList: [
         {
           id: 1,
-          icon: require("../../assets/tubiao/gg.png"),
+          icon: require("@/assets/tubiao/gg.png"),
           text: "6英寸500g【约200g榴莲肉】",
           status: "a"
         },
         {
           id: 2,
-          icon: require("../../assets/tubiao/dz.png"),
+          icon: require("@/assets/tubiao/dz.png"),
           text: "请选择配送地址",
           status: "d"
         },
         {
           id: 3,
-          icon: require("../../assets/tubiao/gj.png"),
+          icon: require("@/assets/tubiao/gj.png"),
           text: "偏远地区不发货"
           // （节假日可能延缓发货）
         },
@@ -243,7 +248,7 @@ export default {
 
     },
     toCart() {
-      this.$router.push("/shopCart")
+      this.$router.push("/CakeshopCart")
     },
     toKefu() {
       window.location.href = localStorage.getItem("kefu")
@@ -252,7 +257,7 @@ export default {
     changeDefault(e) {
       this.selectList[1].text = e.name + e.tel
       this.address_id = e.id
-      mrscaddress({
+      setDefaultAddress({
         id: this.address_id
       }).then(res => {
         // this.$toast(res.data)
@@ -373,7 +378,8 @@ export default {
         cpbs: this.detail.cpbs,
         taste_name: this.selectedTaste || this.modelTastes
       }
-      this.$router.push({ path: "/confirmOrder", query: { data: JSON.stringify(data) } })
+
+      this.$router.push({ path: "/CakeconfirmOrder", query: { data: JSON.stringify(data) } })
     },
     addNewAddress() {
       this.$router.push("/cakeExitAdress")
@@ -392,7 +398,7 @@ export default {
           ...data
         }
       }
-      dgseladdress(data).then(res => {
+      checkDelivery(data).then(res => {
         //1-规格 2-重量 3-颜色 4-型号
         var list = {}
         if (res.data.address_list.length > 0) {
@@ -435,8 +441,9 @@ export default {
       } else {
         token = ""
       }
-      getCakeDetails({
-        id, token
+      getCakeShow({
+        cid: sessionStorage.getItem("cityId"), // 补上城市ID
+  id
       }).then(res => {
         this.loadingflag = false
         if (!res.data) {

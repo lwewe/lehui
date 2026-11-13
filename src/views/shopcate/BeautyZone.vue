@@ -58,7 +58,7 @@
 
     <!-- 6. 场景 Banner (今日防晒了没) -->
     <div class="scene-banner-area">
-      <img class="scene-banner-img" src="../../assets//lh/cate/ls/b8.png" @click="JingzaoSuperValue()" alt="场景Banner" />
+      <img class="scene-banner-img" :src="banerfs" @click="JingzaoSuperValue()" alt="场景Banner" />
     </div>
 
     <!-- 7. 防晒专区 (3列横向滑动) -->
@@ -104,7 +104,7 @@
               <span class="symbol">¥</span>
               <span class="price">{{ item.sell_price }}</span>
             </div>
-            <div class="add-btn">+</div>
+            <!-- <div class="add-btn">+</div> -->
           </div>
         </div>
       </div>
@@ -121,6 +121,7 @@ export default {
   name: "BeautyZone",
   data() {
     return {
+      banerfs:'',
       activeTab: 0,
       loading: false,      // 新增
       // 分类图标
@@ -171,7 +172,7 @@ export default {
       if (item.title) {
         this.$router.push({
           path: '/productList',
-          query: { keyword: item.title }
+          query: { shop_cate_id: item.id }
         })
       }
     },
@@ -225,6 +226,7 @@ export default {
 
           // 6. 场景 Banner + 防晒专区：type=grid 且 title 含"防晒"
           const sunModule = modules.find(m => m.type === 'grid' && /防晒/.test(m.title || ''));
+          this.banerfs = sunModule.img;
           if (sunModule) {
             this.sceneBannerImg = sunModule.img || '';
             this.sunCareList = (sunModule.items || []).slice(0, 6);
@@ -235,7 +237,7 @@ export default {
           if (tabModule && tabModule.items) {
             this.tabList = tabModule.items.map(item => ({
               name: item.title,
-              sub: item.subtitle || ''
+              sub: item.sub || ''
             }));
              this.tabCateIds = tabModule.items.map(item => item.cate_id || 0);
             this.tabGoodsList = tabModule.items.map(item => item.products || []);
@@ -287,13 +289,18 @@ loadTabGoods(index) {
       }
     },
 
+    // JingzaoSuperValue() {
+    //   this.$router.push('/JingzaoSuperValuenew');
+    // },
     JingzaoSuperValue() {
-      this.$router.push('/JingzaoSuperValue');
-    },
-
+  this.$router.push({
+    path: '/JingzaoSuperValuenew',
+    query: { id: this.$route.query.id || 3 }   // ✅ 把 3 带过去
+  });
+},
     AppBrandRecommend(item) {
       this.$router.push({
-        path: '/AppBrandRecommend',
+        path: '/AppBrandRecommendnew',
         query: {
           brand_id: item.id,
           brand_name: item.name,
@@ -516,8 +523,8 @@ loadTabGoods(index) {
       .brand-logo {
         width: 100%;
         object-fit: cover;
-        height: 110px;
-        border-radius: 8px;
+        // height: 110px;
+        border-radius: 8px 8px 0  0;
 
       }
 

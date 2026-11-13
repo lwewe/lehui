@@ -1,12 +1,12 @@
 <template>
-  <div class="super-value-page">
+  <div class="super-value-page" :style="bgColor">
 
     <!-- 1. 顶部导航栏 -->
 
 
     <!-- 2. 顶部大 Banner -->
     <div class="banner-area">
-      <img class="banner-img" src="../../assets/lh/jdzy/b2.png" alt="Banner" />
+      <img class="banner-img" :src="bannerImg" alt="Banner" />
     </div>
 
     <!-- 3. 商品列表区域 -->
@@ -32,7 +32,7 @@
                 <span class="price">{{ item.sell_price }}</span>
                 <span class="original-price" v-if="item.sell_price < item.market_price">¥{{ item.market_price }}</span>
               </div>
-              <div class="add-btn" @click="addToCart(item)">+</div>
+              <!-- <div class="add-btn" @click="addToCart(item)">+</div> -->
             </div>
 
 
@@ -56,6 +56,8 @@ export default {
   name: "JingzaoSuperValue",
   data() {
     return {
+      bgColor: {},
+      bannerImg: '',
       goodsList: [],
       loading: false,
     }
@@ -65,42 +67,36 @@ export default {
       channelDetail({ id: 13 }).then(res => {
         if (res.code == 200) {
           const data = res.data;
+          const modules = data.modules || [];
 
-          // 1. 返回按钮图标（用 banner 图，或者你单独配一个返回图标）
-          if (data.banner && data.banner.length > 0) {
-            this.baners = data.banner[0].img;
-            this.bannerImg = data.banner[0].img;
+          // 1. 找 banner 模块（type === 'banner'）取 banner 图
+          const bannerModule = modules.find(m => m.type === 'banner');
+          if (bannerModule && bannerModule.banner_img) {
+
           }
 
-          // 2. 分类图标：直接用 nav
-          if (data.nav && data.nav.length > 0) {
-            this.categoryList = data.nav.map(item => ({
+          // 2. 找推荐 grid 模块（type === 'grid'）取商品列表
+          const gridModule = modules.find(m => m.type === 'grid');
+          if (gridModule) {
+            this.goodsList = gridModule.items || [];
+            this.bannerImg = gridModule.banner_img;
+            this.bgColor = { backgroundColor: gridModule.bg_color }
+            console.log('this.goodsList')
+            console.log(gridModule)
+          }
+
+          // 3. 找图标 entry 模块（type === 'entry'）取分类图标
+          const entryModule = modules.find(m => m.type === 'entry');
+          if (entryModule) {
+            this.categoryList = (entryModule.items || []).map(item => ({
               id: item.cate_id || item.id,
               img: item.img,
               title: item.title,
               link: item.link
             }));
           }
-
-          // 3. sections 里如果有 items，可以在这里处理
-          // 目前接口 items 为空，所以 hotList / goodsList 保持空
-          if (data.sections && data.sections.length > 0) {
-
-            this.goodsList = res.data.sections[0].items
-            // data.sections.forEach(section => {
-
-            //   // if (section.items && section.items.length > 0) {
-            //   //   // 根据 section.type 或 title 区分
-            //   //   if (section.title === '超值购') {
-            //   //     // this.goodsList = section.items;
-            //   //   } else if (section.title === '热销推荐' || section.title === '上新') {
-            //   //     this.goodsList = section.items;
-            //   //   }
-            //   // }
-            // });
-          }
         }
-      })
+      });
     },
     goToDetail(item) {
       console.log('查看商品详情:', item);
@@ -166,7 +162,7 @@ export default {
 <style scoped lang="less">
 .super-value-page {
   min-height: 100vh;
-  background: linear-gradient(to bottom, #FD2104, #FCFCFC);
+  // background: linear-gradient(to bottom, #FD2104, #FCFCFC);
   padding-bottom: 0px;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
@@ -210,7 +206,7 @@ export default {
 /* ================= 2. 顶部 Banner ================= */
 .banner-area {
   width: 100%;
-  height: 170px;
+  // height: 170px;
   position: relative;
 
 

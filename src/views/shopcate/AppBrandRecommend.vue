@@ -46,6 +46,7 @@
       <div v-if="!loading && !goodsList.length" class="empty-tip">暂无商品</div>
       <div v-if="loading" class="loading-tip">加载中...</div>
       <div v-if="finished && goodsList.length" class="finished-tip">没有更多了</div>
+      <div ref="loadMoreSentinel" class="load-more-sentinel"></div>
     </div>
   </div>
 </template>
@@ -66,7 +67,9 @@ export default {
       reqFlag: 0,
       loading: false,
       finished: false,
-      bannerImg: require('../../assets/lh/cate/jd/b6.png')
+      bannerImg: require('../../assets/lh/cate/jd/b6.png'),
+      observer: null,          // ← 新增
+      scrollHandler: null      // ← 新增，降级用，便于移除
     }
   },
   computed: {
@@ -78,41 +81,38 @@ export default {
     getPlatformName,
 
     fetchBrandList() {
-  const brandId = this.$route.query.brand_id;
+      const brandId = this.$route.query.brand_id;
 
-  return channelDetail({ id: this.$route.query.channel_id || 3 }).then(res => {
-    if (res.code !== 200) return;
+      return channelDetail({ id: this.$route.query.channel_id || 3 }).then(res => {
+        if (res.code !== 200) return;
 
-    const modules = res.data?.modules || [];
+        const modules = res.data?.modules || [];
 
-    // ✅ 顶部 Banner：取 type='banner' 模块的 banner_img，没则保留本地兜底
-    const bannerModule = modules.find(m => m.type === 'banner');
-    if (bannerModule?.banner_img) {
-      this.bannerImg = bannerModule.banner_img;
-    }
+        // ✅ 顶部 Banner：取 type='banner' 模块的 banner_img，没则保留本地兜底
+        const bannerModule = modules.find(m => m.type === 'banner');
+        if (bannerModule?.banner_img) {
+          this.bannerImg = bannerModule.banner_img;
+        }
 
-    // 品牌列表
-    const brandModule = modules.find(m => m.type === 'brand');
-    this.brandList = brandModule?.items || [];
-// ✅ 顶部 Banner 取 brand 模块的 banner_img，没则保留本地兜底
-if (brandModule?.banner_img) {
-  this.bannerImg = brandModule.banner_img;
-}
-    const idx = this.brandList.findIndex(b => String(b.id) === String(brandId));
-    this.activeBrandIndex = idx > -1 ? idx : 0;
-  });
-},
+        // 品牌列表
+        const brandModule = modules.find(m => m.type === 'brand');
+        this.brandList = brandModule?.items || [];
+        // ✅ 顶部 Banner 取 brand 模块的 banner_img，没则保留本地兜底
+        if (brandModule?.banner_img) {
+          this.bannerImg = brandModule.banner_img;
+        }
+        const idx = this.brandList.findIndex(b => String(b.id) === String(brandId));
+        this.activeBrandIndex = idx > -1 ? idx : 0;
+      });
+    },
     // 2. 商品：productList 按 brand_id 筛
     fetchGoods() {
       if (this.loading || this.finished) return;
+      const brand = this.brandList[this.activeBrandIndex];
+      if (!brand) return;
+
       this.loading = true;
       const flag = this.reqFlag;
-
-      const brand = this.brandList[this.activeBrandIndex];
-      if (!brand) {
-        this.loading = false;
-        return;
-      }
 
       productList({
         brand_id: brand.id,
@@ -122,20 +122,62 @@ if (brandModule?.banner_img) {
         order: 'desc'
       }).then(res => {
         if (flag !== this.reqFlag) return;
-        if (res.code === 200) {
-          const list = res.data?.data || [];
-          this.goodsList = this.goodsList.concat(list);
+        if (res.code !== 200) return;
 
-          const current = res.data?.current_page || this.page;
-          const last = res.data?.last_page || 1;
-          if (current >= last) {
-            this.finished = true;
-          } else {
-            this.page = current + 1;
-          }
+        const data = res.data || {};
+        const list = data.data || data.list || [];
+        this.goodsList = this.goodsList.concat(list);
+
+        // 三层兜底，兼容后端各种分页字段
+        const current = Number(data.current_page ?? data.page ?? this.page);
+        const last = Number(data.last_page ?? data.total_page ?? 0);
+        const total = Number(data.total ?? 0);
+
+        let isEnd = false;
+        if (last > 0) {
+          isEnd = current >= last;
+        } else if (total > 0) {
+          isEnd = this.goodsList.length >= total;
+        } else {
+          isEnd = list.length < this.limit;   // 最后兜底：本页不足 limit 即到底
         }
+
+        this.finished = isEnd;
+        if (!isEnd) this.page = current + 1;
+      }).catch(() => {
+        // 失败不置 finished，允许重试
       }).finally(() => {
         if (flag === this.reqFlag) this.loading = false;
+      });
+    },
+    initObserver() {
+      // 兼容：不支持 IntersectionObserver 时降级到 window scroll
+      if (!('IntersectionObserver' in window)) {
+        this.scrollHandler = () => {
+          const scrollTop = window.pageYOffset
+            || document.documentElement.scrollTop
+            || document.body.scrollTop;
+          const scrollHeight = Math.max(
+            document.documentElement.scrollHeight,
+            document.body.scrollHeight
+          );
+          const clientHeight = window.innerHeight || document.documentElement.clientHeight;
+          if (scrollHeight - scrollTop - clientHeight < 200) {
+            this.fetchGoods();
+          }
+        };
+        window.addEventListener('scroll', this.scrollHandler, { passive: true });
+        return;
+      }
+
+      this.observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) this.fetchGoods();
+      }, { rootMargin: '200px 0px' });   // 提前 200px 触发
+
+      this.$nextTick(() => {
+        if (this.$refs.loadMoreSentinel) {
+          this.observer.observe(this.$refs.loadMoreSentinel);
+        }
       });
     },
 
@@ -152,8 +194,15 @@ if (brandModule?.banner_img) {
       this.loading = false;
       this.reqFlag++;
       this.fetchGoods();
+      // 列表清空后哨兵可能重新渲染，重新 observe
+      if (this.observer) {
+        this.$nextTick(() => {
+          if (this.$refs.loadMoreSentinel) {
+            this.observer.observe(this.$refs.loadMoreSentinel);
+          }
+        });
+      }
     },
-
     goToDetail(item) {
       this.$goDetail(item);
     },
@@ -169,10 +218,20 @@ if (brandModule?.banner_img) {
       }
     }
   },
-
+  beforeDestroy() {
+    if (this.observer) {
+      this.observer.disconnect();
+      this.observer = null;
+    }
+    if (this.scrollHandler) {
+      window.removeEventListener('scroll', this.scrollHandler);
+      this.scrollHandler = null;
+    }
+  },
   mounted() {
     this.fetchBrandList().then(() => {
       this.fetchGoods();
+      this.initObserver();
     });
   }
 }
@@ -264,6 +323,7 @@ if (brandModule?.banner_img) {
     .brand-card {
       flex: 0 0 80px;
       height: 80px;
+      padding: 2px 3px;
       background: #ffffff;
       border-radius: 12px;
       display: flex;
@@ -279,7 +339,7 @@ if (brandModule?.banner_img) {
         width: 80px;
         height: 80px;
         border-radius: 10px;
-        object-fit: contain;
+        object-fit: cover;
       }
 
       &.active {
@@ -435,5 +495,10 @@ if (brandModule?.banner_img) {
 
 .bottom-safe {
   height: 20px;
+}
+
+.load-more-sentinel {
+  height: 1px;
+  width: 100%;
 }
 </style>

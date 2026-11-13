@@ -52,7 +52,8 @@
       <div class="new-arrival-box">
         <div class="new-title" @click="TmallExclusiveNew('new')">独家上新</div>
         <div class="new-desc">去购买 ▶</div>
-        <img class="new-img" :src="(newList[0] && newList[0].img) || defaultImg" alt="" @click="goToDetail(newList[0])" />
+        <img class="new-img" :src="(newList[0] && newList[0].img) || defaultImg" alt=""
+          @click="goToDetail(newList[0])" />
       </div>
     </div>
 
@@ -76,16 +77,25 @@
               <span class="price">{{ item.sell_price }}</span>
               <span class="market-price" v-if="item.sell_price < item.market_price">¥{{ item.market_price }}</span>
             </div>
-            <div class="add-cart" @click.stop="addToCart(item)">+</div>
+            <!-- <div class="add-cart" @click.stop="addToCart(item)">+</div> -->
           </div>
         </div>
       </div>
     </div>
 
     <!-- 空状态 -->
-    <div class="empty-tip" v-else-if="!loading">
+    <!-- 空状态 -->
+    <div class="empty-tip" v-if="!loading && currentGoodsList.length === 0">
       暂无商品
     </div>
+
+    <!-- 加载状态提示 -->
+    <div class="load-more-status" v-if="currentGoodsList.length > 0">
+      <span v-if="pageData[currentTab] && pageData[currentTab].loading">正在加载中...</span>
+      <span v-else-if="pageData[currentTab] && pageData[currentTab].finished">没有更多商品了</span>
+    </div>
+
+    <div ref="loadMoreTrigger" style="height: 10px; width: 100%;"></div>
 
     <!-- 6. 底部导航 -->
     <div class="tab-bar">
@@ -106,28 +116,28 @@
   </div>
 </template>
 
- <script>
-import { channelDetail } from "@/api/lhjdtm";
+<script>
+import { channelDetail, productList } from "@/api/lhjdtm";
 
 export default {
   name: "TmallSupermarket",
   data() {
     return {
+      observer: null,
       platform: 2,
       searchKeyword: '',
       currentTab: 0,
       loading: false,
-
       defaultImg: require('../../assets/lh/730.png'),
       defaultBanner: require('../../assets/lh/tm/b1.png'),
-
       bannerImg: '',
       baners: '',
-
       categoryList: [],
       recommendList: [],
       newList: [],
       tabList: [],
+      pageData: {},
+      tabReqId: 0, // ✅ 新增：防止 Tab 切换后旧请求覆盖新数据
     }
   },
   computed: {
@@ -140,45 +150,203 @@ export default {
   methods: {
     channelDetailIndex() {
       channelDetail({ id: 16 }).then(res => {
-        if (res.code == 200) {
-          const data = res.data || {};
+        if (res.code !== 200) return;
+        const modules = res.data?.modules || [];
 
-          if (data.banner && data.banner.length > 0) {
-            this.bannerImg = data.banner[0].img;
-            this.baners = data.banner[0].img;
+        const bannerModule = modules.find(m => m.type === 'banner');
+        if (bannerModule) {
+          this.bannerImg = bannerModule.banner_img || '';
+          this.baners = bannerModule.banner_img || '';
+        }
+
+        const iconModule = modules.find(m => m.type === 'entry' && m.list_type === 'icon');
+        if (iconModule) {
+          this.categoryList = (iconModule.items || []).map(item => ({
+            id: item.cate_id || item.id,
+            img: item.img || this.defaultImg,
+            title: item.title,
+            link: item.link
+          }));
+        }
+
+        const subsidyModule = modules.find(m => m.type === 'grid' && m.title === '超级补贴');
+        if (subsidyModule) {
+          this.recommendList = (subsidyModule.items || []).slice(0, 3);
+        }
+
+        const newModule = modules.find(m => m.type === 'grid' && m.title === '独家上新');
+        if (newModule) {
+          this.newList = newModule.items || [];
+        }
+
+        const tabModule = modules.find(m => m.type === 'entry' && m.list_type === 'tab');
+        if (tabModule && tabModule.items) {
+          this.tabList = tabModule.items.map(item => ({
+            name: item.title,
+            items: item.items || [] // 如果是空的，后续用接口填补
+          }));
+
+          this.currentTab = 0;
+          this.pageData = {};
+          this.fetchTabProducts(0);
+
+          this.$nextTick(() => {
+            this.initObserver();
+          });
+        }
+      });
+    },
+
+    fetchTabProducts(index, isLoadMore = false) {
+      if (!this.pageData[index]) {
+        this.pageData[index] = { page: 1, finished: false, loading: false };
+      }
+      const status = this.pageData[index];
+
+      if (status.loading || status.finished) return;
+
+      if (isLoadMore && (!this.tabList[index] || this.tabList[index].items.length === 0)) {
+        return;
+      }
+
+      status.loading = true;
+      this.loading = true;
+
+      // ✅ 锁定当前请求的 Tab ID
+      const reqId = ++this.tabReqId;
+      const reqTab = index;
+
+      let params = {
+        platform: 2,
+        page: status.page,
+        limit: 10
+      };
+
+      if (index === 1) {
+        params.hot = 1;
+      } else if (index === 2) {
+        params.sort = 'sales';
+        params.order = 'desc';
+      } else if (index === 3) {
+        params.sort = 'id';
+        params.order = 'desc';
+      } else {
+        params.sort = 'px';
+        params.order = 'desc';
+      }
+
+      productList(params).then(res => {
+        // ✅ 如果请求返回时，用户已经切了别的 Tab，直接丢弃数据
+        if (reqId !== this.tabReqId || reqTab !== this.currentTab) return;
+
+        if (res.code === 200) {
+          const payload = res.data || {};
+          let list = [];
+          if (Array.isArray(payload.data)) list = payload.data;
+          else if (Array.isArray(payload.list)) list = payload.list;
+
+          const formatList = list.map(p => ({
+            ...p,
+            img: p.img ? String(p.img).replace(/^http:\/\//, 'https://') : this.defaultImg
+          }));
+
+          if (isLoadMore) {
+            const oldList = this.tabList[index].items || [];
+            const existingIds = new Set(oldList.map(item => item.id));
+            const uniqueList = formatList.filter(item => !existingIds.has(item.id));
+            this.$set(this.tabList[index], 'items', oldList.concat(uniqueList));
+          } else {
+            this.$set(this.tabList[index], 'items', formatList);
           }
 
-          if (data.nav && data.nav.length > 0) {
-            this.categoryList = data.nav.map((item, index) => ({
-              id: item.cate_id || item.id || index,
-              img: item.img || this.defaultImg,
-              title: item.title,
-              link: item.link
-            }));
-          }
+          const currentPage = Number(payload.current_page || status.page);
+          const lastPage = Number(payload.last_page || 1);
 
-          if (data.sections && data.sections.length > 0) {
-            const sections = data.sections;
-
-            // [0] 超级补贴
-            if (sections[0] && sections[0].items) {
-              this.recommendList = sections[0].items.slice(0, 3);
-            }
-
-            // [1] 独家上新
-            if (sections[1] && sections[1].items) {
-              this.newList = sections[1].items;
-            }
-
-            // tabs 区块
-            const tabSection = sections.find(s => s.type === 'tabs');
-            if (tabSection && tabSection.tabs && tabSection.tabs.length > 0) {
-              this.tabList = tabSection.tabs;
-              this.currentTab = 0;
-            }
+          if (currentPage >= lastPage || list.length < 10) {
+            status.finished = true;
+          } else {
+            status.page = currentPage + 1;
           }
         }
-      })
+      }).catch(err => {
+        if (reqId !== this.tabReqId) return;
+        console.error(`获取商品失败:`, err);
+      }).finally(() => {
+        if (reqId === this.tabReqId) {
+          // ✅ 保证当前 Tab 状态解锁
+          setTimeout(() => {
+            status.loading = false;
+            this.loading = false;
+          }, 150);
+        }
+      });
+    },
+
+    initObserver() {
+      this.disconnectObserver();
+      const trigger = this.$refs.loadMoreTrigger;
+      if (trigger && window.IntersectionObserver) {
+        this.observer = new IntersectionObserver((entries) => {
+          if (entries[0].isIntersecting) {
+            const index = this.currentTab;
+            const status = this.pageData[index];
+            if (status && !status.loading && !status.finished) {
+              this.fetchTabProducts(index, true);
+            }
+          }
+        }, { threshold: 0.1 });
+        this.observer.observe(trigger);
+      } else {
+        window.addEventListener('scroll', this.handleScrollFallback, true);
+      }
+    },
+
+    disconnectObserver() {
+      if (this.observer) {
+        this.observer.disconnect();
+        this.observer = null;
+      }
+      window.removeEventListener('scroll', this.handleScrollFallback, true);
+    },
+
+    handleScrollFallback() {
+      const index = this.currentTab;
+      const status = this.pageData[index];
+      if (!status || status.loading || status.finished) return;
+
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop;
+      const windowHeight = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+      const scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
+
+      if (scrollTop + windowHeight >= scrollHeight - 150) {
+        this.fetchTabProducts(index, true);
+      }
+    },
+
+    // ✅ 终极修复的切换 Tab 逻辑
+    changeTab(index) {
+      if (this.currentTab === index) return;
+
+      // 1. 立刻断开观察器
+      this.disconnectObserver();
+
+      // 2. 切换 Tab
+      this.currentTab = index;
+
+      // 3. 立刻将页面滚回顶部，打断旧 Tab 的滚动位置
+      window.scrollTo(0, 0);
+
+      // 4. 重置目标 Tab 的数据并请求
+      this.pageData[index] = { page: 1, finished: false, loading: false };
+      this.fetchTabProducts(index, false);
+
+      // 5. 等待 DOM 更新完毕（新数据加载显示）后，重新恢复观察器
+      this.$nextTick(() => {
+        // 双保险：等浏览器渲染帧结束再挂载
+        requestAnimationFrame(() => {
+          this.initObserver();
+        });
+      });
     },
 
     formatSaleNum(num) {
@@ -192,23 +360,13 @@ export default {
       }
     },
 
-    changeTab(index) {
-      this.currentTab = index;
-    },
-
-    // goToCategoryWithId(item) {
-    //   this.$router.push({
-    //     path: '/TmallCategory',
-    //     query: { categoryId: item.id, categoryTitle: item.title }
-    //   });
-    // },
- goToCategoryWithId(item) {
+    goToCategoryWithId(item) {
       this.$router.push({
         path: '/productList',
         query: {
-          keyword: item.title,
+          // keyword: item.title,
+          shop_cate_id: item.id,
           platform: 2,
-         
           t: Date.now()
         }
       });
@@ -245,11 +403,23 @@ export default {
       this.$router.push('/TmallCategory');
     }
   },
-  activated() {
-    this.channelDetailIndex();
-  },
+
   mounted() {
     this.channelDetailIndex();
+  },
+
+  activated() {
+    this.$nextTick(() => {
+      this.initObserver();
+    });
+  },
+
+  deactivated() {
+    this.disconnectObserver();
+  },
+
+  beforeDestroy() {
+    this.disconnectObserver();
   }
 }
 </script>
@@ -374,7 +544,7 @@ export default {
 
 .category-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 16px 0;
   padding: 16px 0;
 
@@ -565,14 +735,14 @@ export default {
     }
 
     .goods-name {
-     font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 6px;
 
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      overflow: hidden;
     }
 
     .goods-tags {
@@ -665,5 +835,13 @@ export default {
       font-weight: bold;
     }
   }
+}
+
+.load-more-status {
+  text-align: center;
+  padding: 16px 0 30px 0;
+  font-size: 12px;
+  color: #999;
+  background: #f7f7f7;
 }
 </style>

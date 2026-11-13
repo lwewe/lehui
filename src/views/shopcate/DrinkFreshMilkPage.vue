@@ -18,7 +18,7 @@
           <div class="item-name">{{ item.title }}</div>
           <div class="item-bottom">
             <span class="price"><span style="font-size: 10px;font-weight: bold;">¥</span>{{ item.sell_price }}</span>
-            <span class="add-btn">+</span>
+            <!-- <span class="add-btn">+</span> -->
           </div>
         </div>
       </div>
@@ -35,7 +35,7 @@
           <div class="item-name">{{ item.title }}</div>
           <div class="item-bottom">
             <span class="price"><span style="font-size: 10px;font-weight: bold;">¥</span>{{ item.sell_price }}</span>
-            <span class="add-btn">+</span>
+            <!-- <span class="add-btn">+</span> -->
           </div>
         </div>
       </div>
@@ -59,7 +59,7 @@
             </div>
             <div class="item-bottom">
               <span class="price"><span style="font-size: 12px;font-weight: bold;">¥</span>{{ item.sell_price }}</span>
-              <span class="add-btn">+</span>
+              <!-- <span class="add-btn">+</span> -->
             </div>
           </div>
         </div>
@@ -104,6 +104,14 @@ export default {
 
     channelDetailIndex() {
   this.loading = true;
+  // ✅ 请求前先清空
+  this.baners = '';
+  this.title1 = '';
+  this.title2 = '';
+  this.title3 = '';
+  this.dailyList = [];
+  this.growthList = [];
+  this.moreList = [];
 
   channelDetail({ id: this.$route.query.id || 3 })
     .then(res => {

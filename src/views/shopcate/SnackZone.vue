@@ -1,7 +1,7 @@
 <template>
   <div class="snack-zone-page">
     <!-- 1. 顶部导航 (红橙色渐变) -->
-<NProgress v-if="loading" />
+    <NProgress v-if="loading" />
 
     <!-- 2. 顶部大 Banner (爆款半价抢) -->
     <div class="top-banner-area">
@@ -25,7 +25,7 @@
     <div class="split-block">
       <!-- ===== 左侧：夏日缤纷好食榜 (3行列表，带排名) ===== -->
       <div class="split-box blue-box">
-        <div class="box-header" @click="SnackFoodRankList(5)">
+        <div class="box-header" @click="SnackFoodRankList(4)">
           <div class="box-title">夏日缤纷好食榜</div>
           <div class="box-sub">酸甜苦辣 清爽度夏</div>
         </div>
@@ -36,7 +36,8 @@
             <img class="rank-img" :src="item.img" alt="" />
             <div class="rank-info">
               <div class="rank-name">{{ item.title }}</div>
-              <div class="rank-price"><span style="font-size: 10px;font-weight: bold;"> ¥</span>{{ item.sell_price }}</div>
+              <div class="rank-price"><span style="font-size: 10px;font-weight: bold;"> ¥</span>{{ item.sell_price }}
+              </div>
             </div>
           </div>
         </div>
@@ -45,18 +46,18 @@
       <!-- ===== 右侧：低卡零食 + 品牌 (上下分行) ===== -->
       <div class="split-box1 green-box">
         <!-- 第一行：低卡零食大图 -->
-        <div class="green-banner-row" @click="SnackLightFoodZone(8,0)">
+        <div class="green-banner-row" @click="SnackLightFoodZone(3, 0)">
           <div class="green-title">{{ dklsTitle }}</div>
           <img class="green-banner-img" :src="dkls" alt="低卡零食横幅" />
         </div>
 
         <!-- 第二行：泸溪河 + 良品铺子 (一行两列) -->
         <div class="brand-row">
-          <div class="brand-item blues" @click="SnackLightFoodZone(4,1)">
+          <div class="brand-item blues" @click="SnackLightFoodZone(5, 1)">
             <div class="brand-name">{{ lxhTitle }}</div>
             <img class="brand-img" :src="lxh" alt="泸溪河" />
           </div>
-          <div class="brand-item yels" @click="SnackLightFoodZone(4,0)">
+          <div class="brand-item yels" @click="SnackLightFoodZone(6, 0)">
             <div class="brand-name">{{ lppzTitle }}</div>
             <img class="brand-img" :src="lppz" alt="良品铺子" />
           </div>
@@ -79,7 +80,7 @@
           <div class="item-price-box">
             <span class="symbol">¥</span>
             <span class="price">{{ item.sell_price }}</span>
-            <span class="old-price">¥{{ item.market_price }}</span>
+            <!-- <span class="old-price">¥{{ item.market_price }}</span> -->
           </div>
         </div>
       </div>
@@ -88,7 +89,7 @@
     <!-- 6. 四个 Tab 切换区 -->
     <div class="tabs-container">
       <div class="tab-btn" v-for="(tab, index) in tabList" :key="index" :class="{ active: activeTab === index }"
-        @click="activeTab = index">
+        @click="handleTabClick(index)">
         <span class="main">{{ tab.name }}</span>
         <span class="sub">{{ tab.sub }}</span>
       </div>
@@ -99,19 +100,19 @@
       <div class="goods-item" v-for="(item, index) in currentGoodsList" :key="index" @click="goToDetail(item)">
         <img class="goods-img" :src="item.img" alt="" />
         <div class="goods-info">
-          <div class="goods-name">{{ item.title  }}</div>
-           <span class="platform-tag" v-if="getPlatformName(item.platform)">
-                  {{ getPlatformName(item.platform) }}
-                </span>
+          <div class="goods-name">{{ item.title }}</div>
+          <span class="platform-tag" v-if="getPlatformName(item.platform)">
+            {{ getPlatformName(item.platform) }}
+          </span>
           <div class="goods-tags">
             <span class="tag" v-for="(tag, tIndex) in item.tags" :key="tIndex">{{ tag }}</span>
           </div>
           <div class="goods-bottom">
             <div class="price-box">
               <span class="symbol">¥</span>
-              <span class="price">{{ item.sell_price  }}</span>
+              <span class="price">{{ item.sell_price }}</span>
             </div>
-            <div class="add-btn">+</div>
+            <!-- <div class="add-btn">+</div> -->
           </div>
         </div>
       </div>
@@ -121,36 +122,37 @@
   </div>
 </template>
 
- <script>
+<script>
 import { channelDetail, productList } from "@/api/lhjdtm";
 import { getPlatformName } from '@/utils/platform'
 export default {
   name: "SnackZone",
   data() {
-    return {   loading: false,      // 新增
+    return {
+      loading: false,      // 新增
       lppzTitle: '', lppz: "",
       lxhTitle: '', lxh: '',
       channelData: { banner: [] },
       navList: [],
-      activeTab: 0, 
+      activeTab: 0,
       dkls: '', dklsTitle: "",
       tabList: [],  // ✅ 改为空数组，从接口获取
       tabGoodsList: [],  // ✅ 新增：存储每个 tab 的商品数据
-      
+
       // 夏日糕点数据
       cakeList: [],
       // 爆品推荐
       hotList: [],
     }
   },
-  
+
   computed: {
     currentGoodsList() {
       // ✅ 从接口数据中获取当前 tab 对应的商品列表
       return this.tabGoodsList[this.activeTab] || [];
     }
   },
-  
+
   methods: {
     getPlatformName,
     goToDetail(item) {
@@ -160,57 +162,129 @@ export default {
 
     },
     channelDetailIndex() {
-  this.loading = true;          // 请求开始
+      this.loading = true;
 
-  channelDetail({ id: this.$route.query.id })
-    .then(res => {
-      if (res.code == 200) {
-        this.channelData = res.data
-        this.navList = res.data.nav || []
+      channelDetail({ id: this.$route.query.id || 5 })
+        .then(res => {
+          if (res.code !== 200) return;
 
-        // ✅ 提取 tabs 数据（从 sections 中找 type 为 tabs 的）
-        const tabsSection = (res.data.sections || []).find(section => section.type === 'tabs')
-        if (tabsSection && tabsSection.tabs) {
-          this.tabList = tabsSection.tabs
-          this.tabGoodsList = tabsSection.tabs.map(tab => tab.items || [])
-        }
+          this.channelData = res.data;
+          const modules = res.data.modules || [];
 
-        // ✅ 提取爆品推荐数据
-        if (res.data.nav && res.data.nav[0] && res.data.nav[0].children && res.data.nav[0].children[0]) {
-          this.hotList = res.data.nav[0].children[0].products.slice(0, 4)
-        }
-
-        // ✅ 提取左侧排行榜数据（夏日缤纷好食榜）
-        if (res.data.nav && res.data.nav[9] && res.data.nav[9].children && res.data.nav[9].children[0]) {
-          this.cakeList = res.data.nav[9].children[0].sections[0].items.slice(0, 3) || []
-        }
-
-        // ✅ 提取右侧双拼模块数据
-        if (res.data.nav && res.data.nav[8] && res.data.nav[8].children && res.data.nav[8].children[0]) {
-          this.dklsTitle = res.data.nav[8].children[0].title
-        }
-        if (res.data.nav && res.data.nav[9] && res.data.nav[9].children && res.data.nav[9].children[0]) {
-          this.dkls = res.data.nav[9].children[0].img
-        }
-
-        if (res.data.nav && res.data.nav[4] && res.data.nav[4].children) {
-          if (res.data.nav[4].children[0]) {
-            this.lppzTitle = res.data.nav[4].children[0].title
-            this.lppz = res.data.nav[4].children[0].img
+          // 1. 顶部 Banner：type='banner'
+          const bannerModule = modules.find(m => m.type === 'banner');
+          if (bannerModule?.items?.length) {
+            this.channelData.banner = bannerModule.items.map(it => ({
+              img: it.img,
+              link: it.link || ''
+            }));
           }
-          if (res.data.nav[4].children[1]) {
-            this.lxhTitle = res.data.nav[4].children[1].title
-            this.lxh = res.data.nav[4].children[1].img
+
+          // 2. 顶部分类图标：type='entry' && list_type='icon'
+          const iconModule = modules.find(m => m.type === 'entry' && m.list_type === 'icon');
+          this.navList = (iconModule?.items || []).slice(0, 10);
+
+          // 3. 左侧排行榜：type='grid' && title 含"夏日"
+          const rankModule = modules.find(m => m.type === 'grid' && /夏日/.test(m.title || ''));
+          if (rankModule) {
+            this.cakeList = (rankModule.items || []).slice(0, 3);
           }
-        }
+
+          // 4. 右侧上：低卡零食大图：type='subpage' && title 含"低卡"
+          const dklsModule = modules.find(m => m.type === 'subpage' && /低卡/.test(m.title || ''));
+          if (dklsModule) {
+            this.dklsTitle = dklsModule.title || '';
+            this.dkls = dklsModule.img || '';
+          }
+
+          // 5. 右侧下：良品 / 泸溪河
+          const lppzModule = modules.find(m => m.type === 'subpage' && /良品/.test(m.title || ''));
+          if (lppzModule) {
+            this.lppzTitle = lppzModule.title || '';
+            this.lppz = lppzModule.img || '';
+          }
+          const lxhModule = modules.find(m => m.type === 'subpage' && /泸溪河/.test(m.title || ''));
+          if (lxhModule) {
+            this.lxhTitle = lxhModule.title || '';
+            this.lxh = lxhModule.img || '';
+          }
+
+          // 6. 爆品推荐：type='grid' && title 含"精品"
+          const hotModule = modules.find(m => m.type === 'grid' && /精品/.test(m.title || ''));
+          if (hotModule) {
+            this.hotList = (hotModule.items || []).slice(0, 4);
+          }
+
+          // 7. 底部 Tab + 瀑布流：type='entry' && list_type='tab'
+          const tabModule = modules.find(m => m.type === 'entry' && m.list_type === 'tab');
+          if (tabModule && tabModule.items) {
+            this.tabList = tabModule.items.map(item => ({
+              name: item.title,
+              sub: item.sub || '',
+              cateId: item.cate_id,
+              products: item.products || [],  // ✅ 保存关联商品
+              productIds: item.product_ids || [] // 备用：关联的商品 ID 数组
+            }));
+            this.tabGoodsList = tabModule.items.map(item => item.products || []);
+            this.activeTab = 0;
+            this.loadTabGoods(0);
+          }
+        })
+        .catch(err => console.error('获取频道数据失败:', err))
+        .finally(() => { this.loading = false; });
+    },
+
+    loadTabGoods(index) {
+      const tab = this.tabList[index];
+      if (!tab) return;
+
+      // 1. 如果有对应关联商品，直接展示
+      if (tab.products && tab.products.length > 0) {
+        this.$set(this.tabGoodsList, index, tab.products);
+        return;
       }
-    })
-    .finally(() => {
-      this.loading = false;     // 成功或失败都关掉
-    })
-},
-    
-    
+
+      // 2. 如果 products 为空，走产品接口，根据分类 id 获取
+      if (tab.cateId) {
+        this.loadGoodsByCate(index, tab.cateId);
+        return;
+      }
+
+      // 3. 兜底：如果既没商品也没分类 ID，置空
+      this.$set(this.tabGoodsList, index, []);
+    },
+
+    // 调取 productList 接口
+    // 调取 productList 接口
+    loadGoodsByCate(index, cateId) {
+      this.loading = true;
+      // 根据截图，接口接收的参数是 shop_cate_id，另外加上分页参数
+      productList({
+        shop_cate_id: cateId,
+        page: 1,
+        page_size: 20 // 一页20个就够了
+      })
+        .then(res => {
+          if (res.code !== 200) return;
+
+          // ✅ 关键修复：接口返回的是分页对象，商品数组在 res.data.data 里面
+          const goodsArr = (res.data && res.data.data) ? res.data.data : [];
+
+          // Vue2 数组下标赋值不是响应式的，必须用 $set
+          this.$set(this.tabGoodsList, index, goodsArr);
+        })
+        .catch(err => console.error('获取分类商品失败:', err))
+        .finally(() => { this.loading = false; });
+    },
+
+    // 点击 Tab 切换
+    handleTabClick(index) {
+      this.activeTab = index;
+      // 如果当前 Tab 已经加载过数据（长度不为0），可以不做重复请求；否则调用加载
+      if (!this.tabGoodsList[index] || this.tabGoodsList[index].length === 0) {
+        this.loadTabGoods(index);
+      }
+    },
     // 处理导航点击
     handleNavClick(item) {
       console.log('点击家电图标:', item)
@@ -225,36 +299,41 @@ export default {
       if (item.title) {
         this.$router.push({
           path: '/productList',
-          query: { keyword: item.title }
+          query: { shop_cate_id: item.id }
         })
       }
     },
-    
+
     // 处理banner点击
     handleBannerClick() {
       if (this.channelData.banner && this.channelData.banner[0] && this.channelData.banner[0].link) {
         window.location.href = this.channelData.banner[0].link
       }
     },
-    
+
     SnackHotProductPage() {
       this.$router.push({ path: '/SnackHotProductPage', query: { id: this.$route.query.id } });
     },
-    
-    SnackFoodRankList(id,nav,index) {
-      this.$router.push({ path: '/SnackFoodRankList', query: { id: id } });
+
+    SnackFoodRankList() {
+      // 使用当前路由上的 id（零食频道是 5），如果取不到则默认 5
+      const currentId = this.$route.query.id || 5;
+      this.$router.push({
+        path: '/SnackFoodRankList',
+        query: { id: currentId }
+      });
     },
-    
+
     SnackLightFoodZone(nav, index) {
       this.$router.push({ path: '/SnackLightFoodZone', query: { id: this.$route.query.id, nav: nav, index: index } });
     },
-    
+
     goBack() {
       this.$router.go(-1);
     }
   },
   activated() {
-     this.channelDetailIndex()
+    this.channelDetailIndex()
   },
   mounted() {
     // this.channelDetailIndex()
@@ -274,6 +353,7 @@ export default {
   padding: 1px 4px;
   margin-top: 4px;
 }
+
 .snack-zone-page {
   background: #f7f7f7;
   min-height: 100vh;
@@ -312,7 +392,7 @@ export default {
 
   .banner-img {
     width: 100%;
-    height: 180px;
+    // height: 180px;
     object-fit: cover;
     border-radius: 12px;
     background: #f0f0f0;
@@ -519,7 +599,7 @@ export default {
     }
 
     .green-banner-img {
-      height: 100px;
+      // height: 100px;
       margin-top: 10px;
       width: 100%;
       object-fit: cover;
@@ -544,12 +624,12 @@ export default {
       justify-content: center;
 
       &.blues {
-        background-image: url(../../assets/lh/cate/ls/bg3.png);
+        background-image: url(../../assets/lh/cate/ls/bg4.png);
         background-size: cover;
       }
 
       &.yels {
-        background-image: url(../../assets/lh/cate/ls/bg4.png);
+        background-image: url(../../assets/lh/cate/ls/bg3.png);
         background-size: cover;
       }
 
@@ -606,30 +686,37 @@ export default {
     gap: 6px;
 
     .grid-item {
-min-width: 0;
+      min-width: 0;
       text-align: center;
       display: flex;
       flex-direction: column;
       align-items: center;
 
       .item-img {
-        width: 60px;           /* 固定宽度 */
-        height: 60px;          /* 固定高度 */
-        object-fit: contain;   /* 保持比例 */
+        width: 60px;
+        /* 固定宽度 */
+        height: 60px;
+        /* 固定高度 */
+        object-fit: contain;
+        /* 保持比例 */
         margin-bottom: 6px;
         background: #f5f5f5;
         border-radius: 8px;
       }
 
       .item-name {
-         font-size: 11px;
-  color: #333;
-  white-space: nowrap;           /* 不换行 */
-  overflow: hidden;              /* 隐藏溢出 */
-  text-overflow: ellipsis;       /* 显示省略号 */
-  width: 100%;                   /* 设置宽度 */
-  text-align: center;
-  margin-bottom: 4px;
+        font-size: 11px;
+        color: #333;
+        white-space: nowrap;
+        /* 不换行 */
+        overflow: hidden;
+        /* 隐藏溢出 */
+        text-overflow: ellipsis;
+        /* 显示省略号 */
+        width: 100%;
+        /* 设置宽度 */
+        text-align: center;
+        margin-bottom: 4px;
       }
 
       .item-price-box {
@@ -722,7 +809,7 @@ min-width: 0;
     background: #fff;
     border-radius: 12px;
     overflow: hidden;
-    padding-bottom:2px;
+    padding-bottom: 2px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
 
     .goods-img {
@@ -745,7 +832,8 @@ min-width: 0;
       -webkit-line-clamp: 2;
       overflow: hidden;
       line-height: 1.4;
-       -webkit-box-orient: vertical;  /* ✅ 新增这一行 */
+      -webkit-box-orient: vertical;
+      /* ✅ 新增这一行 */
     }
 
     .goods-tags {
@@ -773,7 +861,8 @@ min-width: 0;
       color: #ed2e33;
 
       .symbol {
-        font-size: 12px;font-weight: bold;
+        font-size: 12px;
+        font-weight: bold;
       }
 
       .price {
@@ -791,7 +880,8 @@ min-width: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 14px;font-weight: bold;
+      font-size: 14px;
+      font-weight: bold;
       cursor: pointer;
     }
   }

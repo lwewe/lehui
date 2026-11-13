@@ -1,300 +1,99 @@
 <template>
-  <div>
-    <div class="address" @click="showPopup()">
-      <div class="city">{{ city }}</div><img src="../assets/pull1.png" style="width: 12px;" alt="">
-      <!-- <div class="pull-down">
-        <van-icon class="" name="arrow-down" size="13px"/>
-      </div> -->
-    </div>
+  <div class="city-selector" @click="showPopup">
+    <van-icon name="location-o" class="icon-location" />
+    <span class="city-name">{{ city || '选择城市' }}</span>
+    <van-icon name="arrow-down" class="icon-arrow" />
   </div>
 </template>
+
 <script>
-import BMap from "BMap"
-import wx from "weixin-js-sdk";
-import { Cakecityshow, getCityList, getLocations } from "@/api/city";
-import { getAccessToken, getCitiesList } from "@/api/newOrder";
+import { selectCity } from "@/api/lehuicake";
 
 export default {
   name: "City",
   props: {
-    cityName: [Number, String],
-    type: [Number, String],
-    num1: [Number, String],
+    type: [Number, String], // 1-蛋糕业务 
   },
   data() {
     return {
-      city: "正在定位",
-      info: {},
-      parameter: {
-        appkey: this.$store.state.appkey,
-        timestamp: this.$store.state.timestamp,
-        v: "1.0",
-      },
-    }
+      city: "",
+      cityId: "",
+    };
   },
+  // City.vue 的 script 中新增
+watch: {
+  '$route'(to, from) {
+    // 从城市列表页返回时，重新读缓存并通知父组件
+    if (from.path === '/cakeCityList' || from.path === '/newCitylist') {
+      const cacheCity = sessionStorage.getItem("cityName");
+      const cacheId = sessionStorage.getItem("cityId");
+      if (cacheCity && cacheId) {
+        this.city = cacheCity;
+        this.cityId = cacheId;
+        this.$emit("getCityId", cacheId);  // ✅ 关键：重新通知首页
+      }
+    }
+  }
+},
   methods: {
-    getTokenKey(city) {
-      const token = localStorage.getItem('access_token');
-      const expiresAt = localStorage.getItem('token_expires_at');
-      const currentTime = Math.floor(Date.now() / 1000);
-
-      if (token && expiresAt && currentTime < expiresAt) {
-        // token 有效，直接使用
-        if (city) this.getCity2(city);
-        return;
-      }
-
-      getAccessToken({
-        entId: "101344",
-        appSecret: "IALrbqLuSVtlMW3k9WlnxnCwuCA556jr"
-      }).then(res => {
-        // console.log(res, "1111")
-        localStorage.setItem('token_type', res.data.token_type);
-        localStorage.setItem('access_token', res.data.access_token);
-        localStorage.setItem('token_expires_at', res.data.expires_at); // 保存过期时间
-        // this.getCity2(city)
-         if (city) this.getCity2(city);  // 加上 city 判断
-      })
-    },
-    isWeiXin() {
-      var ua = window.navigator.userAgent.toLowerCase();
-      if (ua.match(/MicroMessenger/i) == "micromessenger") {
-        return true;
-      } else {
-        return false;
-      }
-    },
-    // 城市跳转
+    // 跳转到城市列表页
     showPopup() {
-      if (this.type == 1) {
-        this.$router.push({ path: "/cakeCityList", query: { city: '' + this.city, change: this.change } })
+      const path = this.type == 1 ? "/cakeCityList" : "/newCitylist";
+      this.$router.push({
+        path: path,
+        query: { city: this.city }
+      });
+    },
+    // 初始化：优先读缓存，否则给默认城市
+    initCity() {
+      const cacheCity = sessionStorage.getItem("cityName");
+      const cacheId = sessionStorage.getItem("cityId");
+
+      if (cacheCity && cacheId) {
+        this.city = cacheCity;
+        this.cityId = cacheId;
+        this.$emit("getCityId", this.cityId);
       } else {
-        if (this.num1 == 3) {
-          this.$router.push({ path: "/citylist", query: { city: '' + this.city, change: this.change } })
-          return
-        }
-        this.$router.push({ path: "/newCitylist", query: { city: '' + this.city, change: this.change } })
+        // 实际项目中这里应该调用微信/百度定位，这里为了不阻塞首页，先默认北京
+        this.searchCityId("北京市");
       }
     },
-    // 获取定位
-    getLocation() {
-      let purl = /(Android)/i.test(navigator.userAgent) ? location.href.split('#')[0] : window.localStorage.getItem('scanUrl');
-      getLocations({
-        url: purl
-      }).then(res => {
-        // console.log(res)
-        if (res.code == 200) {
-          this.info = res.data
-          this.getSign()
+    // 根据名字反查ID
+    searchCityId(cityName) {
+      if (!cityName) return;
+      
+      selectCity(cityName).then((res) => {
+        if (res.code == 200 && res.data.city_show) {
+          const cityData = res.data.city_show;
+          this.city = cityData.name;
+          this.cityId = cityData.id;
+          
+          sessionStorage.setItem("cityName", cityData.name);
+          sessionStorage.setItem("cityId", cityData.id);
+          
+          this.$emit("getCityId", cityData.id);
         }
-      })
-    },
-    getSign() {
-      //请求后端，获取微信签名信息
-      let configData = {
-        debug: false,
-        appId: this.info.appid, // 必填，公众号的唯一标识
-        timestamp: "" + this.info.time, // 必填，生成签名的时间戳
-        nonceStr: this.info.nonceStr, // 必填，生成签名的随机串
-        signature: this.info.signature,// 必填，签名
-        jsApiList: ['getLocation']
-      }
-      // console.log(configData)
-      wx.config(configData);
-      wx.ready((res1) => {
-        wx.getLocation({
-          type: 'wgs84',
-          success: (res) => {
-            this.getCityName(res.longitude, res.latitude)
-            sessionStorage.setItem("longitude", res.longitude)
-            sessionStorage.setItem("latitude", res.latitude)
-          }, fail: () => {
-            // console.log("定位失败")
-            this.createMap2()
-          }
-        });
-      });
-      wx.error(function (res) {
-      });
-    },
-    // 查询初始cityId
-    searchCityId(city) {
-      Cakecityshow({
-        city
-      }).then(res => {
-        // console.log(res)
-        if (res.code == 200) {
-          let cityShow = res.data.city_show
-          this.city = cityShow.name
-          sessionStorage.setItem("cityName", cityShow.name)
-          sessionStorage.setItem("cityId", cityShow.id)
-          this.$emit('getCityId', cityShow.id)
-        }
-      })
-    },
-    getCity2(cityName) {
-      getCitiesList().then(res => {
-        // console.log(res)
-        if (res.code == 200) {
-          let id = res.data.filter(item => cityName.includes(item.name))[0].cityId
-          sessionStorage.setItem("targetId", id)
-        }
-      })
-    },
-    createMap2() {
-      // console.log("[[[")
-      const geolocation = new BMap.Geolocation();
-      var _this = this
-      geolocation.getCurrentPosition(function getinfo(position) {
-        let latitude = position.latitude
-        let longitude = position.longitude
-        var gc = new BMap.Geocoder();
-        gc.getLocation(position.point, function (rs) {
-          //   debugger
-          var addComp = rs.addressComponents;
-          _this.city = addComp.city
-          var address =
-            addComp.street +
-            addComp.streetNumber; //获取地址
-          sessionStorage.setItem("streetNumber", address)
-          sessionStorage.setItem("longitude", longitude)
-          sessionStorage.setItem("latitude", latitude)
-          sessionStorage.setItem("cityName", _this.city)
-          if (sessionStorage.getItem("promptcity") != 2 && sessionStorage.getItem("cake") != 1) {
-            _this.messageinfo()
-          }
-          // console.log(!sessionStorage.getItem("cityId"))
-          if (!sessionStorage.getItem("cityId")) {
-            _this.searchCityId(addComp.city)
-            _this.getTokenKey(addComp.city)
-          }
-        });
-      }, { enableHighAccuracy: true }, function (e) {
-        // console.log(e)
-      }, {
-        provider: 'baidu'
-      });
-    },
-    createMap() {
-      // console.log("[[[")
-      const geolocation = new BMap.Geolocation();
-      var _this = this
-      geolocation.getCurrentPosition(function getinfo(position) {
-        let latitude = position.latitude
-        let longitude = position.longitude
-        var gc = new BMap.Geocoder();
-        gc.getLocation(position.point, function (rs) {
-          //   debugger
-          var addComp = rs.addressComponents;
-          if (_this.isWeiXin()) {
-            _this.getLocation()
-          } else {
-            _this.city = addComp.city
-            var address =
-              addComp.street +
-              addComp.streetNumber; //获取地址
-            sessionStorage.setItem("streetNumber", address)
-            sessionStorage.setItem("longitude", longitude)
-            sessionStorage.setItem("latitude", latitude)
-            sessionStorage.setItem("cityName", _this.city)
-            if (sessionStorage.getItem("promptcity") != 2 && sessionStorage.getItem("cake") != 1) {
-              _this.messageinfo()
-            }
-            // console.log(!sessionStorage.getItem("cityId"))
-            if (!sessionStorage.getItem("cityId")) {
-              _this.searchCityId(addComp.city)
-              _this.getTokenKey(addComp.city)
-            }
-          }
-        });
-      }, { enableHighAccuracy: true }, function (e) {
-        // console.log(e)
-      }, {
-        provider: 'baidu'
-      });
-    },
-    // 提示当前城市是否需要切换
-    messageinfo() {
-      this.$dialog.confirm({
-        message: '当前定位"' + this.city + '"，是否需要切换到其他城市？',
-        confirmButtonColor: 'red',
-        cancelButtonColor: 'red'
-      }).then(() => {
-        this.$router.push({ path: "/citylist", query: { city: '' + this.city } })
-        sessionStorage.setItem("promptcity", "2")
       }).catch(() => {
-        sessionStorage.setItem("promptcity", "2")
-      })
-
-    },
-    getCityName(lng, lat) {
-      // 创建一个坐标点
-      let point = new BMap.Point(lng, lat);
-
-      // 创建一个地理编码实例
-      let geoc = new BMap.Geocoder();
-
-      // 根据坐标点进行逆地理编码
-      geoc.getLocation(point, (rs) => {
-        let addComp = rs.addressComponents;
-        // console.log(addComp,"addComp")
-        this.city = addComp.city;
-        var address =
-          addComp.street +
-          addComp.streetNumber; //获取地址
-        sessionStorage.setItem("streetNumber", address)
-        sessionStorage.setItem("cityName", this.city)
-        if (!sessionStorage.getItem("cityId")) {
-          this.searchCityId(this.city)
-          this.getTokenKey(this.city)
-        }
-        if (sessionStorage.getItem("promptcity") != 2 && sessionStorage.getItem("cake") != 1) {
-          this.messageinfo()
-        }
+        this.city = "北京市"; // 兜底
       });
-    },
+    }
   },
   created() {
-    // setTimeout(() => {
-    if (sessionStorage.getItem("cityName") && sessionStorage.getItem("cityId")) {
-      this.city = sessionStorage.getItem("cityName")
-      // console.log(this.city,"this.city")
-      // this.searchCityId(this.city)
-    } else {
-      this.createMap()
-    }
-    // }, 1000)
+    this.initCity();
   },
-  mounted() {
-  },
-  updated() {
-    // if(sessionStorage.getItem("cityName")){
-    //   this.city = sessionStorage.getItem("cityName")
-    //   // console.log(this.city,"this.city")
-    // }
-  },
-}
+};
 </script>
 
 <style scoped>
-.address {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  justify-content: center;
-  padding: 10px 0px;
+/* 样式同上，保持不变 */
+.city-selector {
+  display: flex; align-items: center; justify-content: center; gap: 4px;
+  background-color: rgba(255, 255, 255, 0.8); padding: 6px 10px;
+  border-radius: 30px; font-size: 13px; color: #333;
+  cursor: pointer; height: 32px; box-sizing: border-box; white-space: nowrap;
 }
-
-.pull-down {
-  width: 12px;
-  height: 12px;
-}
-
-.city {
-  white-space: nowrap;
-  max-width: 80px;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  font-size: 15px;
-}
+.city-selector:active { background-color: rgba(255, 255, 255, 1); }
+.icon-location { font-size: 14px; color: #92716D; }
+.city-name { max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.icon-arrow { font-size: 10px; color: #999; margin-left: 2px; }
 </style>

@@ -1,11 +1,13 @@
 <template>
-  <div class="drink-tab-zone">
+  <div class="drink-tab-zone" :style="backGound">
     <!-- 1. 顶部导航栏 -->
-    
+
 
     <!-- 2. 顶部背景与按钮 -->
     <div class="top-area-wrapper">
-      <div class="top-bg-img"></div>
+      <div class="top-bg-img">
+        <img :src="baners" alt="" style="width: 100%;">
+      </div>
       <div class="top-tab-btn-group">
         <div v-for="(section, index) in sectionsList" :key="index" class="tab-btn"
           :class="{ active: activeTab === index }" @click="scrollToSection(index)">
@@ -34,7 +36,7 @@
                   <span style="font-size: 12px; font-weight: bold;">¥</span>
                   {{ item.sell_price || '--' }}
                 </span>
-                <span class="add-btn">+</span>
+                <!-- <span class="add-btn">+</span> -->
               </div>
             </div>
           </div>
@@ -44,13 +46,15 @@
   </div>
 </template>
 
- <script>
+<script>
 import { channelDetail } from "@/api/lhjdtm";
 
 export default {
   name: "DrinkTabZone",
   data() {
     return {
+      baners: '',
+      backGound: {},
       activeTab: 0,
       sectionsList: []
     };
@@ -60,41 +64,55 @@ export default {
   },
   methods: {
     goToDetail(item) {
-        this.$goDetail(item);
+      this.$goDetail(item);
       // this.$router.push({ path: "/ProductDetail", query: { id: item.id } });
     },
     goBack() {
       this.$router.go(-1);
     },
     channelDetailIndex() {
-      channelDetail({ id: this.$route.query.id }).then(res => {
-        if (res.code === 200) {
-          this.sectionsList = res.data.nav[2].children[0].sections || [];
-          console.log('sectionsList:', this.sectionsList);
-        }
-      });
+      channelDetail({ id: this.$route.query.id || 8 })
+        .then(res => {
+          if (res.code !== 200) return;
+
+          const modules = res.data?.modules || [];
+
+          // 1. 找到「夏日冰霜」模块
+          const targetModule = modules.find(m => m.type === 'subpage' && /夏日冰霜/.test(m.title || ''));
+          console.log(targetModule.bg_color)
+          this.baners = targetModule.banner_img;
+          this.backGound = { backgroundColor: targetModule.bg_color };
+          if (targetModule) {
+            // 2. 赋值给页面的 sectionsList
+            // 因为接口返回的 sections 已经是按 sort 降序排好的（3, 2, 1），直接赋值即可
+            this.sectionsList = targetModule.sections || [];
+          }
+        })
+        .catch(err => {
+          console.error('获取夏日冰霜数据失败:', err);
+        });
     },
     scrollToSection(index) {
       console.log('点击tab:', index);
       this.activeTab = index;
-      
+
       // 确保DOM更新后再滚动
       this.$nextTick(() => {
         // 使用 querySelectorAll 获取所有板块元素
         const sections = document.querySelectorAll('.section-wrapper');
         console.log('找到板块数量:', sections.length);
-        
+
         if (sections[index]) {
           // 获取目标元素的位置
           const targetElement = sections[index];
           const elementTop = targetElement.getBoundingClientRect().top;
           const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
-          
+
           // 计算滚动位置，减去顶部导航栏高度
           const targetScroll = elementTop + currentScroll - 100;
-          
+
           console.log('目标滚动位置:', targetScroll);
-          
+
           // 使用 scrollTo 滚动
           window.scrollTo({
             top: targetScroll,
@@ -148,12 +166,13 @@ export default {
 .top-area-wrapper {
   position: relative;
   width: 100%;
-  height: 280px;
+  // height: 280px;
 
   .top-bg-img {
     width: 100%;
-    height: 100%;
-    background: url("../../assets/lh/cate/jd/b7.png") no-repeat center center / cover;
+
+
+    // background: url("../../assets/lh/cate/jd/b7.png") no-repeat center center / cover;
   }
 
   .top-tab-btn-group {
@@ -194,7 +213,8 @@ export default {
 
 .section-wrapper {
   margin-bottom: 30px;
-  scroll-margin-top: 100px; /* 减小这个值 */
+  scroll-margin-top: 100px;
+  /* 减小这个值 */
 
   .section-title-bar {
     display: flex;
@@ -214,22 +234,22 @@ export default {
   }
 
   .goods-scroll-wrapper {
-      display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  padding-bottom: 4px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 4px;
 
-  &::-webkit-scrollbar {
-    display: none;
-  }
+    &::-webkit-scrollbar {
+      display: none;
+    }
 
-  .goods-grid-col {
-    flex: 0 0 calc((100% - 24px) / 3);
-    scroll-snap-align: start;
-    height: 100%;
-  }
+    .goods-grid-col {
+      flex: 0 0 calc((100% - 24px) / 3);
+      scroll-snap-align: start;
+      height: 100%;
+    }
 
     .goods-item {
       background: #ffffff;
@@ -245,7 +265,7 @@ export default {
 
       .item-img {
         width: 100%;
-        
+
         background: #f5f6fa;
         border-radius: 10px 10px 0 0;
         object-fit: cover;
@@ -262,7 +282,7 @@ export default {
         -webkit-box-orient: vertical;
         overflow: hidden;
         margin-bottom: 2px;
-        padding:  0 10px;
+        padding: 0 10px;
       }
 
       .item-bottom {

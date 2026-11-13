@@ -1,86 +1,117 @@
 <template>
   <div class="conPage">
-    <NProgress v-if="loadingflag"/>
+    <NProgress v-if="loadingflag" />
     <div class="searchBox">
       <div>
         <!--      地址-->
-        {{city}}
+        {{ city }}
       </div>
       <div class="searchValue">
-        <van-search @input="searchStore" background="#fff0" placeholder="搜索门店" v-model="searchValue"/>
+        <van-search @input="searchStore" background="#fff0" placeholder="搜索门店" v-model="searchValue" />
       </div>
     </div>
     <div class="title">
       <div>所有门店</div>
       <div class="line"></div>
     </div>
+
     <!--    门店列表-->
     <div>
       <div class="storeItem" v-for="item in storeList" :key="item.shop_id" @click="chooseStore(item)">
         <div class="storeName">{{ item.shop_name }}</div>
         <div class="storeAddress">
           <div style="padding-top: 2px">
-            <van-icon name="location-o"/>
+            <van-icon name="location-o" />
           </div>
           <div style="color:#6D6D6D">{{ item.address }}</div>
         </div>
       </div>
+
+      <!-- ✅ 新增：空态提示 -->
+      <div v-if="!loadingflag && !storeList.length" class="empty-tip">暂无门店</div>
     </div>
   </div>
 </template>
 <script>
-import City from "@/components/City.vue";
-import {getAllStore} from "@/api/account";
+import City from "@/components/Citycake.vue";
+import { getSelShop } from "@/api/lehuicake";
 
 export default {
   name: "AllStore",
-  components: {City},
+  components: { City },
   data() {
     return {
       searchValue: "",
-      city:"",
+      city: "",
       storeList: [],
-      list:[],
-      dataList:[],
-      loadingflag:true
+      list: [],
+      dataList: [],
+      loadingflag: true
     }
   },
   methods: {
-    searchStore(e){
-      let arry  = this.list
-      this.storeList = arry.filter(item=>item.shop_name.includes(e))
+    // ✅ 空关键词返回全量副本；list 空保护
+    searchStore(e) {
+      const keyword = (e || '').trim();
+      const source = this.list || [];
+      this.storeList = keyword
+        ? source.filter(item => (item.shop_name || '').includes(keyword))
+        : source.slice();
     },
     chooseStore(item) {
-      // this.$store.commit("changeStoreName", item.shop_name)
-      this.dataList = this.dataList.filter(item=>item.indexs!=this.$route.query.index)
+      // ✅ indexs 比较统一 String，address 空值保护
+      const currentIndex = String(this.$route.query.index);
+      this.dataList = this.dataList.filter(item => String(item.indexs) !== currentIndex);
       this.dataList.push({
-        id:item.shop_id,
-        name:item.shop_name,
-        indexs:this.$route.query.index,
-        detail:item.address.replace(/\s*/g,'')
-      })
-      sessionStorage.setItem("StoreName",JSON.stringify(this.dataList))
-      setTimeout(()=>{
-        this.$router.go(-1)
-      },500)
+        id: item.shop_id,
+        name: item.shop_name,
+        indexs: this.$route.query.index,
+        detail: (item.address || '').replace(/\s*/g, '')
+      });
+      sessionStorage.setItem("StoreName", JSON.stringify(this.dataList));
+      // ✅ 去掉 500ms 延迟，直接返回
+      this.$router.go(-1);
     },
-    getAll(id){
-      getAllStore({
-        brand_id:id
-      }).then(res=>{
-        this.loadingflag = false
-        if(res.code == 200){
-          this.city  = res.data.shop_list.city.name
-          this.storeList = res.data.shop_list.shops
-          this.list = res.data.shop_list.shops
+    getAll(id) {
+      if (!id) {
+        this.loadingflag = false;
+        return;
+      }
+      // ✅ cid 从缓存取（City 组件已写入 sessionStorage）
+      const cid = sessionStorage.getItem("cityId");
+      if (!cid) {
+        // 没城市缓存，兜底：不传 cid 让后端返回默认，或提示
+        console.warn('缺少 cityId 缓存');
+      }
+
+      getSelShop({
+        cid: cid,          // ✅ 补上必填 cid
+        brand_id: id
+      }).then(res => {
+        if (res.code == 200 && res.data && res.data.shop_list) {
+          const shopList = res.data.shop_list;
+          this.city = (shopList.city && shopList.city.name) || '';
+          this.storeList = shopList.shops || [];
+          this.list = (shopList.shops || []).slice();
         }
-      })
+      }).catch(() => { }).finally(() => {
+        this.loadingflag = false;
+      });
     }
   },
   created() {
-    this.getAll(this.$route.query.id)
-    if(sessionStorage.getItem("StoreName")){
-      this.dataList = JSON.parse(sessionStorage.getItem("StoreName"))
+    // ✅ query.id 可能是数组，归一化
+    const id = Array.isArray(this.$route.query.id)
+      ? this.$route.query.id[0]
+      : this.$route.query.id;
+    this.getAll(id);
+    // ✅ JSON.parse 加 try/catch
+    if (sessionStorage.getItem("StoreName")) {
+      try {
+        this.dataList = JSON.parse(sessionStorage.getItem("StoreName")) || [];
+      } catch (e) {
+        this.dataList = [];
+      }
     }
   }
 }
@@ -154,5 +185,13 @@ export default {
     margin-top: 6px;
     padding-top: 7px;
   }
+}
+
+/* ✅ 新增空态样式 */
+.empty-tip {
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+  padding: 40px 0;
 }
 </style>

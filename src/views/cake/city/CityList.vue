@@ -20,11 +20,7 @@
                 <span style="font-size: 0.8rem;">{{ city }}</span>
             </span>
             <br><br>
-        <!-- 热门城市 -->
-<!--            <p id="热门" class="font13" style="margin-left: 3vw;margin-top: 15px;height: 7px;">热门城市</p>-->
-<!--            <ul class="hotbox">-->
-<!--                <li @click="editCity($event)" class="cityblock" style="font-size: 0.8rem;" v-for="(item,index) in hotcitylist" :id="item.cityId" :key="index" :name="item.cityName">{{ item.cityName }}</li>-->
-<!--            </ul>-->
+    
       </div>
       <!-- 城市列表 -->
       <ul class="list">

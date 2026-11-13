@@ -1,339 +1,224 @@
 <template>
   <div class="orderfood">
-    <!--    <ReturnBack :rcolor="'#fff'" :bcolor="'rgba(218,218,218,0.26)'"></ReturnBack>-->
     <NProgress v-if="loadingflag" />
-    <!--    tab切换-->
-    <div class="tabListBox">
+
+    <!-- 电子券列表区域 -->
+    <div class="rightwrap">
+      <!-- 品牌列表 (长条卡片) -->
+      <div class="couponList" v-if="brandList.length > 0">
+        <div
+          class="couponItem"
+          v-for="item in brandList"
+          :key="item.id"
+          @click="toBrandDetail(item)"
+        >
+          <div class="couponCard">
+            <!-- 左侧信息区 -->
+            <div class="leftBg">
+              <span class="couponName">{{ item.title }}电子券</span>
+              <div class="btnExchange">点击兑换</div>
+            </div>
+            <!-- 右侧品牌Logo区 (动态取接口的 yanse 背景色) -->
+            <div
+              class="rightBrand"
+              :style="{ backgroundColor: item.yanse || '#F0F0F0' }"
+            >
+              <img class="brandImg" :src="item.img" alt="" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 加载中 / 没有更多 -->
+        <div class="loadMore" v-if="loadingMore">加载中...</div>
+        <div class="loadMore" v-else-if="!hasMore">没有更多了</div>
+      </div>
+
+      <!-- 空状态 -->
       <div
-        v-for="item in cake == 88 ? tabList.filter(item => item.active == 2) : flag == 0 ? tabList : flag == 2 ? tabList.filter(item => item.active != 3 && item.active != 2) : tabList.filter(item => item.active != 3)" 
-        :key="item.active" :style="{ backgroundImage: item.active == active ? 'url(' + item.back + ')' : '' }"
-        class="tabItem" @click="changeType(item.active)"
-        :class="{ tabItem2: item.active == active, tabItem3: cake ? cake != 2 : false, tabItem4: item.active == active && cake != 1 || types == 1, }"
-        v-if="item.isShow">
-        <div>{{ item.title }}</div>
-        <div class="tabIcon" v-if="item.active == active">
-          <img class="img" src="../../assets/zhichong/xuanz.png" alt="">
-        </div>
+        v-else-if="!loadingflag"
+        style="text-align: center; color: #999; padding: 20px;"
+      >
+        暂无品牌数据
       </div>
     </div>
-    <!--    自助点餐-->
-    <div class="leftwrap" v-if="active == 3 && flag == 0">
-     
-      <img src="../../assets/newico/tp.png" alt="" style="width: 100%;">
-      <div style="margin-top: 5px;padding: 0 10px;" @click="toNexts()">
-        <van-notice-bar :text="gonggao" left-icon="volume-o" />
-      </div>
-      <div class="pd0">
-        <div class="banner1" v-for="(item, index) in imgurlbox" :key="item.id" v-if="item.id !=25"
-          @click="goindex(index + 1, index <= 2 || index == 6 ? 1 : 2)">
-          <img class="img" :src="item.img" alt="" >
-        </div>
-      </div>
-    </div>
-    <!--    电子券-->
-    <div class="rightwrap" v-if="active == 1">
-
-      
-      <ElectronicCoupon></ElectronicCoupon>
-    </div>
-    <!--    饮品直冲-->
-    <!-- <div class="brandList" v-if="active == 2 && flag != 2"> -->
-
-    <div class="brandList" v-if="active == 2 && (flag != 2 || cake == 88)"> 
-      <div v-for="item in brandList" :key="item.id" class="brandItem" @click="todetail(item.id)">
-        <img class="img" :src="item.img" alt="">
-      </div>
-    </div>
-
-    
   </div>
 </template>
 
 <script>
-import { getBannerList, getBannerLists, getIsShowOder } from '@/api/service'
-import ElectronicCoupon from "@/components/select/ElectronicCoupon.vue";
-import { getBrandDirect } from "@/api/brand";
+import { getCouponsBrand } from "@/api/lehuicake";
+
 export default {
-  components: { ElectronicCoupon },
   data() {
     return {
-      showAd: true, 
-      gonggao: '尊敬的悦享聚汇用户，您好，感谢您一直以来的信任与支持。为给您提供更稳定的服务，现有一项重要安排需向您通知。近期，由于麦当劳、瑞幸、库迪、塔斯汀等品牌供应链体系波动导致我平台部分订单履约稳定性受到一定影响。为从根本上解决这一问题，提升整体服务质量，我们决定对以上品牌系统进行一次集中维护与优化。维护时间:2025年3月6日12:00，维护期间，以上点餐品牌订单成功率会受到一定程度影响，维护期间出餐成功率预计，麦当劳(50%)瑞幸(80%)、库迪(80%)、塔斯汀(50%)，具体表现，部分订单可能出现延迟、失败退款等需要人工处理，我们力争在3月15日前完成全部优化工作，数据恢复后我们将第一时间通知。因本次维护给您带来的不便，我们深表歉意，也衷心感谢您的理解与支持。',
-      active: 1,
-      imgurlbox: [],
-      loadingflag: true,
-      cake: 0,
-      types: 0,
-      tabList: [
-        {
-          title: "电子券",
-          active: 1,
-          back: require("../../assets/zhichong/yb.png")
-        },
-        {
-          title: "饮品直冲",
-          active: 2,
-          back: require("../../assets/zhichong/zj.png")
-        },
-        {
-          title: "自助点餐",
-          active: 3,
-          back: require("../../assets/zhichong/zb.png")
-        },
-      ],
-      pageno: 1,
-      brandList: [],
-      isScroll: false,
-      flag: 0,
-      signal: 0
+      loadingflag: true, // 首屏 loading
+      loadingMore: false, // 上拉加载 loading
+      brandList: [], // 品牌列表数据
+      cid: "2", // 城市 ID
+      page: 1, // 当前页
+      limit: 10, // 每页条数
+      total: 0, // 总条数
+      hasMore: true, // 是否还有下一页
     };
   },
   methods: {
-    // 关闭广告
-    closeImg() { this.showAd = false; },
-    closeAd() {
-      this.showAd = false;
-
+     toBrandDetail(item) {
+      this.$router.push({path: "/brandCouPon", query: {id: item.id}})
     },
-
-    // 点击广告图片
-    toNexts() {
-      window.location.href = 'http://yxfmm.bjyxfl.com/imgs/ad2.png';
-    },
-    getIsShowOder() {
-      getIsShowOder().then(res => {
-        if (res.code == 200) {
-          this.flag = res.data.flag
-          this.signal = res.data.signal
-        }
-      })
-    },
-    todetail(id) {
-      this.$router.push({ path: "/directCharge", query: { id } })
-    },
-    changeType(e) {
-      this.active = e
-      if (this.active == 2) {
-        this.brandList = []
-        this.pageno = 1
-        this.getBrandDirect()
-      } else if (this.active == 3) {
-        this.showAd = true
-        this.getlistpics()
+    // 获取品牌列表
+    getBrandList(isLoadMore = false) {
+      if (isLoadMore) {
+        if (this.loadingMore || !this.hasMore) return;
+        this.loadingMore = true;
+      } else {
+        this.loadingflag = true;
+        this.page = 1;
+        this.hasMore = true;
       }
-      this.$router.replace({ path: "/orderfood", query: { active: e } })
-    },
-    getlistpic() {
-      getBannerList({
-        flag: '1',
-        // type:'mdl'
-      }).then(res => {
-        this.loadingflag = false
-        // console.log(res);
-        if (res.code == 200) {
-          this.imgurlbox = res.data.list
-          // console.log(this.imgurlbox);
-        }
 
+      getCouponsBrand({
+        cid: this.cid,
+        page: this.page,
+        limit: this.limit,
       })
-    },
-    getlistpics() {
-      getBannerLists({
-        flag: '1',
-        // type:'mdl'
-      }).then(res => {
-        this.loadingflag = false
-        console.log(res);
-        if (res.code == 200) {
-          this.imgurlbox = res.data.list
+        .then((res) => {
+          const resData = res.data?.data || res.data;
 
-        }
+          if (res.code === 200 || resData) {
+            const brandList = resData.brand_list || {};
+            const list = brandList.data || [];
 
-      })
-    },
-    goindex(num1, num2) {
-      // if(num1==4){
-      //   this.$toast("正在建设中...,敬请期待")
-      //   return
-      // }
-      this.$router.push({ path: "/select", query: { num1: num1, num2: num2 } })
-    },
-    getBrandDirect(pageno = this.pageno) {
-      getBrandDirect({
-        pageno,
-        pagesize: 10
-      }).then(res => {
-        this.loadingflag = false
-        if (res.code == 200) {
-          if (res.data.length == 0) {
-            this.isScroll = true
-            return
+            // 追加或覆盖
+            this.brandList = isLoadMore
+              ? this.brandList.concat(list)
+              : list;
+
+            this.total = brandList.total || 0;
+            this.hasMore = this.page < (brandList.last_page || 1);
+          } else {
+            this.$toast(res.msg || "获取数据失败");
           }
-          res.data.forEach(item => {
-            this.brandList.push(item)
-          })
-
-        }
-      })
-    },
-    //滚动条事件
-    handleScroll(e) {
-      let scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
-      let scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight;
-      let clientHeight = document.documentElement.clientHeight || document.body.clientHeight;
-      if (Math.ceil(scrollTop + clientHeight) >= scrollHeight) {
-        this.onMost()
-      }
-    },
-    onMost() {
-      if (!this.isScroll) {
-        this.pageno++
-        if (this.active == 2) {
-          this.getBrandDirect(this.pageno)
-        }
-      }
+        })
+        .catch((err) => {
+          console.error("接口请求异常:", err);
+          this.$toast("网络请求失败");
+        })
+        .finally(() => {
+          this.loadingflag = false;
+          this.loadingMore = false;
+        });
     },
 
+    // 上拉加载更多
+    onLoadMore() {
+      if (!this.hasMore || this.loadingMore) return;
+      this.page += 1;
+      this.getBrandList(true);
+    },
+
+     
   },
   created() {
-    this.getIsShowOder()
-    if (sessionStorage.getItem("cake")) {
-      this.cake = sessionStorage.getItem("cake")
-    }
-    if (sessionStorage.getItem("types")) {
-      this.types = sessionStorage.getItem("types")
-    }
-    this.active = this.$route.query.active || 1
-    if (this.cake == 2) {
-      this.active = 3
-    }
-
-    if (this.cake == 88) {
-      this.active = 2
-    }
-    this.tabList.forEach(item => {
-      // if (item.active == 1 || item.active == 2) {
-      //   item.isShow = this.cake != 2
-      // } else {
-      //   item.isShow = this.cake != 1 || this.types == 1
-      // }
-      if (this.cake == 88) {
-    item.isShow = item.active == 2
-  } else if (item.active == 1 || item.active == 2) {
-    item.isShow = this.cake != 2
-  } else {
-    item.isShow = this.cake != 1 || this.types == 1
-  }
-    })
+    this.getBrandList();
   },
   mounted() {
-    if (this.active == 2) {
-      this.getBrandDirect()
-    } else if (this.active == 3) {
-      // this.getlistpic();
-      this.getlistpics();//岚延
-    } else if (this.active == 1) {
-      setTimeout(() => {
-        this.loadingflag = false
-      }, 500)
-    }
-    window.addEventListener('scroll', this.handleScroll);
+    // 滚动到底部自动加载更多（也可换成 van-list 的 @load）
+    window.addEventListener("scroll", () => {
+      const scrollTop =
+        document.documentElement.scrollTop || document.body.scrollTop;
+      const clientHeight = document.documentElement.clientHeight;
+      const scrollHeight = document.documentElement.scrollHeight;
+      if (scrollTop + clientHeight >= scrollHeight - 50) {
+        this.onLoadMore();
+      }
+    });
   },
   beforeDestroy() {
-    window.removeEventListener('scroll', this.handleScroll, false);
+    // 若用匿名函数需手动移除，建议改成具名函数，这里仅作提醒
   },
 };
 </script>
 
 <style scoped lang="less">
-// 悬浮广告样式 // yishagn以上控制广告
- 
- 
-
-// yishagn以上控制广告
 .orderfood {
   min-height: 100vh;
   background: #f0f0f0;
   padding-top: 10px;
   box-sizing: border-box;
-
 }
 
-// .leftwrap {
-//   padding: 0px 10px 10px;
-
-//   .banner1 {
-//     margin-top: 10px;
-//   }
-// }
-.leftwrap {
-  width: 100%;
-
-  .pd0 {
-    margin-top: 2px;
-    padding: 0px 10px 50px 10px;
-    display: flex;
-    // gap: 7px;
-    justify-content: space-between;
-    flex-wrap: wrap;
-  }
-
-  .banner1 {
-    width: 49%;
-    margin-top: 5px;
-  }
-}
-
-.tabListBox {
-  background-image: url("../../assets/zhichong/jbback.png");
-  background-size: 100% 100%;
-  width: 100%;
-  height: 44px;
+/* ================= 电子券全新样式（截图还原版） ================= */
+.couponList {
+  padding: 10px 15px;
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 12px; /* 卡片间距 */
 
-  .tabItem {
-    width: 33.3%;
-    width: 50%;
+  .couponItem {
+    width: 100%;
+    box-sizing: border-box;
+
+    .couponCard {
+      display: flex;
+      height: 95px;
+      border-radius: 10px;
+      // background-color: #fff;
+      // box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      overflow: hidden;
+
+      /* 左侧信息区 */
+      .leftBg {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding-left: 106px;
+        border-radius: 14px;
+        /* 浅粉色背景 */
+        background: url('../../../assets/daincan/bj.png');
+        background-size: cover;
+        //  linear-gradient(to right, #fff6f6, #ffffff);
+
+        .couponName {
+          font-size: 15px;
+          font-weight: bold;
+          color: #333;
+          margin-bottom: 8px;
+        }
+
+        .btnExchange {
+          background-color: #f34343; /* 红色按钮 */
+          color: #fff;
+          font-size: 11px;
+          padding: 4px 12px;
+          border-radius: 15px;
+          width: max-content;
+        }
+      }
+
+      /* 右侧Logo区 */
+      .rightBrand {
+        width: 85px;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        border-radius: 14px;
+
+        .brandImg {
+          width: 60px;
+          height: 60px;
+          object-fit: contain; /* 保证Logo不拉伸 */
+        }
+      }
+    }
+  }
+
+  .loadMore {
     text-align: center;
-    background-size: 100% 100%;
-    font-size: 14px;
-    color: #646166;
-    height: 54px;
-    line-height: 64px;
-  }
-
-  .tabItem2 {
-    line-height: 54px;
-    font-size: 15px;
-    font-weight: bold;
-    color: #343434;
-  }
-
-  .tabItem3 {
-    width: 50%;
-  }
-
-  //.tabItem4{
-  //  margin: 0 auto;
-  //}
-  .tabIcon {
-    width: 16px;
-    margin: auto;
-    margin-top: -13px;
-  }
-}
-
-.brandList {
-  display: flex;
-  flex-wrap: wrap;
-  padding: 10px;
-  gap: 10px 2px;
-  justify-content: space-between;
-
-  .brandItem {
-    width: calc(50% - 2px);
+    color: #999;
+    font-size: 12px;
+    padding: 8px 0;
   }
 }
 </style>

@@ -5,7 +5,7 @@ import store from "@/store";
 import CryptoJS from 'crypto-js'
 
 const instance = axios.create({
-   // baseURL: "/api/v1",
+//    baseURL: "/api/v1",
     baseURL: "https://scapi.bjyxfl.com/api/v1",
     headers: {
        "Content-Type": "application/x-www-form-urlencoded;charset=utf-8"

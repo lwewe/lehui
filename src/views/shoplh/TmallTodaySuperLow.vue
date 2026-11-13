@@ -45,7 +45,7 @@
               <span class="price">{{ item.sell_price }}</span>
               <span class="original-price" v-if="item.sell_price < item.market_price">¥{{ item.market_price }}</span>
             </div>
-            <div class="snap-btn" @click.stop="addToCart(item)">抢</div>
+            <div class="snap-btn" @click.stop="goToDetail(item)">抢</div>
           </div>
         </div>
       </div>
@@ -74,36 +74,34 @@ export default {
     }
   },
   methods: {
-    // 获取超级补贴数据（channelDetail 接口）
-    getData() {
-      this.loading = true;
-      channelDetail({ id: 16 }).then(res => {
-        console.log('今日超低数据:', res);
-        if (res.code == 200) {
-          const data = res.data || {};
-          let recommendData = [];
+     getData() {
+  this.loading = true;
 
-          if (data.sections && data.sections.length > 0) {
-            // 找 title === '超级补贴' 的 section
-            // 找不到就退而取第一个 grid section
-            const subsidySection =
-              data.sections.find(s => s.title === '超级补贴') ||
-              data.sections.find(s => s.type === 'grid');
+  channelDetail({ id: 16 }).then(res => {
+    if (res.code !== 200) return;
 
-            if (subsidySection && subsidySection.items) {
-              recommendData = subsidySection.items;
-            }
-          }
+    const modules = res.data?.modules || [];
 
-          // 前 4 个放顶部
-          this.topList = recommendData.slice(0, 4);
-          // 第 5 个开始放下方列表
-          this.goodsList = recommendData.slice(4);
-        }
-      }).finally(() => {
-        this.loading = false;
-      })
-    },
+    // 1. 在 modules 里找 title 为「超级补贴」的 grid 模块
+    const subsidyModule = modules.find(m => m.type === 'grid' && m.title === '超级补贴');
+
+    if (subsidyModule && subsidyModule.items) {
+      const items = subsidyModule.items;
+
+      // 2. 前 4 个放顶部
+      this.topList = items.slice(0, 4);
+      // 3. 第 5 个开始放下方列表
+      this.goodsList = items.slice(4);
+    } else {
+      this.topList = [];
+      this.goodsList = [];
+    }
+  }).catch(err => {
+    console.error('获取超级补贴数据失败:', err);
+  }).finally(() => {
+    this.loading = false;
+  });
+},
 
     formatSaleNum(num) {
       if (num >= 10000) return (num / 10000).toFixed(1) + '万';
@@ -168,8 +166,9 @@ export default {
 .header-banner-wrapper {
   background: #FF4E50;
   padding: 10px;
-  margin-bottom: 10px;
+  // margin-bottom: 10px;
   width: 100%;
+  padding-bottom: 20px;
   box-sizing: border-box;
 
   .white-panel {
@@ -190,7 +189,7 @@ export default {
       grid-template-columns: repeat(4, 1fr);
       gap: 8px;
       padding: 10px 0;
-      border-radius: 10px 10px 0 0;
+      border-radius: 10px;
 
       .top-item {
         display: flex;
@@ -233,7 +232,11 @@ export default {
 
 /* 3. 商品列表 */
 .list-wrapper {
-  padding: 0 12px;
+  padding: 10px 12px;
+  background-color: #f7f7f7;
+  border-radius: 10px;
+  position: relative;
+  top: -10px;
 }
 
 .list-item {

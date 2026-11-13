@@ -67,9 +67,9 @@
       <van-goods-action-mini-btn @click="toCart" :icon="require('../../assets/tubiao/gc.png')" text="购物车" />
       <van-goods-action-mini-btn @click="toKefu" :icon="require('../../assets/tubiao/kfz.png')" text="客服" />
       <!-- <van-goods-action-big-btn class="toPay" style="width:100%;" primary text="立即购买" @click="open('c', 1)" /> -->
-      <van-goods-action-big-btn class="goCart" :class="{ goCart2: detail.stock == 0 }" text="加入购物车"
+      <van-goods-action-big-btn class="goCart" v-if="homeFlg != 1" :class="{ goCart2: detail.stock == 0 }" text="加入购物车"
         @click="open('b', 1)" />
-      <van-goods-action-big-btn class="toPay" style="width:100%;" primary text="立即购买" @click="openSelect" />
+      <van-goods-action-big-btn class="toPay" :style="{  borderRadius: homeFlg == 1 ? '30px' : '',width:'100%'}" primary text="立即购买" @click="openSelect" />
 
     </van-goods-action>
 
@@ -184,7 +184,7 @@ export default {
   data() {
     return {
       loadedProductId: "",   //    
-
+      homeFlg:this.$route.query.homeFlg,
       loadingflag: true,
       onIndex: 1,
       detail: {},

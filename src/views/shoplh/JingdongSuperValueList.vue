@@ -1,11 +1,11 @@
 <template>
   <div class="super-value-list">
-     <NProgress v-if="loading" />
+    <NProgress v-if="loading" />
     <!-- 1. 顶部导航 -->
 
     <!-- 2. 顶部 Banner (通栏) -->
     <div class="banner-area">
-      <img class="banner-img" src="../../assets/lh/jdzy/b1.jpg" alt="Banner" />
+      <img class="banner-img" :src=bannerImg alt="Banner" />
     </div>
 
     <!-- 3. 商品列表 (左图右文结构) -->
@@ -60,7 +60,7 @@ export default {
       type: this.$route.query.type || "recommend",// 路由 type
       loading: false,
       goodsList: [],
-
+ bannerImg: '',
       /**
        * 路由 type -> sections 索引 映射
        * 只根据索引取数据，不依赖后端 title 文字
@@ -82,45 +82,54 @@ export default {
     }
   },
   methods: {
-    // 根据路由 type 索引从 sections 取数据
-    channelDetailIndex() {
+     channelDetailIndex() {
       const fixImg = (url) => (url ? url.replace("http://", "https://") : "");
 
       this.loading = true;
       this.goodsList = [];
+      this.bannerImg = ''; // ✅ 请求前清空 Banner，防止闪烁
+
       channelDetail({ id: 14 })
         .then((res) => {
-          if (res.code == 200) {
-            const data = res.data || {};
+          if (res.code !== 200) return;
 
-            // 1. Banner（接口返回则覆盖）
-            if (data.banner && data.banner.length > 0) {
-              this.bannerImg = fixImg(data.banner[0].img);
+          const modules = res.data?.modules || [];
+
+          // 根据路由 type 匹配对应模块的 title
+          let targetTitle = '';
+          if (this.type === 'hot') {
+            targetTitle = '热销';
+          } else if (this.type === 'new') {
+            targetTitle = '上新';
+          } else {
+            targetTitle = '超值'; // recommend 默认
+          }
+
+          // 在 modules 里找对应的 grid 模块
+          const targetModule = modules.find(m => m.type === 'grid' && m.title === targetTitle);
+
+          if (targetModule) {
+            // ✅ 1. 动态获取该模块的 Banner 图
+            if (targetModule.banner_img) {
+              this.bannerImg = fixImg(targetModule.banner_img);
             }
-
-            // 2. 根据 type 索引取 sections 数据
-            if (data.sections && data.sections.length > 0) {
-              const index = this.typeIndexMap[this.type] ?? 1; // 默认超值购
-              const section = data.sections[index];
-
-              if (section && Array.isArray(section.items)) {
-                this.goodsList = section.items.map((p) => ({
-                  ...p,
-                  img: fixImg(p.img)
-                }));
-              } else {
-                this.goodsList = [];
-              }
-            } else {
-              this.goodsList = [];
+            
+            // 2. 获取商品列表
+            if (Array.isArray(targetModule.items)) {
+              this.goodsList = targetModule.items.map(p => ({
+                ...p,
+                img: fixImg(p.img)
+              }));
             }
           }
+        })
+        .catch((err) => {
+          console.error("获取数据失败:", err);
         })
         .finally(() => {
           this.loading = false;
         });
     },
-
     // 格式化销量
     formatSaleNum(num) {
       if (num >= 10000) {

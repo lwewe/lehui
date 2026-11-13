@@ -1,4 +1,4 @@
-<template>
+ <template>
   <div class="tmall-category">
     <!-- 主内容滚动区域 -->
     <div class="scroll-content">
@@ -24,7 +24,7 @@
         <div class="sidebar">
           <div class="menu-item" v-for="(item, index) in topCategories" :key="item.id"
             :class="{ active: String(activeCategoryId) === String(item.id) }" @click="selectCategory(item, index)">
-            {{ item.title }}
+            {{ item.name }}
             <div class="active-line" v-if="String(activeCategoryId) === String(item.id)"></div>
           </div>
         </div>
@@ -35,29 +35,29 @@
             <!-- 顶部 BANNER 图 -->
             <div class="sub-banner">
               <div class="banner-bg">
-                <span class="sub-title">{{ currentCategory.title }}</span>
-                <img class="banner-img" :src="currentCategory.img" alt="" v-if="currentCategory.img" />
+                <span class="sub-title">{{ currentCategory.name }}</span>
+                <img class="banner-img" :src="currentCategory.tbimg" alt="" v-if="currentCategory.tbimg" />
               </div>
             </div>
 
             <!-- 如果有子分类，展示子分类网格 -->
             <template v-if="currentCategory.children && currentCategory.children.length > 0">
-              <div class="sub-header-title">{{ currentCategory.title }}</div>
+              <div class="sub-header-title">{{ currentCategory.name }}</div>
               <div class="sub-goods-grid">
                 <div class="sub-goods-item" v-for="(child, childIndex) in currentCategory.children" :key="child.id"
                   @click="toMore2(currentCategory.id, child.id, activeCategoryIndex, childIndex)">
-                  <img class="sub-goods-img" :src="child.img || defaultImg" alt="" />
-                  <div class="sub-goods-name">{{ child.title }}</div>
+                  <img class="sub-goods-img" :src="child.tbimg || defaultImg" alt="" />
+                  <div class="sub-goods-name">{{ child.name }}</div>
                 </div>
               </div>
             </template>
 
             <!-- 如果没有子分类，展示商品列表 -->
             <template v-else>
-              <div class="sub-header-title">{{ currentCategory.title }}</div>
+              <div class="sub-header-title">{{ currentCategory.name }}</div>
               <div class="sub-goods-grid" v-if="goodsList.length > 0">
                 <div class="sub-goods-item" v-for="(goods, idx) in goodsList" :key="idx" @click="goToDetail(goods)">
-                  <img class="sub-goods-img" :src="goods.img || defaultImg" alt="" />
+                  <img class="sub-goods-img" :src="goods.img || goods.tbimg || defaultImg" alt="" />
                   <div class="sub-goods-name">{{ goods.name || goods.title }}</div>
                 </div>
               </div>
@@ -92,7 +92,7 @@
 <script>
 import { categoryList, productList } from "@/api/lhjdtm";
 
- export default {
+export default {
   name: "TmallCategory",
   data() {
     return {
@@ -145,7 +145,12 @@ import { categoryList, productList } from "@/api/lhjdtm";
 
           // 兼容 code 为数字 200 或字符串 "200"
           if (Number(res.code) === 200) {
-            this.categories = res.data || [];
+            // 接口返回结构是 res.data.data（分页对象里的 data 数组）
+            const list = res.data && res.data.data
+              ? res.data.data
+              : (Array.isArray(res.data) ? res.data : []);
+
+            this.categories = list;
             this.topCategories = this.categories.filter(
               item => String(item.pid) === '0'
             );
@@ -198,17 +203,18 @@ import { categoryList, productList } from "@/api/lhjdtm";
         path: "/productList",
         query: {
           ...query,
+          shop_cate_id: query.cate_id,
           platform: this.platform,
           t: Date.now()
         }
       });
     },
 
-    // 获取商品列表
+    // 获取商品列表（当前被注释掉，需要时取消注释）
     // IndexproductList(categoryId) {
     //   const params = { platform: this.platform, page: this.page, limit: this.limit };
     //   if (categoryId) params.cate_id = categoryId;
-
+    //
     //   productList(params)
     //     .then(res => {
     //       console.log('天猫分类商品:', res);

@@ -21,7 +21,7 @@
             <div class="item-name">{{ item.title }}</div>
             <div class="item-bottom">
               <span class="price"><span style="font-size: 10px;font-weight: bold;">¥</span>{{ item.sell_price }}</span>
-              <span class="add-btn">+</span>
+              <!-- <span class="add-btn">+</span> -->
             </div>
           </div>
         </div>
@@ -38,7 +38,7 @@
             <div class="item-name">{{ item.title }}</div>
             <div class="item-bottom">
               <span class="price"><span style="font-size: 10px;font-weight: bold;">¥</span>{{ item.sell_price }}</span>
-              <span class="add-btn">+</span>
+              <!-- <span class="add-btn">+</span> -->
             </div>
           </div>
         </div>
@@ -65,7 +65,7 @@
                   <span class="symbol"><span style="font-size: 10px;font-weight: bold;">¥</span></span>
                   <span class="price">{{ item.sell_price }}</span>
                 </div>
-                <div class="add-btn">+</div>
+                <!-- <div class="add-btn">+</div> -->
               </div>
             </div>
           </div>
@@ -80,7 +80,7 @@
 
 <script>
 import { getPlatformName } from '@/utils/platform'
-import { channelChildrenDetaill } from "@/api/lhjdtm";
+import { channelDetail } from "@/api/lhjdtm";
 export default {
   name: "LightFoodZone",
   data() {
@@ -115,38 +115,61 @@ export default {
   methods: {
     // 获取平台名称
     getPlatformName,
-    
+
     goToDetail(item) {
       this.$goDetail(item);
       // this.$router.push({ path: '/ProductDetail', query: { id: item.id } });
     },
-    // 新增：获取频道详情
     channelDetailIndex() {
-      channelChildrenDetaill({ id: this.$route.query.id, nav_index: this.$route.query.nav, child_index: this.$route.query.index }).then(res => {
-        if (res.code == 200) {
-          console.log(res)
-          this.baners = res.data.banner[0].img;
-          this.morningList = res.data.sections[0].items;
-          this.enjoyList = res.data.sections[1].items;
-          this.moreList = res.data.sections[2].items;
+      const channelId = this.$route.query.id || 5;
+      const navPx = Number(this.$route.query.nav);
 
-          this.title1 = res.data.sections[0].title;
-          this.title2 = res.data.sections[1].title;
-          this.title3 = res.data.sections[2].title;
+      // ✅ 1. 发请求前，先清空上一次的数据，防止页面“闪一下”
+      this.baners = '';
+      this.title1 = '';
+      this.title2 = '';
+      this.title3 = '';
+      this.morningList = [];
+      this.enjoyList = [];
+      this.moreList = [];
+      this.pageBgStyle = {}; // 恢复默认背景
+      this.pageBgStyle1 = {}; // 恢复默认字体颜色
 
+      // 2. 发起新请求
+      channelDetail({ id: channelId }).then(res => {
+        if (res.code !== 200) return;
 
+        const modules = res.data?.modules || [];
 
-          const bgColorStr = res.data.bg_color || '';
-          const colors = bgColorStr.split(',').map(item => item.trim()).filter(item => item);
-          this.pageBgStyle = {
-            backgroundColor: colors[0]
-          };
-          this.pageBgStyle1 = {
-            color: colors[1]
-          };
-
+        // 动态匹配对应的 subpage 模块
+        let targetModule = modules.find(m => m.type === 'subpage' && m.px === navPx);
+        if (!targetModule) {
+          targetModule = modules.find(m => m.type === 'subpage' && (m.px === 3 || /低卡/.test(m.title || '')));
         }
-      })
+
+        if (!targetModule) return;
+
+        // 3. 赋值新数据
+        this.baners = targetModule.banner_img || '';
+
+        const sections = targetModule.sections || [];
+console.log(sections[0]?.text_color)
+        this.title1 = sections[0]?.title || '';
+        this.morningList = sections[0]?.items || [];
+this.pageBgStyle1 ={color:sections[0]?.text_color}
+        this.title2 = sections[1]?.title || '';
+        this.enjoyList = sections[1]?.items || [];
+
+        this.title3 = sections[2]?.title || '';
+        this.moreList = sections[2]?.items || [];
+
+        const bgColor = (targetModule.bg_color || '').trim();
+        if (bgColor) {
+          this.pageBgStyle = { backgroundColor: bgColor };
+        }
+      }).catch(err => {
+        console.error('获取数据失败:', err);
+      });
     },
     goBack() {
       this.$router.go(-1);

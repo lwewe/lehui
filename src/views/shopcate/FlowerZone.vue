@@ -61,7 +61,7 @@
                 ¥{{ item.original_price }}
               </span> -->
             </div>
-            <div class="add-btn">+</div>
+            <!-- <div class="add-btn">+</div> -->
           </div>
         </div>
       </div>
@@ -204,9 +204,9 @@ export default {
         if (res.code === 200 && res.data) {
           const data = res.data;
 
-          if (data.banner && data.banner.length) {
-            this.bannerImg = data.banner[0].img;
-          }
+
+          this.bannerImg = data.modules[0].banner_img;
+
 
           this.navList = (data.nav || []).map((item, index) => ({
             id: index,

@@ -160,7 +160,7 @@ export default {
       subCategories: [],      // 小分类（当前大分类的 children）
       activeTopId: 0,         // 当前大分类 id（0=全部）
       activeSubId: 0,         // 当前小分类 id（0=全部）
-      cate_id: '',
+      shop_cate_id: '',
       searchValue: "",
       bottomPrice: "",
       highestPrice: "",
@@ -175,7 +175,7 @@ export default {
         { id: 4, name: '盒马' },
         { id: 5, name: '鲜花' },
         { id: 6, name: '途虎养车' },
-        { id: 7, name: '供应商' },
+        { id: 7, name: '乐汇商城' },
       ],
       synthesisList: [
         { id: 1, text: "综合推荐" },
@@ -235,11 +235,8 @@ export default {
         });
       });
     },
-    // 获取分类树
-      
     async fetchCategory() {
       try {
-        // 🚨 使用新接口，获取一级分类及其 children
         const res = await categoryList({
           page: 1,
           limit: 100,
@@ -248,55 +245,70 @@ export default {
         });
 
         if (res.code === 200 || res.code === 0) {
-          // ThinkPHP 分页数据在 res.data.data
           const rawData = res?.data?.data || res?.data || [];
 
-          // 数据格式清洗，将 name 映射为 title，tbimg 映射为 img
-          this.categoryList = rawData.map(item => ({
-            ...item,
-            title: item.name || '',
-            img: item.tbimg || '',
-            children: (item.children || []).map(child => ({
-              ...child,
-              title: child.name || '',
-              img: child.tbimg || ''
-            }))
-          }));
+          // 1. 提取所有平铺的子分类
+          let allChildren = [];
+          rawData.forEach(item => {
+            if (item.children && item.children.length > 0) {
+              allChildren = allChildren.concat(item.children);
+            }
+          });
 
-          // 过滤出大分类（一级分类）
-          this.topCategories = this.categoryList
-            .filter(c => c.pid === 0 || c.level === 1)
-            .map(c => ({ id: c.id, title: c.title }));
+          // 2. 格式化一级分类，并根据 pid 手动挂载 children
+          this.categoryList = rawData.map(item => {
+            const topId = Number(item.id);
+            // 精准匹配 pid
+            const myChildren = allChildren
+              .filter(child => Number(child.pid) === topId || Number(child.pid) === Number(item.id))
+              .map(child => ({
+                id: Number(child.id),
+                pid: Number(child.pid),
+                title: child.name || '',
+                img: child.tbimg || ''
+              }));
 
-          // 选中状态逻辑保持原样
+            return {
+              id: topId,
+              pid: Number(item.pid),
+              title: item.name || '',
+              img: item.tbimg || '',
+              children: myChildren
+            };
+          });
+
+          // 3. 提取大分类
+          this.topCategories = this.categoryList.map(c => ({ id: c.id, title: c.title }));
+
+          // 4. 处理选中状态
           if (this.searchValue && this.searchValue.trim()) {
             this.activeTopId = 0;
             this.activeSubId = 0;
-          } else if (this.cate_id) {
-            this.locateCategoryById(this.cate_id);
+            this.updateSubCategories();
+          } else if (this.shop_cate_id) {
+            // 🚨 核心修复：这里直接调用 locateCategoryById 更新
+            this.locateCategoryById(this.shop_cate_id);
           } else {
             this.activeTopId = 0;
             this.activeSubId = 0;
+            this.updateSubCategories();
           }
-          this.updateSubCategories();
         }
       } catch (err) {
         console.error('获取分类失败:', err);
       }
     },
 
-    // ✅ 新增：根据 cate_id 反查大/小分类
     locateCategoryById(cateId) {
       const id = Number(cateId)
 
       if (!id) {
         this.activeTopId = 0
-        this.activeTopObj = null
         this.activeSubId = 0
+        this.updateSubCategories()
         return
       }
 
-      // 递归查找，返回 { item, top, parentId }
       const findInTree = (list, topObj = null, parentId = null) => {
         for (const item of list) {
           const currentTop = item.pid === 0 ? item : topObj;
@@ -314,43 +326,52 @@ export default {
       const found = findInTree(this.categoryList);
       if (found) {
         this.activeTopId = found.top.id;
-        this.activeTopObj = found.top;   // 直接存 top 对象
 
+        // 🚨 修复：如果是二级分类，直接高亮二级分类；否则清空
         if (found.item.pid === 0) {
           this.activeSubId = 0;
-        } else if (found.parentId && found.parentId !== found.top.id) {
-          this.activeSubId = found.parentId;
         } else {
           this.activeSubId = found.item.id;
         }
+
+        // 🚨 核心修复：瞬间更新 SubCategories，不再等待下一轮渲染！
+        this.updateSubCategories();
+
       } else if (this.topCategories.length > 0) {
         this.activeTopId = this.topCategories[0].id;
-        this.activeTopObj = this.topCategories[0];
+        this.activeSubId = 0;
+        this.updateSubCategories();
       }
     },
 
-    // 根据当前大分类更新小分类
     updateSubCategories() {
-      if (!this.activeTopObj) {
-        this.subCategories = []
-        return
+      if (this.activeTopId === 0) {
+        this.subCategories = [];
+        return;
       }
-      this.subCategories = (this.activeTopObj.children || []).map(c => ({
-        id: c.id,
-        title: c.title
-      }))
+      const currentTop = this.categoryList.find(c => Number(c.id) === Number(this.activeTopId));
+      if (currentTop && currentTop.children && currentTop.children.length > 0) {
+        this.subCategories = currentTop.children;
+      } else {
+        this.subCategories = [];
+      }
     },
 
     // 点击大分类
     changeTopCategory(id) {
-      if (this.activeTopId === id) return
-      this.activeTopId = id
-      this.activeTopObj = id === 0 ? null : this.categoryList.find(c => c.id === id)   // 加上
-      this.activeSubId = 0
-      this.updateSubCategories()
-      this.cate_id = id === 0 ? '' : id
-      this.fetchData(true)
-      this.scrollToActiveTop()
+      // 如果点的是同一个大分类且已经在“全部”，不重复请求
+      if (this.activeTopId === id && this.activeSubId === 0) return;
+
+      this.activeTopId = id;
+      this.activeSubId = 0; // 小分类全部高亮
+      this.shop_cate_id = id === 0 ? '' : id;
+
+      // 🚨 更新小分类 UI
+      this.updateSubCategories();
+
+      // 请求商品数据
+      this.fetchData(true);
+      this.scrollToActiveTop();
     },
 
     // 点击小分类
@@ -358,7 +379,7 @@ export default {
       if (this.activeSubId === id) return
       this.activeSubId = id
       // 小分类切换后按小分类 id 请求
-      this.cate_id = id === 0 ? this.activeTopId : id
+      this.shop_cate_id = id === 0 ? this.activeTopId : id
       this.fetchData(true)
     },
     returnBack() {
@@ -367,7 +388,6 @@ export default {
 
     // 统一请求入口
     fetchData(isReset = true) {
-      if (this.isFetching) return;
 
       if (isReset) {
         this.shopList = [];
@@ -393,6 +413,7 @@ export default {
 
       if (hasKeyword) {
         params = {
+          has_shop_cate: 1,
           keyword: this.searchValue.trim(),
           page: this.pageno,
           limit: 10,
@@ -400,25 +421,35 @@ export default {
         if (this.platform !== 0) {
           params.platform = this.platform;
         }
-        if (this.jd_type !== '' && this.jd_type !== null) {
+        // if (this.jd_type !== '' && this.jd_type !== null) {
+        //   params.jd_type = this.jd_type;
+        // }
+
+        if (this.jd_type != null && this.jd_type !== '') {
           params.jd_type = this.jd_type;
         }
+
       } else {
         params = {
+          has_shop_cate: 1,
           page: this.pageno,
           limit: 10,
           sort: this.getSortType(),
           order: this.getSortOrder(),
         };
 
-        const finalCateId = this.cate_id || this.activeSubId || this.activeTopId;
-        if (finalCateId) {
-          params.cate_id = finalCateId;
+        if (this.shop_cate_id) {
+          params.shop_cate_id = this.shop_cate_id;
         }
         if (this.platform !== 0) {
           params.platform = this.platform;
         }
-        if (this.jd_type !== '' && this.jd_type !== null) {
+
+        // if (this.jd_type !== '' && this.jd_type !== null) {
+        //   params.jd_type = this.jd_type;
+        // }
+
+        if (this.jd_type != null && this.jd_type !== '') {
           params.jd_type = this.jd_type;
         }
         if (this.bottomPrice) {
@@ -530,7 +561,7 @@ export default {
       this.activeTopId = 0;
       this.activeTopObj = null;   // 加上
       this.activeSubId = 0;
-      this.cate_id = '';
+      this.shop_cate_id = '';
       this.fetchCategory();
       this.fetchData(true);
     },
@@ -578,20 +609,19 @@ export default {
     this.searchValue = kw;
 
     // cate_id
-    const cateId = this.$route.query.cate_id || this.$route.query.id || '';
-    this.cate_id = cateId ? Number(cateId) : '';
+    // const cateId = this.$route.query.cate_id || this.$route.query.id || '';
+    // this.cate_id = cateId ? Number(cateId) : '';
 
+    const shopCateId = this.$route.query.shop_cate_id || '';
+    this.shop_cate_id = shopCateId ? Number(shopCateId) : '';
+    console.log('productList 读到 shop_cate_id =', shopCateId, '类型 =', typeof shopCateId)
+    console.log('this.shop_cate_id =', this.shop_cate_id)
     // platform
-    const platform = this.$route.query.platform || '';
-    if (platform !== '') {
-      this.platform = Number(platform);
-    }
+        const platform = this.$route.query.platform;
+    this.platform = (platform !== undefined && platform !== '') ? Number(platform) : 0;
 
-    // jd_type
-    const jdType = this.$route.query.jd_type || '';
-    if (jdType !== '') {
-      this.jd_type = Number(jdType);
-    }
+    const jdType = this.$route.query.jd_type;
+    this.jd_type = (jdType !== undefined && jdType !== '') ? Number(jdType) : '';
 
     await this.fetchCategory();
     this.fetchData(true);
@@ -608,32 +638,36 @@ export default {
         const kw = newQuery.keyword || '';
         this.searchValue = kw;   // 有就赋值，没有就清空
 
-        const raw = newQuery.cate_id || newQuery.id || '';
+        // const raw = newQuery.cate_id || newQuery.id || '';
+        // const newId = raw ? Number(raw) : '';
+
+        const raw = newQuery.shop_cate_id || '';
         const newId = raw ? Number(raw) : '';
 
         // platform
-        const platform = newQuery.platform || '';
-        if (platform !== '') {
-          this.platform = Number(platform);
-        }
+          const platform = newQuery.platform;
+        this.platform = (platform !== undefined && platform !== '') ? Number(platform) : 0;
 
-        // jd_type
-        const jdType = newQuery.jd_type || '';
-        if (jdType !== '') {
-          this.jd_type = Number(jdType);
-        }
+        const jdType = newQuery.jd_type;
+        this.jd_type = (jdType !== undefined && jdType !== '') ? Number(jdType) : '';
 
         // cate_id 相同、没有 keyword 时，不重复请求
         if (
-          newId === this.cate_id &&
+          // newId === this.cate_id &&
+          // oldQuery !== undefined &&
+          // !kw &&
+          // newQuery.cate_id === oldQuery.cate_id
+
+          newId === this.shop_cate_id &&
           oldQuery !== undefined &&
           !kw &&
-          newQuery.cate_id === oldQuery.cate_id
+          newQuery.shop_cate_id === oldQuery.shop_cate_id
+
         ) {
           return;
         }
 
-        this.cate_id = newId;
+        this.shop_cate_id = newId;
 
         if (kw && !newId) {
           this.activeTopId = 0;
