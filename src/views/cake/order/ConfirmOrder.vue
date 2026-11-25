@@ -490,8 +490,11 @@ export default {
         }
       }
 
-      // 🚨 核心修改：如果接口没给数据(或者返回null/空)，直接返回空数组！
-      // 这样模板里就会展示 "该日期暂无可选时间"
+      // 
+      if (item.product.flag == 1 && type === 'delivery') {
+        return this.timeList;
+      }
+
       return [];
     },
     getTimeListByBrand(brandId, item) {
@@ -864,7 +867,7 @@ export default {
               paySuccess(order_no).then(res => {
                 if (res.code == 200) {
 
-                  that.$router.replace({ path: "/orderInfo", query: { tabIndex: 0 } })
+                  that.$router.replace({ path: "/orderInfo", query: { refresh: Date.now() } })
 
                 }
               })
@@ -999,7 +1002,14 @@ export default {
             ).then(res => {
               if (res.code == 200) {
 
-                this.$router.replace({ path: "/orderInfo" })
+                // this.$router.replace({ path: "/orderInfo" })
+                setTimeout(() => {
+                  this.$router.replace({
+                    path: '/orderInfo',
+                    query: { refresh: Date.now() }
+                  });
+                }, 1000);
+
                 //   }
               } else {
                 this.$toast(res.msg)

@@ -1,28 +1,28 @@
 <template>
   <div id="app">
- 
 
-     <keep-alive>
+
+    <keep-alive>
       <router-view v-if="$route.meta.keepAlive" />
     </keep-alive>
     <router-view v-if="!$route.meta.keepAlive" />
-<!-- 
+    <!-- 
     <keep-alive>
   <router-view v-if="$route.meta.keepAlive" :key="$route.fullPath" />
 </keep-alive>
 <router-view v-if="!$route.meta.keepAlive" :key="$route.fullPath" /> -->
-    
-    <NavigationTab :active="$route.meta.active" v-if="$route.meta.active>=0"></NavigationTab>
+
+    <NavigationTab :active="$route.meta.active" v-if="$route.meta.active >= 0"></NavigationTab>
   </div>
 </template>
 
 <script>
-import {getopenid} from "@/api/login";
+import { getopenid } from "@/api/login";
 import NavigationTab from "@/components/NavigationTab.vue";
 
 export default {
   name: 'App',
-  components: {NavigationTab},
+  components: { NavigationTab },
   data() {
     return {
       wxCode: "",
@@ -77,9 +77,9 @@ export default {
             url = window.location.href;
           }
           window.location.href =
-              "https://open.weixin.qq.com/connect/oauth2/authorize?appid=wx05cc5223511e93c3&redirect_uri=" +
-              encodeURIComponent(url) +
-              "&response_type=code&scope=snsapi_base&state=1&connect_redirect=1#wechat_redirect";
+            "https://open.weixin.qq.com/connect/oauth2/authorize?appid=wx05cc5223511e93c3&redirect_uri=" +
+            encodeURIComponent(url) +
+            "&response_type=code&scope=snsapi_base&state=1&connect_redirect=1#wechat_redirect";
           // window.close();
         }
         if (code != "" && code != null) {
@@ -99,7 +99,7 @@ export default {
         return false;
       }
     },
-    // ///////微信登录
+    // 微信登录
   },
   created() {
     window.localStorage.setItem('scanUrl', location.href.split('#')[0])
@@ -125,14 +125,10 @@ export default {
     if (this.$route.query.festivals) {
       sessionStorage.setItem("festivals", this.$route.query.festivals)
     }
-    // d7667128bd7f096183ef62c83f8a5d9bd2d0da8c79dee64a5098325c0a1a14be
-    // localStorage.setItem("token", "e6e3cf313ff9f46ddbfe09e051a958e0a0697ae1d3fc3248afb136a9376d9ac3")
-    // this.$store.commit("settoken","08fb80ad2c6bffd8fb84cfa08827d1cdc2486cbd18480181095fa58806ec5637")
+    
   },
   mounted() {
-    // localStorage.setItem("token", "e6e3cf313ff9f46ddbfe09e051a958e0a0697ae1d3fc3248afb136a9376d9ac3")
-    // this.$store.commit("settoken","e6e3cf313ff9f46ddbfe09e051a958e0a0697ae1d3fc3248afb136a9376d9ac3")
-    // this.token = localStorage.getItem("token")
+    
   }
 }
 </script>
@@ -177,14 +173,35 @@ export default {
   display: flex;
   flex-direction: column;
 } */
- .mb10{margin-bottom: 10px;}
- .bdr10{
+.mb10 {
+  margin-bottom: 10px;
+}
+
+.bdr10 {
   border-radius: 10px;
- }
-.pd10{
+}
+
+.pd10 {
   padding: 10px;
 }
- .bgfff{
+
+.bgfff {
   background: #ffffff;
- }
+}
+
+.df {
+  display: flex;
+}
+
+.jcsb {
+  justify-content: space-between;
+}
+
+.fs12 {
+  font-size: 12px;
+}
+.cl8{color: #b5691a;}
+.txtrg{
+  text-align: right;
+}
 </style>

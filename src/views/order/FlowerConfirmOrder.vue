@@ -452,7 +452,14 @@ export default {
       }, res => {
         if (res.err_msg === "get_brand_wcpay_request:ok") {
           this.$toast('支付成功')
-          setTimeout(() => this.$router.replace("/orderInfo"), 1000)
+          // setTimeout(() => this.$router.replace("/orderInfo"), 1000)
+          setTimeout(() => {
+            this.$router.replace({
+              path: '/orderInfo',
+              query: { refresh: Date.now() }
+            });
+          }, 1000);
+
         } else if (res.err_msg === "get_brand_wcpay_request:cancel") {
           this.$toast('已取消支付')
         } else {
@@ -478,9 +485,13 @@ export default {
         payByCard(payload).then(res => {
           this.$toast(res.msg || '支付成功')
           if (res.code == 200) {
-
-
-            setTimeout(() => { this.$router.replace("/orderInfo") }, 1000)
+            setTimeout(() => {
+              this.$router.replace({
+                path: '/orderInfo',
+                query: { refresh: Date.now() }
+              });
+            }, 1000);
+            // setTimeout(() => { this.$router.replace("/orderInfo") }, 1000)
           } else {
             // this.isShow = true
             this.pass = ""

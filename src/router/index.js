@@ -13,10 +13,18 @@ import Freeca from "@/views/freeca/Freeca.vue";
 import PersonCenter from "@/views/mine/PersonCenter.vue";
 import OrderInfo from "@/views/order/OrderInfo.vue";
 import OrderDetail from "@/views/order/OrderDetail.vue";
+import OrderDetaildy from "@/views/order/OrderDetailfilmyc.vue";
+import OrderDetailhb from "@/views/order/OrderDetailhb.vue";
+
+import OrderDetaildc from "@/views/order/OrderDetailfilmdc.vue";
+import OrderDetaildg from "@/views/order/OrderDetaildg.vue";
+import OrderDetaildzq from "@/views/order/OrderDetaildzq.vue";
+
 
 
 import Classification from "@/views/classification/Classification.vue";
 import ProductList from "@/views/product/ProductList.vue";
+import ProductListhm from "@/views/product/ProductListHm.vue";
 import ProductDetail from "@/views/product/ProductDetail.vue";
 import ConfirmOrder from "@/views/order/ConfirmOrder.vue";
 import ConfirmOrderhm from "@/views/order/ConfirmOrderHm.vue";
@@ -38,7 +46,12 @@ import TuHuConfirmOrder from "@/views/order/TuHuConfirmOrder.vue";
 
 import TuhuZone from "@/views/shopcate/TuhuZone.vue";
 import FlowerZone from "@/views/shopcate/FlowerZone.vue";
+import HomeactivityList from "@/views/shopcate/HomeactivityList.vue";
+
+
+import Homefood from "@/views/shoplh/HomeFood.vue";
 import HomeDap from "@/views/shoplh/HomeDap.vue";
+
 import HomeXianh from "@/views/shoplh/HomeXianh.vue";
 import HomeQingl from "@/views/shoplh/HomeQingl.vue";
 import HomeQinglyx from "@/views/shoplh/HomeQinglyx.vue";
@@ -132,6 +145,9 @@ import orderOrderDetail from "@/views/order/orderOrderDetail.vue";
 // import ProductDescription from "@/views/mine/ProductDescription.vue";
 import Notification from "@/views/service/Notification.vue";
 
+import GetpayqrCode from "@/views/order/GetpayqrCode.vue";
+import GetpayqrCodeorder from "@/views/order/GetpayqrCodeorder.vue";
+
 Vue.use(Router)
 
 
@@ -200,7 +216,46 @@ const routes = [
         meta: {
             title: '订单详情'
         }
+    }, {
+        path: '/orderDetaildy',
+        component: OrderDetaildy,
+        meta: {
+            title: '订单详情'
+        }
+    }, 
+    {
+        path: '/OrderDetailhb',
+        component: OrderDetailhb,
+        meta: {
+            title: '订单详情'
+        }
+    }, 
+    
+    
+    {
+        path: '/orderDetaildg',
+        component: OrderDetaildg,
+        meta: {
+            title: '订单详情'
+        }
+    }, {
+        path: '/orderDetaildzq',
+        component: OrderDetaildzq,
+        meta: {
+            title: '订单详情'
+        }
     },
+
+
+
+    {
+        path: '/OrderDetaildc',
+        component: OrderDetaildc,
+        meta: {
+            title: '订单详情'
+        }
+    },
+
     {
         path: '/FlowerDetail',
         component: FlowerDetail,
@@ -246,7 +301,15 @@ const routes = [
     },
 
 
+{
+        path: '/productListhm',
+        component: ProductListhm,
+        meta: {
+            title: '商品',
+            keepAlive: true
 
+        }
+    }, 
     {
         path: '/productList',
         component: ProductList,
@@ -255,7 +318,9 @@ const routes = [
             keepAlive: true
 
         }
-    }, {
+    }, 
+    
+    {
         path: '/productDetail',
         component: ProductDetail,
         meta: {
@@ -267,20 +332,20 @@ const routes = [
         meta: {
             title: '确认订单'
         }
-    }, 
+    },
     {
         path: '/confirmOrderhm',
         component: ConfirmOrderhm,
         meta: {
             title: '盒马确认订单'
         }
-    }, 
+    },
     {
         path: '/orderInfo',
         component: OrderInfo,
         meta: {
             title: '订单',
-            // keepAlive:true
+            keepAlive: true
         }
     }, {
         path: '/address',
@@ -398,7 +463,15 @@ const routes = [
             title: '大牌',
             keepAlive: true
         }
+    }, {
+        path: '/Homefood',
+        component: Homefood,
+        meta: {
+            title: '随心',
+            keepAlive: true
+        }
     },
+
     {
         path: '/HomeXianh',
         component: HomeXianh,
@@ -416,7 +489,13 @@ const routes = [
     },
 
 
-
+    {
+        path: '/activityList',
+        component: HomeactivityList,
+        meta: {
+            title: '活动', keepAlive: true
+        }
+    },
 
     {
         path: '/FlowerZone',
@@ -425,6 +504,8 @@ const routes = [
             title: '鲜花', keepAlive: true
         }
     },
+
+
     {
         path: '/HemaDetail',
         component: HemaDetail,
@@ -489,7 +570,7 @@ const routes = [
             keepAlive: true
         }
     },
-{
+    {
         path: '/ServiceNew',
         component: ServiceNew,
         meta: {
@@ -498,7 +579,7 @@ const routes = [
         }
     },
 
-{
+    {
         path: '/StoreNew',
         component: StoreNew,
         meta: {
@@ -887,6 +968,20 @@ const routes = [
             keep: true,
         }
     },
+    {
+        path: '/GetpayqrCode',
+        component: GetpayqrCode,
+        meta: {
+            title: '展示码'
+        }
+    },
+    {
+        path: '/GetpayqrCodeorder',
+        component: GetpayqrCodeorder,
+        meta: {
+            title: '订单'
+        }
+    },
     //  {
     //     path: '/selectBrand',
     //     component: SelectBrand,
@@ -920,6 +1015,9 @@ const routes = [
             title: '订单详情'
         }
     },
+
+
+
     //  {
     //     path: '/productDescription',
     //     component: ProductDescription,

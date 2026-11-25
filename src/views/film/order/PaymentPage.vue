@@ -165,7 +165,7 @@ export default {
           if (sessionStorage.getItem("change") == 1) {
             window.location.href = this.$store.state.shopUrl + "/orderInfo?tabIndex=0" + "&token=" + localStorage.getItem("token")
           } else {
-            this.$router.replace({ path: "/orderInfo", query: { tabIndex: 0 } })
+            this.$router.replace({ path: "/orderInfo", query: {  refresh: Date.now()} })
           }
         }, 1000)
       }

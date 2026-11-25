@@ -104,7 +104,7 @@
         <van-goods-action-big-btn class="toPay"
           :class="{ toPay2: btnText || (takeTicketTypeCode == 2 && calculateDaysDiff(detailList.showEndTime) <= 3) }"
           primary
-          :text="btnText == 1 ? '暂未开售' : btnText == 2 ? '演出已结束' : (takeTicketTypeCode == 2 && calculateDaysDiff(detailList.showEndTime) <= 3) ? '演出即将开始,暂停售票' : '立即购票8'"
+          :text="btnText == 1 ? '暂未开售' : btnText == 2 ? '演出已结束' : (takeTicketTypeCode == 2 && calculateDaysDiff(detailList.showEndTime) <= 3) ? '演出即将开始,暂停售票' : '立即购票'"
           @click="open(2)" />
       </van-goods-action>
     </div>
@@ -170,7 +170,7 @@
             <span class="price">￥{{ fullprice }}</span>
             <span class="selected">(已选{{ valueNumber }})</span>
           </div>
-          <div class="speBox btn" @click="toPay">确认8</div>
+          <div class="speBox btn" @click="toPay">确认</div>
         </div>
       </div>
     </div>
@@ -305,7 +305,7 @@ export default {
             cancelButtonText: '取消订单'
           }).then(() => {
             // 继续支付 → 跳订单列表
-            this.$router.push({ path: '/orderInfo', query: { status: 'all' } })
+            this.$router.push({ path: '/orderInfo', query: {   refresh: Date.now()} })
           }).catch(() => {
             // 取消订单 → 取消后继续购票
             this.unlockSeatAndGo(oid)
@@ -362,7 +362,7 @@ export default {
     unlockSeatAndGo(oid) {
       if (!oid) {
         this.$toast('请到订单列表取消订单')
-        this.$router.push({ path: '/orderInfo', query: { status: 'all' } })
+        this.$router.push({ path: '/orderInfo', query: {   refresh: Date.now() } })
         return
       }
       PerformUnlockSeat({ oid }).then(res => {

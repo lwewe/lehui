@@ -99,18 +99,18 @@
         </div>
       </div>
     </div>
-    <NavigationTab :active="2"></NavigationTab>
+    <!-- <NavigationTabhm :active="2"></NavigationTabhm> -->
   </div>
 </template>
 
 <script>
-import NavigationTab from "@/components/NavigationTab.vue";
+import NavigationTabhm from "@/components/NavigationTabhm.vue";
 import { cartList, cartCheck, cartUpdateQuantity, cartDelete } from "@/api/lhjdtm";
  
 import { getPlatformName, PLATFORM } from '@/utils/platform'
 export default {
   name: "ShopCart",
-  components: { NavigationTab },
+  components: { NavigationTabhm },
   data() {
     return {
       fiteredList:'',
@@ -543,7 +543,8 @@ export default {
 
 .footer {
   position: fixed;
-  bottom: 50px;
+  // bottom: 50px;
+  bottom: 0px;
   left: 0;
   background-color: white;
   width: 100%;

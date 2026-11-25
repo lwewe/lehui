@@ -22,10 +22,14 @@
           <div class="card-header">
             <div class="order-no">
               <!-- 如果是真·跨平台组合单，显示“组合”，否则显示单个平台 -->
-              <span class="platform-tag" v-if="item.isGroup">组合</span>
-              <span class="platform-tag" v-else>
-                {{ formatPlatformTag(item.platform, item.jd_type || item.items?.[0]?.jd_type) }}
+              <span>
+                <span class="platform-tag" v-if="item.isGroup">组合</span>
+                <span class="platform-tag" v-else>
+                  {{ formatPlatformTag(item.platform, item.jd_type || item.items?.[0]?.jd_type) }}
+                </span>
               </span>
+              <span v-if="item.platform == 17 || item.platform == 18" class="fs12 cl8">{{ item.orderstatus_name
+              }}</span>
             </div>
             <!-- <div class="status" :class="getStatusClass(item.status)">
              -- {{ item.status_name }}
@@ -41,6 +45,7 @@
               <div class="group-block" v-for="(sub, sIndex) in item.groupList" :key="sIndex">
                 <div class="product-item" v-for="(goods, gIndex) in getSubItems(sub)" :key="gIndex"
                   @click.stop="goDetail(sub)">
+
                   <div class="product-img" :style="{ backgroundImage: `url(${goods.img})` }"></div>
                   <div class="product-detail">
                     <div class="title">
@@ -48,8 +53,9 @@
                       <span v-if="gIndex === 0" class="mini-platform-tag">
                         {{ formatPlatformTag(sub.platform, sub.jd_type) }}
                       </span>
-                      {{ goods.title }}
+                      {{ goods.title }} 
                     </div>
+                     
                     <div class="specs1" v-if="goods.spec_name"><span class="specs">{{ goods.spec_name }}</span></div>
                     <div class="price-line">
                       <span class="unit-price"><span style="font-size: 10px;">￥</span>{{ goods.sell_price }}</span>
@@ -59,7 +65,7 @@
 
                     <div class="express-action">
                       <div class="status" :class="getStatusClass(sub.status)">
-                        {{ sub.status_name }}
+                        {{ sub.status_name }}**
                       </div>
                       <!-- <span class="express-text">{{ goods.express_company || '快递' }} <span v-if="goods.express_no">({{
             goods.express_no }})</span></span> -->
@@ -74,10 +80,39 @@
 
             <!-- B. 普通单条订单（即便是纯京东买多个商品也是走这里） -->
             <template v-else>
+              <div v-if="Number(item.platform) === 21" class="store-line fs12 df jcsb">
+
+                <span class="">{{ getDc(item.pf) }}</span><span class="cl8">{{ item.status_name }}</span>
+
+              </div>
               <div class="product-item" v-for="(goods, gIndex) in getSubItems(item)" :key="gIndex">
-                <div class="product-img" :style="{ backgroundImage: `url(${goods.img})` }"></div>
+                <template v-if="![15, 16, 12, 19, 20].includes(Number(item.platform))">
+
+                  <img v-if="goods.img" :src="goods.img" class="product-img" style="object-fit: cover;" />
+
+                  <div v-else class="product-img"></div>
+                </template>
+
+
+                <!-- {{ item}} -->
                 <div class="product-detail">
-                  <div class="title">{{ goods.title }}</div>
+                  <template v-if="![15, 16, 19, 20].includes(Number(item.platform))">
+                    <div class="title">{{ goods.title }} <span class="fs12 cl8"
+                        v-if="[19, 20].includes(Number(item.platform))">已支付</span></div>
+                  </template>
+                  <template v-if="[19, 20].includes(Number(item.platform))">
+                    <div class="df jcsb fs12">{{ goods.title }} <span class="fs12 cl8">已支付</span></div>
+                  </template>
+                  <template v-if="[15, 16].includes(Number(item.platform))">
+                    <div class="fs12 df jcsb ">
+                      <span>{{ goods.title }}</span> <span class="cl8">{{ item.status_name }}</span>
+                    </div>
+                  </template>
+                 <template v-if="[1,2,5,7,22].includes(Number(item.platform))">
+                    <div class="fs12  txtrg">
+                       <span class="cl8">{{ item.status_name }}</span>
+                    </div>
+                  </template>
                   <div class="specs1" v-if="goods.spec_name"><span class="specs">{{ goods.spec_name }}</span></div>
                   <div class="price-line">
                     <span class="unit-price"><span style="font-size: 10px;">￥</span>{{ goods.sell_price }}</span>
@@ -110,7 +145,7 @@
             </div>
 
             <!-- 动态按钮区域 -->
-                       <!-- 动态按钮区域 -->
+            <!-- 动态按钮区域 -->
             <div class="action-buttons">
               <!-- 【1. 组合单专属判断逻辑】 -->
               <template v-if="item.isGroup">
@@ -119,13 +154,9 @@
                   <button class="btn" @click.stop="handleAction('cancelOrder', item, $event)">取消订单</button>
                   <button class="btn-red" @click.stop="handleAction('payOrder', item, $event)">立即支付</button>
                 </template>
-                <!-- 如果组内都是待发货/待收货 -->
-                <template v-else-if="item.groupList.some(sub => sub.status === 1 || sub.status === 2)">
-                  <button class="btn-cl6" @click.stop="handleAction('confirmReceive', item, $event)">申请售后</button>
-                </template>
-                <!-- 其他状态 -->
+
                 <template v-else>
-                  <button class="btn" @click.stop="handleAction('viewDetail', item, $event)">查看详情</button>
+                  <!-- <button class="btn" @click.stop="handleAction('viewDetail', item, $event)">查看/详情</button> -->
                 </template>
               </template>
 
@@ -138,22 +169,67 @@
               </template>
               <template v-else>
                 <template v-if="item.status === -1">
-                  <button class="btn" @click.stop="handleAction('cancelOrder', item, $event)">取消订单</button>
-                  <button class="btn-red" @click.stop="handleAction('payOrder', item, $event)">立即支付</button>
+
+                  <button class="btn" v-if="[17, 18].includes(Number(item.platform))"
+                    @click.stop="dyyc('cancelOrder', item, $event)">取消订单</button>
+                  <button class="btn" v-if="![17, 18].includes(Number(item.platform))"
+                    @click.stop="handleAction('cancelOrder', item, $event)">取消订单</button>
+                  <button class="btn-red" v-if="![17, 18].includes(Number(item.platform))"
+                    @click.stop="handleAction('payOrder', item, $event)">立即支付</button>
+                  <button class="btn-red" v-if="[17, 18].includes(Number(item.platform))"
+                    @click.stop="paymentpage('payOrder', item, $event)">电影支付</button>
+
+
                 </template>
                 <template v-else-if="item.status === 1">
-                  <button class="btn-cl6" @click.stop="handleAction('confirmReceive', item, $event)">申请售后</button>
+
+                  <button class="btn" v-if="item.platform == 15 && item.type_name == '特惠打车'"
+                    @click.stop="detailurls(item.orderurl)">订单详情</button>
+                  <button class="btn" v-if="item.platform == 15 && item.type_name == '特惠酒店'"
+                    @click.stop="detailurls(item.orderurl)">订单详情</button>
+                  <button class="btn" v-if="item.platform == 15 && item.type_name == '海底捞'"
+                    @click.stop="detailurls(item.orderurl)">订单详情</button>
+                  <button class="btn" v-if="item.platform == 15 && item.type_name == '永辉'"
+                    @click.stop="detailurls(item.orderurl)">订单详情</button>
+                  <button class="btn" v-if="item.platform == 15 && item.type_name == '山姆'"
+                    @click.stop="detailurls(item.orderurl)">订单详情</button>
+                  <button class="btn" v-if="item.platform == 15 && item.type_name == '中石化中石油'"
+                    @click.stop="detailurls(item.orderurl)">订单详情</button>
+                  <button class="btn" v-if="item.platform == 15 && item.type_name == '盒马展付码'"
+                    @click.stop="detailurls(item.orderurl)">订单详情</button>
+                  <button class="btn" v-if="item.platform == 15 && item.type_name == 'JD上门家政'"
+                    @click.stop="detailurls(item.orderurl)">订单详情</button>
+                  <button class="btn" v-if="item.platform == 16 && item.type_name == '叮咚买菜'"
+                    @click.stop="detailurls(item.detailurl)">订单详情</button>
+
                 </template>
                 <template v-else-if="item.status === 2">
-                  <button v-if="!item.isGroup" class="btn"
-                    @click.stop="handleAction('viewLogistics', item, $event)">查看物流</button>
-                  <button class="btn-cl6" @click.stop="handleAction('confirmReceive', item, $event)">申请售后</button>
+                  <button class="btn" v-if="item.platform == 15 && item.type_name == '特惠打车'"
+                    @click.stop="detailurls(item.orderurl)">订单详情</button>
+                  <button class="btn" v-if="[21].includes(Number(item.platform))"
+                    @click.stop="handleActiondc('viewDetail', item, $event)">点餐详情</button>
+
+                  <button
+                    v-if="!item.isGroup && item.platform != 21 && item.platform != 15 && item.platform != 17 && item.platform != 18"
+                    class="btn" @click.stop="handleAction('viewLogistics', item, $event)">查看物流</button>
+
                 </template>
                 <template v-else-if="item.status === 7 || item.status === 'used'">
-                  <button class="btn" @click.stop="handleAction('viewDetail', item, $event)">查看详情</button>
+
+                  <button class="btn" v-if="![17, 18].includes(Number(item.platform))"
+                    @click.stop="handleAction('viewDetail', item, $event)">查看详情</button>
+                  <button class="btn" v-if="[17, 18].includes(Number(item.platform))"
+                    @click.stop="handleActiondy('viewDetail', item, $event)">查看详情</button>
+
                 </template>
                 <template v-else-if="item.status === 9">
-                  <button class="btn">已取消</button>
+                  <button class="btn" v-if="![17, 18].includes(Number(item.platform))">已取消</button>
+                  <button class="btn" v-if="[17, 18].includes(Number(item.platform))"
+                    @click.stop="handleActiondy('viewDetail', item, $event)">查看详情</button>
+                </template>
+
+                <template v-if="[19, 20].includes(Number(item.platform))">
+                  <button class="btn" @click.stop="detailsdgxq('viewDetail', item, $event)">查看详情</button>
                 </template>
                 <template v-else-if="item.status === 'useable'">
                   <button class="btn-red" @click.stop="handleAction('useNow', item, $event)">立即使用</button>
@@ -191,6 +267,8 @@
 
 <script>
 import { orderList, orderCancel } from "@/api/lhjdtm";
+import { cancelLockOrder } from "@/api/lehuifilm";
+import { PerformUnlockSeat } from "@/api/lehuiperform";
 import { getPlatformName } from '@/utils/platform'
 
 export default {
@@ -240,6 +318,15 @@ export default {
     }
     this.fetchOrderList()
   },
+  activated() {
+    if (this.$route.query.refresh) {
+      this.page = 1;
+      this.orderList = [];
+      this.fetchOrderList();
+      // 清掉标记，避免下次详情返回时误判
+      this.$router.replace({ path: '/orderInfo', query: {} });
+    }
+  },
   methods: {
     goLogistics(orderId, delivery) {
       if (!orderId) {
@@ -251,14 +338,242 @@ export default {
         query: { id: orderId, address: delivery }
       });
     },
+    getDc(vals) {
+      const cates = { sbk: '星巴克', kfc: '肯德基', mcd: '麦当劳', lk: '瑞幸', cot: '库迪', pzh: '必胜客', tas: '塔斯汀', nx: '奈雪', chagee: '霸王茶姬', dicos: '德克士', molly: '茉莉奶白', guming: '古茗' }
+      return cates[vals]
+    },
     formatPlatformTag(platform, jdType) {
       const p = Number(platform);
-      if (p === 1) return '京东';
-      if (p === 2) return '天猫';
-      if (p === 4) return '盒马';
-      if (p === 5) return '鲜花';
-      if (p === 12) return '途虎';
+      const map = {
+        1: '京东', 2: '天猫', 3: '京东京造', 4: '盒马', 5: '鲜花',
+        12: '途虎', 15: '展付码', 16: '在线商城', 17: '电影',
+        18: '演出', 19: '蛋糕', 20: '电子券', 21: '点餐', 22: '烘焙'
+      };
+      if (map[p]) return map[p];
       return this.getPlatformName(platform, jdType);
+    },
+    normalizeOrder(item) {
+      const biz = item.biz;
+
+      const platform = Number(item.platform);
+      // 点餐单（麦当劳等，platform 21 / biz dc）
+      if (platform === 21 || biz === 'dc') {
+        const goodsList = item.goods || [];
+        const first = goodsList[0] || {};
+        return {
+          ...item,
+          // 列表卡片里给个展示用标题
+          product_img: first.productImage || '',
+          product_title: first.productName || item.storeName || '点餐订单',
+          sell_price: Number(first.amount || item.zongji || 0),
+          total_price: Number(item.zongji || item.totalTenantAmount || 0),
+          pay_amount: Number(item.zongji || item.totalTenantAmount || 0),
+          // 把 goods 映射成 getSubItems 认识的格式
+
+          items: goodsList.map(g => ({
+            // img: g.productImage || '',
+            img: g.productImage,
+            title: g.productName || '',
+            spec_name: g.memo || '',
+            sell_price: g.amount,
+            quantity: g.num || 1
+          })),
+          status: item.status,
+          status_name: item.status_name || item.orderstatus_name || ''
+        };
+      }
+      // 电影 (17) 或 演出 (18)
+      if (platform === 17 || platform === 18 || biz === 'dy' || biz === 'yc') {
+        const isMovie = (platform === 17 || biz === 'dy');
+        const price = Number(isMovie ? (item.showamount || item.price || 0) : (item.price || 0));
+        const qty = Number(item.quantity || 1);
+
+        // 🎯 核心映射：抛弃 ord_bs，直接读 orderstatus
+        let finalStatus = -1;
+        let finalStatusName = '待支付';
+        const os = item.orderstatus;
+
+        if (os === 'N' || os === '0') {
+          finalStatus = -1;
+          finalStatusName = '待支付';
+        } else if (os === 'E' || os === '8') {
+          finalStatus = 9;
+          finalStatusName = '订单超时';
+        } else if (os === 'C' || os === '2' || os === 'R' || os === '7') {
+          finalStatus = 9;
+          finalStatusName = (os === 'R' || os === '7') ? '退款完成' : '已取消';
+        } else if (os === 'P' || os === '1') {
+          finalStatus = 1;
+          finalStatusName = '已付款';
+        } else if (os === 'S' || os === '4') {
+          finalStatus = 7;
+          finalStatusName = '出票成功';
+        } else if (os === 'T' || os === '11') {
+          finalStatus = 2;
+          finalStatusName = '正在出票';
+        } else if (os === 'F') {
+          finalStatus = 3;
+          finalStatusName = '出票失败';
+        } else {
+          // 如果接口传了上面的字典之外的状态，直接兜底用接口给的 name
+          finalStatusName = item.orderstatus_name || '未知状态';
+        }
+
+        return {
+          ...item,
+          product_img: isMovie ? (item.movielogo || item.img || '') : (item.img || ''),
+          product_title: isMovie ? (item.moviename || item.title || '') : (item.title || ''),
+          sell_price: price,
+          total_price: price * qty,
+          pay_amount: price * qty,
+          spec_text: isMovie
+            ? [item.cinemaname, item.roomname, item.playtime, item.seats].filter(Boolean).join(' | ')
+            : [item.venuesname, item.dateDesc, item.priceDesc].filter(Boolean).join(' | '),
+
+          status: finalStatus,           // 转换好的状态
+          status_name: finalStatusName   // 转换好的中文名称
+        };
+      }
+      // 蛋糕单（platform 19 / biz dg）——新增，不影响原有平台
+
+      if (platform === 19 || biz === 'dg') {
+        const subList = Array.isArray(item.order_list) ? item.order_list : [];
+        const items = [];
+
+        subList.forEach(sub => {
+          let parsed = null;
+          try {
+            parsed = typeof sub.content === 'string' ? JSON.parse(sub.content) : sub.content;
+          } catch (e) {
+            parsed = null;
+          }
+
+          // content 可能是数组（id 29/28）或对象（id 30/22/21…）
+          const arr = Array.isArray(parsed) ? parsed : (parsed ? [parsed] : []);
+
+          arr.forEach(c => {
+            const product = c.product || {};
+            const xinghao = c.xinghao || {};
+
+            // 1) 数组结构：有 product/xinghao，能取到商品名、图片、规格、价格
+            if (product.title || product.image_path || xinghao.name) {
+              items.push({
+                img: product.image_path || '',
+                title: product.title || '蛋糕订单',
+                spec_name: [
+
+                  c.ship_date ? `配送日期：${c.ship_date} ${c.ship_time_text || ''}` : ''
+                ].filter(Boolean).join(' | '),
+                sell_price: Number(xinghao.price || item.zongji || 0),
+                quantity: Number(c.quantity || 1)
+              });
+              return;
+            }
+
+            // 2) 对象结构（供应商 content）：没有 product，用 content 里的线索兜底
+            const shipText = c.group && Object.values(c.group)[0]
+              ? [
+                Object.values(c.group)[0].ship_date || '',
+                Object.values(c.group)[0].ship_time_text || ''
+              ].filter(Boolean).join(' ')
+              : '';
+
+            items.push({
+              img: '',
+              title: '蛋糕订单',
+              spec_name: [
+                shipText ? `配送：${shipText}` : '',
+                ''
+              ].filter(Boolean).join(' | '),
+              sell_price: Number(sub.dg_final_amount || item.zongji || 0),
+              quantity: Number(c.quantitys || 1)
+            });
+          });
+        });
+
+        // 3) 完全解析不出商品时，用订单顶层兜底
+        if (items.length === 0) {
+          items.push({
+            img: '',
+            title: item.content || '蛋糕订单',
+            spec_name: '',
+            sell_price: Number(item.zongji || 0),
+            quantity: 1
+          });
+        }
+
+        return {
+          ...item,
+          product_img: items[0].img || '',
+          product_title: items[0].title || '蛋糕订单',
+          sell_price: Number(item.zongji || 0),
+          total_price: Number(item.zongji || 0),
+          pay_amount: Number(item.zongji || 0),
+          items,
+          status: item.ord_bs,
+          status_name: (subList[0] && subList[0].state_name) || item.platform_name || '蛋糕',
+          add_time_text: item.add_time_text || ''
+        };
+      }
+
+      // 电子券（platform 20 / biz dzq）——新增，不影响其他平台
+      if (platform === 20 || biz === 'dzq') {
+        const coupon = item.coupons || {};
+        return {
+          ...item,
+          product_img: coupon.image || coupon.img || item.img || '',
+          product_title: coupon.title || item.content || item.platform_name || '电子券',
+          sell_price: Number(coupon.price ?? item.zongji ?? 0),
+          total_price: Number(item.zongji ?? coupon.price ?? item.total_fee ?? 0),
+          pay_amount: Number(item.total_fee ?? item.zongji ?? coupon.price ?? 0),
+          quantity: Number(item.num || 1),
+          items: [{
+            img: coupon.image || coupon.img || item.img || '',
+            title: coupon.title || item.content || '电子券',
+            spec_name: '',
+            sell_price: Number(coupon.price ?? item.zongji ?? 0),
+            quantity: Number(item.num || 1)
+          }],
+          status: item.ord_bs,
+          status_name: item.platform_name || '电子券'
+        };
+      }
+
+      // 烘焙 / 随心兑（platform 22 / biz sxd）
+      if (platform === 22 || biz === 'sxd') {
+        const brand = item.brandInfo || {};
+        const shop = item.shopInfo || {};
+        return {
+          ...item,
+          product_img: brand.logoThumbUrl || brand.logoUrl || '',
+          product_title: item.brandName || brand.brandName || '烘焙订单',
+          spec_text: [shop.name].filter(Boolean).join(' | '),
+          sell_price: Number(item.total_fee),
+          total_price: Number(item.total_fee ?? item.price ?? 0),
+          pay_amount: Number(item.price ?? item.total_fee ?? 0),
+          quantity: Number(item.quantity || 1),
+          status: item.status,
+          status_name: item.orderstatus_name || item.status_name || '支付成功'
+        };
+      }
+
+      // 其他非 jdtm 订单（展付码、线上商城等）
+      if (biz !== 'jdtm') {
+        return {
+          ...item,
+          product_img: item.product_img || item.img || '',
+          product_title: item.product_title || item.title || item.order_name || item.type_name || '',
+          sell_price: item.sell_price ?? item.price ?? item.total_fee ?? 0,
+          total_price: item.total_price ?? item.total_fee ?? item.pay_amount ?? 0,
+          pay_amount: item.pay_amount ?? item.total_fee ?? item.total_price ?? 0,
+          spec_text: item.spec_text || '',
+          status: item.status ?? item.order_status,
+          status_name: item.status_name || item.order_status_name || item.orderstatus_name || ''
+        };
+      }
+
+      // jdtm 商城单原样返回
+      return item;
     },
 
     // 提取所有商品数据
@@ -267,7 +582,7 @@ export default {
         return order.items.map(goods => ({
           img: goods.img || order.product_img || '',
           title: goods.title || order.product_title || '',
-          spec_name: goods.spec_name || '',
+          spec_name: goods.spec_name || order.spec_text || '',
           sell_price: goods.sell_price ?? order.sell_price ?? '',
           quantity: goods.quantity ?? order.quantity ?? 1,
 
@@ -283,7 +598,7 @@ export default {
         return [{
           img: order.product.img || order.product_img || '',
           title: order.product.title || order.product_title || '',
-          spec_name: '',
+          spec_name: order.spec_text || '',
           sell_price: order.product.sell_price ?? order.sell_price ?? '',
           quantity: order.quantity ?? 1
         }];
@@ -291,25 +606,135 @@ export default {
       return [{
         img: order.product_img || '',
         title: order.product_title || '',
-        spec_name: '',
+        spec_name: order.spec_text || '',
         sell_price: order.sell_price ?? '',
         quantity: order.quantity ?? 1
       }];
     },
 
     getPlatformName,
+    detailsdgxq(vals, item, events) {
+      if (Number(item.platform) === 19) {
+        this.$router.push({ path: '/orderDetaildg', query: { id: item.order_list[0].id, platform: item.platform } });
+        return;
+      }
 
+      if (Number(item.platform) === 20) {
+        this.$router.push({ path: '/orderDetaildzq', query: { id: item.id, platform: item.platform } });
+        return;
+      }
+    },
     goDetail(item) {
+      console.log(item)
+      if (item.platform == 15) {
+        return false
+      }
+
+      if (item.platform == 16) {
+        return false
+      }
+
       if (item.biz === 'tuhu' || Number(item.platform) === 12) {
         this.$router.push({ path: '/orderDetail', query: { order_id: item.order_id } });
         return;
       }
-      // 组合单点击跳转第一个商品或主订单
+      // 新增：电影/演出带 biz
+      if (Number(item.platform) === 17 || Number(item.platform) === 18) {
+        this.$router.push({ path: '/orderDetaildy', query: { id: item.id, platform: item.platform } });
+        return;
+      }
+      if (Number(item.platform) === 19) {
+        this.$router.push({ path: '/orderDetaildg', query: { id: item.order_list[0].id, platform: item.platform } });
+        return;
+      }
+
+      if (Number(item.platform) === 20) {
+        this.$router.push({ path: '/orderDetaildzq', query: { id: item.id, platform: item.platform } });
+        return;
+      }
+      if (Number(item.platform) === 21) {
+        this.$router.push({
+          path: '/OrderDetaildc',
+          query: { orderData: JSON.stringify(item.id), platform: item.platform }
+        });
+        return;
+      }
+
+      if (Number(item.platform) === 22) {
+        this.$router.push({ path: '/OrderDetailhb', query: { id: item.id } });
+        return;
+      }
+
+
       if (item.isGroup) {
         this.$router.push({ path: '/orderDetail', query: { id: item.groupList[0].id } });
         return;
       }
       this.$router.push({ path: '/orderDetail', query: { id: item.id } });
+    },
+
+
+    detailurls(detailurls) {
+
+      window.location.href = detailurls
+    },
+    dyyc(action, item, event) {
+      console.log(item)
+
+      this.$dialog.confirm({
+        title: '取消订单',
+        message: '确定要取消该订单吗？',
+        confirmButtonColor: 'red'
+      }).then(() => {
+        if (item.platform == 17) {
+          cancelLockOrder({ oid: item.id }).then(res => {
+            if (res.code == 200) {
+              this.$toast(res.msg || '订单已取消')
+              this.fetchOrderList()
+            } else {
+              this.$toast(res.msg || '取消失败')
+            }
+          })
+        }
+        if (item.platform == 18) {
+          PerformUnlockSeat({ oid: item.id }).then(res => {
+            if (res.code == 200) {
+              this.$toast(res.msg || '订单已取消')
+              this.fetchOrderList()
+            } else {
+              this.$toast(res.msg || '取消失败')
+            }
+          })
+        }
+
+
+      }).catch(() => { })
+    },
+    paymentpage(action, item, event) {
+      if (Number(item.platform) === 17) {
+        this.$router.replace({ path: "/paymentpage", query: { order: item.id } })
+      }
+      if (Number(item.platform) === 18) {
+        this.$router.push({ path: "/performPaymentPage", query: { isId: true, id: item.id, platform: 18 } })
+      }
+
+
+
+
+    },
+    handleActiondy(action, item, event) {
+      if (Number(item.platform) === 17 || Number(item.platform) === 18) {
+        this.$router.push({ path: '/orderDetaildy', query: { id: item.id, platform: item.platform } });
+        return;
+      }
+    },
+    handleActiondc(action, item, event) {
+      // ✅ 将整个 item 对象转成 JSON 字符串传过去
+      this.$router.push({
+        path: '/OrderDetaildc',
+        query: { orderData: JSON.stringify(item.id), platform: item.platform }
+      });
+      return;
     },
 
     handleAction(action, item, event) {
@@ -427,6 +852,10 @@ export default {
           this.$toast('途虎订单暂不支持查看详情');
           return;
         }
+        if (Number(item.platform) === 17 || Number(item.platform) === 18) {
+          this.$router.push({ path: '/orderDetail', query: { id: item.id, biz: item.biz } });
+          return;
+        }
         this.$router.push({ path: '/orderDetail', query: { id: item.id } })
       }
     },
@@ -468,9 +897,14 @@ export default {
           const mergedList = [];
           const groupMap = {};
 
-          list.forEach(item => {
+          list.forEach(rawItem => {
+            // 1. 先统一格式化（处理电影、演出、在线商城等特殊 biz 的字段）
+            // 如果是 jdtm 商城单，会原样返回，不影响原逻辑
+            const item = this.normalizeOrder(rawItem);
+
             const gid = item.group_id;
 
+            // 2. 正常的组合单聚合逻辑 (只有有 group_id 的商城单才会进这里)
             if (gid && String(gid) !== "0") {
               if (!groupMap[gid]) {
                 groupMap[gid] = {
@@ -484,19 +918,17 @@ export default {
                 groupMap[gid].totalGroupPrice += Number(item.pay_amount || item.total_price || 0);
               }
             } else {
+              // 3. 普通单（包括刚格式化的电影、演出等）直接推入
               mergedList.push(item);
             }
           });
 
           // 检查每个合并的组是否真的是跨平台组合
-
           mergedList.forEach(item => {
             if (item.groupList && item.groupList.length > 1) {
-              // 只要 groupList 里有多条订单，统一视为组合单（不管是同平台还是跨平台）
               item.isGroup = true;
               item.totalGroupPrice = Number(item.totalGroupPrice.toFixed(2));
             } else {
-              // 只有一条订单，或者没有 group_id 的，保持普通单
               item.isGroup = false;
             }
           });
@@ -649,6 +1081,8 @@ export default {
 .order-no {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  width: 100%;
 }
 
 .status {

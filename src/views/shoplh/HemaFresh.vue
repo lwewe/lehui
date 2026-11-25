@@ -17,10 +17,9 @@
     <!-- 分类图标 -->
     <div class="category-box" v-if="categoryList.length">
       <div class="category-grid">
-        <div class="cat-item" v-for="(item, index) in categoryList.slice(0, 10)" :key="index" @click="goCategory(item)">
+        <div class="cat-item" v-for="(item, index) in categoryList.slice(0, 15)" :key="index" @click="goCategory(item)">
           <img class="cat-icon" :src="item.img" alt="" />
           <div class="cat-name">{{ item.title }}</div>
-
         </div>
       </div>
     </div>
@@ -66,7 +65,12 @@
         </div>
       </div>
     </div>
-
+    <div class="list-footer">
+      <div v-if="isLoading && goodsList.length" class="footer-tip">
+        <van-loading size="16px" type="spinner" /> 加载中...
+      </div>
+      <div v-else-if="isScroll && goodsList.length" class="footer-tip">— 没有更多了 —</div>
+    </div>
     <div class="bottom-safe"></div>
   </div>
 </template>
@@ -101,56 +105,96 @@ export default {
       this.goodsList = [];   // 搜索时清空旧列表
       this.hemaProductsLists(1);
     },
-
-    async hemaProductsLists(page = this.page) {
-      if (this.isLoading) return       // 防止重复请求
-      if (this.isScroll && page > 1) return  // 没有更多了就不请求
-
+    async hemaProductsLists(page = 1) {
+      if (this.isLoading || (this.isScroll && page > 1)) return
       this.isLoading = true
       try {
-        const res = await hemaProductsList({ page, limit: this.limit, keyword: this.keyword || "" })
-        this.isLoading = false
-
+        const res = await hemaProductsList({
+          page,
+          limit: this.limit,
+          keyword: this.keyword.trim()
+        })
         if (res.code === 200 && res.data) {
           const list = res.data.list || []
-
-          if (list.length === 0) {
-            this.isScroll = true    // 没有更多
-            return
-          }
-
-          if (page === 1) {
-            this.goodsList = []
-          }
-          this.goodsList = [...this.goodsList, ...list]
-
-          // 如果返回数量小于 limit，说明没有下一页
-          if (list.length < this.limit) {
-            this.isScroll = true
-          }
+          if (page === 1) this.goodsList = []
+          this.goodsList = this.goodsList.concat(list)
+          this.page = page
+          if (list.length < this.limit) this.isScroll = true
+        } else if (page === 1) {
+          this.goodsList = []
+          this.isScroll = true
         }
       } catch (err) {
+        console.error('hemaProductsList 失败:', err)
+      } finally {
         this.isLoading = false
-        console.error("hemaProductsList 失败:", err)
       }
     },
+
+    // async hemaProductsLists(page = this.page) {
+    //   if (this.isLoading) return       // 防止重复请求
+    //   if (this.isScroll && page > 1) return  // 没有更多了就不请求
+
+    //   this.isLoading = true
+    //   try {
+    //     const res = await hemaProductsList({ page, limit: this.limit, keyword: this.keyword || "" })
+    //     this.isLoading = false
+
+    //     if (res.code === 200 && res.data) {
+    //       const list = res.data.list || []
+
+    //       if (list.length === 0) {
+    //         this.isScroll = true    // 没有更多
+    //         return
+    //       }
+
+    //       if (page === 1) {
+    //         this.goodsList = []
+    //       }
+    //       this.goodsList = [...this.goodsList, ...list]
+
+    //       // 如果返回数量小于 limit，说明没有下一页
+    //       if (list.length < this.limit) {
+    //         this.isScroll = true
+    //       }
+    //     }
+    //   } catch (err) {
+    //     this.isLoading = false
+    //     console.error("hemaProductsList 失败:", err)
+    //   }
+    // },
+    // handleScroll() {
+    //   if (this.timer) return
+    //   this.timer = setTimeout(() => {
+    //     this.timer = null
+
+    //     const scrollTop = document.documentElement.scrollTop || document.body.scrollTop
+    //     const scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight
+    //     const clientHeight = document.documentElement.clientHeight || document.body.clientHeight
+
+    //     // ✅ 留 50px 余量，提前触发
+    //     if (scrollTop + clientHeight >= scrollHeight - 50) {
+    //       if (this.isScroll || this.isLoading) return
+    //       this.page++
+    //       this.hemaProductsLists(this.page)
+    //     }
+    //   }, 200)
+    // },
     handleScroll() {
       if (this.timer) return
       this.timer = setTimeout(() => {
         this.timer = null
-
         const scrollTop = document.documentElement.scrollTop || document.body.scrollTop
         const scrollHeight = document.documentElement.scrollHeight || document.body.scrollHeight
         const clientHeight = document.documentElement.clientHeight || document.body.clientHeight
 
-        // ✅ 留 50px 余量，提前触发
         if (scrollTop + clientHeight >= scrollHeight - 50) {
-          if (this.isScroll || this.isLoading) return
-          this.page++
-          this.hemaProductsLists(this.page)
+          // 原来先 page++ 再请求，失败时页码就跳过了；改成传下一页，成功后才写入 page
+          this.hemaProductsLists(this.page + 1)
         }
       }, 200)
     },
+
     async categoryLists() {
       try {
         const res = await categoryList({ platform: 4 });
@@ -175,22 +219,60 @@ export default {
       try {
         const res = await channelDetail({ id: 15 });
         if (res.code === 200 && res.data) {
-           console.log('-----')
-           console.log(res.data)
+          console.log('-----')
+          console.log(res.data)
 
-          this.categoryList = res.data.modules[0].items
+          this.categoryList = res.data.modules[2].items
 
- 
+
         }
       } catch (err) {
         console.error("channelDetail 失败:", err);
       }
     },
     goCategory(item) {
-        console.log('跳转 shop_cate_id =', item.id, 'name =', item.name)
+      console.log('跳转 shop_cate_id =', item.id, 'name =', item.name)
+
+      let ids = '';
+      if (item.id == 34) {
+        ids = 2
+      }
+      else if (item.id == 39) {
+        ids = 3
+      }
+      else if (item.id == 25) {
+        ids = 1
+      }
+      else if (item.id == 65) {
+        ids = 7
+      }
+      else if (item.id == 154) {
+        ids = 12
+      }
+      else if (item.id == 52) {
+        ids = 4
+      }
+      else if (item.id == 70) {
+        ids = 8
+      }
+
+      else if (item.id == 396) {
+        ids = 395
+      }
+      else if (item.id == 294) {
+        ids = 262
+      }
+      else if (item.id == 358) {
+        ids = 14
+      }
+
+
+
+
       this.$router.push({
-        path: "/productList",
-        query: { shop_cate_id: item.id, title: item.name }
+        path: "/productListhm",
+        query: { shop_cate_id: ids, title: item.name, platform: 4 }
+        // query: { shop_cate_id: item.id, title: item.name,platform:4 }
       });
     },
 
@@ -287,7 +369,7 @@ export default {
   padding: 16px 0;
   background: #fff;
   border-radius: 12px;
-  margin: -12px 10px 10px 10px;
+  margin: 0px 10px 10px 10px;
   position: relative;
   z-index: 2;
 }
@@ -572,6 +654,28 @@ export default {
     padding: 6px 14px;
     border-radius: 20px;
     cursor: pointer;
+  }
+}
+
+.state-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 0;
+  color: #999;
+  font-size: 14px;
+}
+
+.list-footer {
+  padding: 16px 0;
+
+  .footer-tip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #999;
   }
 }
 </style>

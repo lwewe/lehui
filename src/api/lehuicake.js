@@ -324,3 +324,30 @@ export function couponsPaySuccess(order_no) {
 export function getCouponsOrder(id) {
     return setaxios.post('/coupons/dzqorder', { id })
 }
+
+
+
+
+export function getStoreList(data) {
+    return setaxios.post('/dangao/store', data)
+}
+
+export function getBrandList(data) {
+    return setaxios.post('/dangao/brand', data)
+}
+
+export function getQrcode(data) {
+    return setaxios.post('/dangao/getqrcode', data)
+}
+
+export function getOrderList(data) {
+    return setaxios.post('/dangao/ddlist', data)
+}
+
+export function getOrderDetail(data) {
+    return setaxios.post('/dangao/order', data)
+}
+export function dcorderDiancan(data) {
+    return setaxios.post('/diancan/dcorder', data)
+}
+

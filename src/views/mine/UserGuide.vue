@@ -12,8 +12,9 @@
       </div>
     </div>
     <div>
-      <!--    商城-->
-      <div :id="'s'+item.id" v-for="(item,index) in contentList" v-if="item.content" :key="item.title">
+      <!--   商城-->
+         <template v-for="(item,index) in contentList">
+      <div :id="'s'+item.id" v-if="item.content" :key="item.title || index">
         <div class="titleBox">
           <div class="number">{{ index + 1 }}.</div>
           <div>{{ item.title }}</div>
@@ -22,6 +23,8 @@
           <div class="content" v-html="item.content"></div>
         </div>
       </div>
+</template>
+
     </div>
 <!--    列表-->
     <div class="ListBox">
@@ -74,7 +77,7 @@ export default {
         {
           id: 4,
           img: require("../../assets/mine/shiyong/tss.png"),
-          text: "图书选购",
+          text: "专属选购",
         },
       ],
       tushu: {},
@@ -103,7 +106,7 @@ export default {
         {
           id: 4,
           img: require("../../assets/mine/shiyong/ts.png"),
-          text: "图书",
+          text: "演出",
         },
       ],
       isTop:false,
@@ -135,26 +138,36 @@ export default {
       }
     },
     getGuideInfo() {
-      getGuide().then(res => {
-        this.loadingflag = false
-        if (res.code == 200) {
-          this.tushu = res.data.tushu
-          this.shangcheng = res.data.shangcheng
-          this.dianying = res.data.dianying
-          this.dangao = res.data.dangao
-          this.tushu.id = 4
-          this.shangcheng.id = 1
-          this.dianying.id = 2
-          this.dangao.id = 3
-          this.contentList.push(
-              this.shangcheng,
-              this.dianying,
-              this.dangao,
-              this.tushu,
-          )
-        }
-      })
+  getGuide().then(res => {
+    this.loadingflag = false
+    if (res.code == 200) {
+      const d = res.data || {}
+
+      // 接口字段 → 模板字段（做一层兼容映射，接口改字段名也不怕）
+      this.shangcheng = d.shangcheng || {}
+      this.dianying  = d.film  || d.dianying || {}
+      this.dangao    = d.cake  || d.dangao   || {}
+      this.tushu     = d.book  || d.tushu    || {}
+      // 专属选购指南（原来漏了）
+      this.zhuan     = d.zhuan || {}
+
+      this.shangcheng.id = 1
+      this.dianying.id   = 2
+      this.dangao.id     = 3
+      // this.tushu.id      = 4
+      this.zhuan.id      = 4
+
+      // 每次重新赋值，避免 keep-alive / 重复调用时 push 叠加
+      this.contentList = [
+        this.shangcheng,
+        this.dianying,
+        this.dangao,
+        // this.tushu,
+        this.zhuan,
+      ]
     }
+  })
+}
   },
   created() {
     this.getGuideInfo()

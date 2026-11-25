@@ -50,7 +50,7 @@ export function getSetting() {
 }
 // 使用指南
 export function getGuide() {
-    return setaxios.post("Personal/guide", {
+    return setaxios.post("index/guide", {
         channel_no:store.state.channel_no,
         // token:localStorage.getItem("token"),
     });

@@ -64,6 +64,14 @@ export function productList(data) {
         ...data
     });
 }
+export function guessLike(data) {
+    return setaxios.post("/jdtmshop/guessLike", {
+        channel_no: store.state.channel_no,
+        token: localStorage.getItem("token"),
+        ...data
+    });
+}
+
 export function productLists(data) {
     return setaxios.post("/jdtmshop/productList", {
         channel_no: store.state.channel_no,

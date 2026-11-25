@@ -101,7 +101,7 @@
           <div class="imageSlider">
             <div class="sliderContainer">
               <div class="sliderItem" v-for="(item, index) in imageList" :key="index">
-                <img :src="item.img" @click="goToFour(index)" alt="" class="sliderImg">
+                <img :src="item.img" @click="goToFour(index,item)" alt="" class="sliderImg">
               </div>
             </div>
           </div>
@@ -187,47 +187,14 @@
         </div>
       </div>
       <!-- ================= 新增结束 ================= -->
-      <!-- ================= 新增结束 ================= -->
-      <!--  -->
-      <!-- <div>
-        <div class="brandSection">
-          
-          <div class="brandTitle"><span>品牌推荐</span><span style="font-size: 12px;color: #707070;"
-              @click="BrandSeasonPage()">更多<img src="../../src/assets/lh/more.png"
-                style="width: 10px;height: 10px;opacity: 0.6;" alt=""></span>
-          </div>
-          <div class="brandList">
-            <div class="brandItem" v-for="(brand, index) in brandList" :key="index">
-              <img :src="brand.img" alt="" class="brandImg" @click="schengWeb(brand)">
 
-            </div>
-          </div>
+      
 
-          
-          <div class="scrollPicSection">
+      <div>
 
-            <div class="picScroll">
-              <div class="picItem" v-for="(pic, index) in picList1" :key="index" @click="schengWeb1(pic)">
-                <img :src="pic.img" alt="" class="scrollPic">
-                <span>{{ pic.title }}</span>
-              </div>
-            </div>
-          </div>
 
-          
-          <div class="scrollPicSection">
 
-            <div class="picScroll">
-              <div class="picItem" v-for="(pic, index) in picList2" :key="index" @click="schengWeb1(pic)">
-                <img :src="pic.img" alt="" class="scrollPic">
-                <span>{{ pic.title }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div> -->
-
-      <!--  -->
+      </div>
 
     </div>
 
@@ -237,7 +204,7 @@
     <!--    tab切换 (改为: 由 zoneList 过滤出 id=10,11,12,13 的板块) :class="{ tabbar2: show }"  -->
     <div class="tabbar" ref="topScroll" v-if="currentTabs.length > 1">
       <!-- <div v-if="isLoading" class="isTab" :style="'width:' + currentTabs.length * 90 + 'px;'"></div> -->
-      <div class="tabbarBox" :style="'width:' + currentTabs.length * 86 + 'px;'">
+      <div class="tabbarBox">
         <div class="tabItem" v-for="(item, index) in currentTabs" :key="item.id" @click="changeTab(item.id, index)">
           <div class="tabTop " :class="{ tabTop2: active == item.id }">{{ item.title }}<span class="lines"></span>
           </div>
@@ -367,7 +334,7 @@ import { getHemaLoginUrlshangcheng } from "@/api/hemashangcheng";
 
 import { getClassifyList } from "@/api/classify";
 
-
+import { getBrandList } from '@/api/lehuicake'
 
 export default {
   name: "IndexView",
@@ -408,6 +375,9 @@ export default {
       img44: '',
       img55: '',
       img66: '',
+      img77: '',
+      
+
       arr1: '',
       arr3: '',
       arr2: '',
@@ -415,26 +385,11 @@ export default {
       arr5: '',
       arr6: '',
       reqId: 0,
-      activityList: [
-        {
-          id: 1,
-          img: require('../assets/11.jpg'), // 记得换成你自己的图片路径
-          link: '/ActivityPage1' // 点击跳转的路径
-        }
-        // 如果想要多个图切换，就把下面的注释放开并修改路径：
-        // ,{
-        //   id: 2,
-        //   img: require('../assets/u.png'),
-        //   link: '/ActivityPage2'
-        // }
-        // ,{
-        //   id: 3,
-        //   img: require('../assets/33.png'),
-        //   link: '/ActivityPage2'
-        // }
-      ],
+      activityList: [],
       // 新增：多分类聚合板块的数据
       multiCategoryData: [],
+      categoryBlocks: [],       // getIndex 的本地生活/在线点餐/便民服务
+      brandCategoryBlock: null, // getBrandList 的品牌板块
       dingdongPosition: {
         latitude: "",
         longitude: ""
@@ -500,13 +455,53 @@ export default {
       yanse44: '',
       yanse55: '',
       yanse66: '',
+      yanse88: '',
+      yanse99: '',
+
       img31: '',
       img32: '',
-      homeFlg:''
+      homeFlg: ''
     }
   },
   methods: {
+    rebuildMultiCategory() {
+      const blocks = this.categoryBlocks.slice()
+      if (this.brandCategoryBlock) blocks.push(this.brandCategoryBlock)
+      this.multiCategoryData = blocks   // 一次性整体重建，不会重复、不怕先后顺序
+    },
+    brandnews() {
+      return getBrandList().then(res => {
+        if (res.code == 200 && res.data) {
+          const list = (res.data || []).filter(i => i.logo)
+
+          this.brandCategoryBlock = list.length ? {
+            type: 'brand',
+            title: '随心付',
+            desc: '| 蛋糕、饮品、甜品',
+            showMore: true,
+            list: list.slice(0, 10).map(item => ({
+              type: 'brand',          // 给每项打标, 防 id 撞车
+              id: item.brand_id,
+              brandId: item.brand_id,
+              name: item.name,
+              img: item.logo           // 模板里叫 img, 接口叫 logo
+            }))
+          } : null
+          this.rebuildMultiCategory()
+        }
+      }).catch(err => console.error('品牌列表加载失败:', err))
+    },
+    mors() {
+      this.$router.push('/Homefood');
+    },
     Morediancan(idx) {
+      const block = this.multiCategoryData[idx]
+
+      // 品牌专区排在最后，按 type 判断，不能再用固定下标
+      if (block && block.type === 'brand') {
+        this.$router.push('/Homefood');
+        return;
+      }
 
       if (idx === 0) {
         this.$router.push('/StoreNew');
@@ -552,9 +547,9 @@ export default {
     },
     handleActivityClick(item) {
       console.log('点击了活动图:', item);
-      if (item.link) {
+      if (item.url) {
         // 如果是站内路由：
-        this.$router.push(item.link);
+        this.$router.push(item.url);
         // 如果是外部链接，请换成：window.location.href = item.link;
       }
     },
@@ -1426,7 +1421,7 @@ export default {
     // },
     goToDetail(item) {
       this.$goDetail(item, {
-        extraQuery: {  homeFlg: 1 }
+        extraQuery: { homeFlg: 1 }
       });
     },
     // 跳转到永辉彩食鲜免密登录
@@ -1496,9 +1491,13 @@ export default {
     zoneListIndex8() {
       zoneList({ pid: 0 }).then(res => {
         if (res.code == 200) {
+
+          this.activityList = res.data.list.filter(item => item.id === 60);
+
           const datas = res.data.list.filter(item => item.id === 44);
           const datas1 = res.data.list.filter(item => item.id === 45);
           const datas2 = res.data.list.filter(item => item.id === 46);
+          const datas6 = res.data.list.filter(item => item.id === 65);
           this.img44 = datas[0].banner;
 
           this.yanse11 = datas[0].yanse1;
@@ -1514,7 +1513,10 @@ export default {
           this.yanse55 = datas2[0].yanse1;
           this.yanse66 = datas2[0].yanse2;
 
+this.img77 = datas6[0].banner;
 
+          this.yanse88 = datas6[0].yanse1;
+          this.yanse99 = datas6[0].yanse2;
 
 
           const datas3 = res.data.list.filter(item => item.id === 31);
@@ -1712,73 +1714,53 @@ export default {
     toDetail(item) {
       // this.$goDetail(item);
       this.$goDetail(item, {
-        extraQuery: {   homeFlg: 1  }
+        extraQuery: { homeFlg: 1 }
       });
     },
 
-    // 分割商品列表到左右两列
-    // splitShopList(list) {
-    //   console.log('开始分割商品列表，总长度:', list.length)
+    splitShopList(list) {
+      this.leftList = []
+      this.rightList = []
 
-    //   this.leftList = []
-    //   this.rightList = []
+      if (!Array.isArray(list) || list.length === 0) return
 
-    //   if (!Array.isArray(list) || list.length === 0) {
-    //     console.warn('商品列表为空或不是数组')
-    //     return
-    //   }
+      let leftHeight = 0
+      let rightHeight = 0
 
-    //   list.forEach((item, index) => {
-    //     if (index % 2 === 0) {
-    //       this.leftList.push(item)
-    //     } else {
-    //       this.rightList.push(item)
-    //     }
-    //   })
+      // 如果左侧有活动图(Banner)，给左侧一个初始高度权重，防止左侧过长
+      // 如果当时没有显示Banner，这段逻辑也不会报错
+      if (this.active == 0 && this.activityList.length > 0) {
+        leftHeight = 200 // 假设Banner高度占据约200的权重
+      }
 
-    //   console.log('分割完成 - 左列:', this.leftList.length, '右列:', this.rightList.length)
-    // },
-// 分割商品列表到左右两列 (最简单的等高瀑布流分配)
-splitShopList(list) {
-  this.leftList = []
-  this.rightList = []
-  
-  if (!Array.isArray(list) || list.length === 0) return
+      list.forEach((item) => {
+        // 估算每个商品卡片的高度权重 (图片方形+文字，约260左右)
+        const itemWeight = 260
 
-  let leftHeight = 0
-  let rightHeight = 0
-  
-  // 如果左侧有活动图(Banner)，给左侧一个初始高度权重，防止左侧过长
-  // 如果当时没有显示Banner，这段逻辑也不会报错
-  if (this.active == 0 && this.activityList.length > 0) {
-    leftHeight = 200 // 假设Banner高度占据约200的权重
-  }
-
-  list.forEach((item) => {
-    // 估算每个商品卡片的高度权重 (图片方形+文字，约260左右)
-    const itemWeight = 260 
-
-    // 核心逻辑：谁短，下一个商品就给谁
-    if (leftHeight <= rightHeight) {
-      this.leftList.push(item)
-      leftHeight += itemWeight
-    } else {
-      this.rightList.push(item)
-      rightHeight += itemWeight
-    }
-  })
-},
+        // 核心逻辑：谁短，下一个商品就给谁
+        if (leftHeight <= rightHeight) {
+          this.leftList.push(item)
+          leftHeight += itemWeight
+        } else {
+          this.rightList.push(item)
+          rightHeight += itemWeight
+        }
+      })
+    },
     onSortScroll(e) {
       const scrollLeft = e.target.scrollLeft
       const pageWidth = e.target.offsetWidth
       const pageIndex = Math.round(scrollLeft / pageWidth)
       this.currentSortPage = pageIndex
     },
-    goToFour(index) {
+    goToFour(index,item) {
+     console.log(item)
+      
       let pid = '';
       let ys1 = '';
       let ys2 = '';
       let imgs = '';
+      
       // 根据你轮播图的索引，对应不同的专区 ID
       if (index === 1) {
 
@@ -1801,6 +1783,14 @@ splitShopList(list) {
         ys2 = this.yanse66
 
 
+
+      }else if (index === 0) {
+
+         pid = 65;
+        imgs = this.img77;
+        ys1 = this.yanse88
+        ys2 = this.yanse99
+        // this.$router.push('/activityList')
 
       }
 
@@ -2293,11 +2283,18 @@ splitShopList(list) {
         //   })
         // }
 
-        this.multiCategoryData = blocks
-        console.log('multiCategoryData:', blocks)
+        this.categoryBlocks = blocks
+        this.rebuildMultiCategory()
+        console.log('multiCategoryData:', this.multiCategoryData)
       }).catch(err => console.error('getIndex 失败:', err))
     },
     handleMultiCategoryClick(item) {
+      // 品牌专区：item.id 是 brand_id，会和下面的硬编码 id 撞车，必须先分流
+      if (item.type === 'brand') {
+        this.$router.push({ path: '/Homefood', query: { brandId: item.brandId } })
+        return
+      }
+
       const pid = Number(item.pid)
 
 
@@ -2362,11 +2359,16 @@ splitShopList(list) {
 
       // 在线点餐 / 饮品直充 → 点餐品牌
       if (pid === 4 || pid === 5) {
-        // sbk-星巴克，kfc-肯德基，mcd-麦当劳，lk-瑞幸，cot-库迪，pzh-必胜客，tas-塔斯汀，nx-奈雪，chagee-霸王茶姬，dicos-德克士，molly-茉莉奶白，guming-古茗
+      
         const brandMap = {
           '麦当劳': 'mcd', '星巴克': 'sbk', '肯德基': 'kfc', '瑞幸': 'lk',
-          '必胜客': 'pzh', '霸王茶姬': 'chagee', '德克士': 'dicos',
-          '库迪': 'cot', '塔斯汀': 'tas', '奈雪': 'nx',
+          '必胜客': 'pzh', '霸王茶姬': 'chagee', '德克士': 'dicos','喜茶':'xc',
+          '库迪': 'cot', '塔斯汀': 'tas', '奈雪': 'nx','茉莉奶白':'molly','古茗':'guming'
+
+
+
+         
+
 
         }
         if (brandMap[item.name]) { this.goToDiancan(brandMap[item.name]); return }
@@ -2569,6 +2571,7 @@ splitShopList(list) {
   },
   mounted() {
     console.log('组件挂载')
+    // this.brandnews();
     this.IndexchannelList()
     this.brandLists();
     this.IndexcategoryList();
@@ -2918,12 +2921,13 @@ splitShopList(list) {
   .tabbarBox {
     display: flex;
     align-items: center;
-    gap: 20px;
+    width: 100%;
     margin-bottom: 10px;
   }
 
   .tabItem {
-    width: 100%;
+    flex: 1;
+    min-width: 0;
   }
 
   .tabTop {
@@ -2946,11 +2950,12 @@ splitShopList(list) {
     font-weight: bold;
 
     .lines {
-      width: 60px;
+      width: 60%;
       height: 4px;
       position: absolute;
       bottom: -3px;
-      left: 6px;
+      left: 50%;
+      transform: translateX(-50%);
       border-radius: 5px;
 
       display: inline-block;
@@ -3124,6 +3129,7 @@ splitShopList(list) {
       .sliderImg {
         width: 100%;
         border-radius: 8px;
+        // max-height: 90px;
         display: block;
       }
     }
@@ -3852,7 +3858,7 @@ splitShopList(list) {
   }
 
   /* 🌟 如果你后续再加板块，可以继续写 :nth-child(4) 比如 (蓝色系) */
-  .category-block:nth-child(4) {
+  .category-block:nth-child(5) {
     .title-area {
       width: 65%;
 
@@ -3882,7 +3888,7 @@ splitShopList(list) {
   }
 
   /* 🌟 如果你后续再加板块，可以继续写 :nth-child(4) 比如 (蓝色系) */
-  .category-block:nth-child(5) {
+  .category-block:nth-child(4) {
     .title-area {
       width: 65%;
 

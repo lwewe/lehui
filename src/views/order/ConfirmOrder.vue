@@ -152,7 +152,7 @@ export default {
 
     // 获取地址列表，默认选中默认地址
     getAddress() {
-       if (this.order_id || this.group_id) return Promise.resolve()
+      if (this.order_id || this.group_id) return Promise.resolve()
       return addressList().then(res => {
         if (res.code == 200 && res.data && res.data.length > 0) {
           let target = null
@@ -198,117 +198,117 @@ export default {
         }
       })
     },
-     getCheckout() {
-  const params = {
-    address_id: this.addrShow ? this.addrShow.id : 0
-  }
-  // ✅ 多平台聚合单必须优先 group_id，否则只恢复一个子订单
-  if (this.group_id) {
-    params.group_id = Number(this.group_id)
-  } else if (this.order_id) {
-    params.order_id = Number(this.order_id)
-  } else if (this.dataDetail.cartIds) {
-    params.cartIds = Array.isArray(this.dataDetail.cartIds)
-      ? this.dataDetail.cartIds.join(',')
-      : this.dataDetail.cartIds
-  }
-
-  if (this.group_id || this.order_id || this.dataDetail.cartIds) {
-    orderSettle(params).then(res => {
-      if (res.code == 200) {
-        if (res.data.order_id) this.order_id = res.data.order_id
-        if (res.data.group_id) this.group_id = res.data.group_id
-
-        // ✅ 1) 待支付订单：地址以订单快照为准
-        const d = res.data.address && res.data.address.delivery
-        if (d) {
-          this.deliveryInfo = d
-          this.orderDeliveryId = d.id
-          this.addrShow = {
-            id: d.id,
-            name: d.name,
-            phone: d.phone,
-            addr: d.address_text || [
-              d.province_name, d.city_name, d.county_name, d.town_name, d.addr
-            ].filter(Boolean).join(' ')
-          }
-        }
-
-        // ✅ 2) 只有用户确实切换了地址，才覆盖显示 + 调一次 orderUpdateAddress
-        const raw = sessionStorage.getItem('selectedAddress')
-        if (raw) {
-          sessionStorage.removeItem('selectedAddress')
-          let a = null
-          try { a = JSON.parse(raw) } catch (e) { a = null }
-          if (a && String(a.id) !== String(this.orderDeliveryId)) {
-            this.addrShow = {
-              id: a.id,
-              name: a.name,
-              phone: a.phone,
-              addr: [a.province_name, a.city_name, a.county_name, a.town_name, a.addr]
-                .filter(Boolean).join(' ')
-            }
-            this.orderDeliveryId = a.id
-            this.orderUpdateAddress1()   // ✅ 全流程唯一调用点
-          }
-        }
-
-        this.groupedOrderList = res.data.groups.map((group, gIdx) => ({
-          platform: group.platform,
-          platform_name: group.platform_name,
-          items: (group.items || []).map((it, idx) => ({
-            id: it.id || `${group.order_no || gIdx}_${it.product_id}_${idx}`,
-            title: it.product_title || it.title,
-            img: it.product_img || it.img,
-            sell_price: it.sell_price,
-            spec_name: it.spec_name || '',
-            quantity: Number(it.quantity) || 1,
-            product: {
-              title: it.product_title || it.title,
-              img: it.product_img || it.img,
-              sell_price: it.sell_price,
-              platform: group.platform
-            }
-          })),
-          totalPrice: group.sub_total,
-          goodsTotal: group.goods_total,
-          freight: group.freight ?? '0.00',
-          count: group.item_count
-        }))
-
-        this.orderList = this.groupedOrderList.flatMap(g => g.items)
-        this.total = res.data.pay_amount
-        this.loadingflag = false
-      } else {
-        this.loadingflag = false
-        this.$toast(res.msg || '获取结算信息失败')
+    getCheckout() {
+      const params = {
+        address_id: this.addrShow ? this.addrShow.id : 0
       }
-    }).catch(() => {
-      this.loadingflag = false
-      this.$toast('网络异常')
-    })
-  } else {
-    // 立即购买（无 cartIds）走本地拼装 —— 原样不动
-    let detail = this.dataDetail
-    this.orderList = [{
-      id: 0,
-      product: {
-        title: detail.product_title,
-        img: detail.product_img,
-        sell_price: detail.sell_price,
-        platform: detail.platform || 2
-      },
-      title: detail.product_title,
-      img: detail.product_img,
-      sell_price: detail.sell_price,
-      spec_name: detail.spec_name || '',
-      quantity: Number(detail.quantity) || 1
-    }]
-    this.total = Number(detail.sell_price) * Number(detail.quantity)
-    this.groupOrderList()
-    this.loadingflag = false
-  }
-},
+      // ✅ 多平台聚合单必须优先 group_id，否则只恢复一个子订单
+      if (this.group_id) {
+        params.group_id = Number(this.group_id)
+      } else if (this.order_id) {
+        params.order_id = Number(this.order_id)
+      } else if (this.dataDetail.cartIds) {
+        params.cartIds = Array.isArray(this.dataDetail.cartIds)
+          ? this.dataDetail.cartIds.join(',')
+          : this.dataDetail.cartIds
+      }
+
+      if (this.group_id || this.order_id || this.dataDetail.cartIds) {
+        orderSettle(params).then(res => {
+          if (res.code == 200) {
+            if (res.data.order_id) this.order_id = res.data.order_id
+            if (res.data.group_id) this.group_id = res.data.group_id
+
+            // ✅ 1) 待支付订单：地址以订单快照为准
+            const d = res.data.address && res.data.address.delivery
+            if (d) {
+              this.deliveryInfo = d
+              this.orderDeliveryId = d.id
+              this.addrShow = {
+                id: d.id,
+                name: d.name,
+                phone: d.phone,
+                addr: d.address_text || [
+                  d.province_name, d.city_name, d.county_name, d.town_name, d.addr
+                ].filter(Boolean).join(' ')
+              }
+            }
+
+            // ✅ 2) 只有用户确实切换了地址，才覆盖显示 + 调一次 orderUpdateAddress
+            const raw = sessionStorage.getItem('selectedAddress')
+            if (raw) {
+              sessionStorage.removeItem('selectedAddress')
+              let a = null
+              try { a = JSON.parse(raw) } catch (e) { a = null }
+              if (a && String(a.id) !== String(this.orderDeliveryId)) {
+                this.addrShow = {
+                  id: a.id,
+                  name: a.name,
+                  phone: a.phone,
+                  addr: [a.province_name, a.city_name, a.county_name, a.town_name, a.addr]
+                    .filter(Boolean).join(' ')
+                }
+                this.orderDeliveryId = a.id
+                this.orderUpdateAddress1()   // ✅ 全流程唯一调用点
+              }
+            }
+
+            this.groupedOrderList = res.data.groups.map((group, gIdx) => ({
+              platform: group.platform,
+              platform_name: group.platform_name,
+              items: (group.items || []).map((it, idx) => ({
+                id: it.id || `${group.order_no || gIdx}_${it.product_id}_${idx}`,
+                title: it.product_title || it.title,
+                img: it.product_img || it.img,
+                sell_price: it.sell_price,
+                spec_name: it.spec_name || '',
+                quantity: Number(it.quantity) || 1,
+                product: {
+                  title: it.product_title || it.title,
+                  img: it.product_img || it.img,
+                  sell_price: it.sell_price,
+                  platform: group.platform
+                }
+              })),
+              totalPrice: group.sub_total,
+              goodsTotal: group.goods_total,
+              freight: group.freight ?? '0.00',
+              count: group.item_count
+            }))
+
+            this.orderList = this.groupedOrderList.flatMap(g => g.items)
+            this.total = res.data.pay_amount
+            this.loadingflag = false
+          } else {
+            this.loadingflag = false
+            this.$toast(res.msg || '获取结算信息失败')
+          }
+        }).catch(() => {
+          this.loadingflag = false
+          this.$toast('网络异常')
+        })
+      } else {
+        // 立即购买（无 cartIds）走本地拼装 —— 原样不动
+        let detail = this.dataDetail
+        this.orderList = [{
+          id: 0,
+          product: {
+            title: detail.product_title,
+            img: detail.product_img,
+            sell_price: detail.sell_price,
+            platform: detail.platform || 2
+          },
+          title: detail.product_title,
+          img: detail.product_img,
+          sell_price: detail.sell_price,
+          spec_name: detail.spec_name || '',
+          quantity: Number(detail.quantity) || 1
+        }]
+        this.total = Number(detail.sell_price) * Number(detail.quantity)
+        this.groupOrderList()
+        this.loadingflag = false
+      }
+    },
 
     toPay() {
       console.log("[ConfirmOrder] toPay 开始, isLoading =", this.isLoading)
@@ -540,7 +540,14 @@ export default {
       }, res => {
         if (res.err_msg === "get_brand_wcpay_request:ok") {
           this.$toast('支付成功')
-          setTimeout(() => this.$router.replace("/orderInfo"), 1000)
+          // setTimeout(() => this.$router.replace("/orderInfo"), 1000)
+          setTimeout(() => {
+            this.$router.replace({
+              path: '/orderInfo',
+              query: { refresh: Date.now() }
+            });
+          }, 1000);
+
         } else if (res.err_msg === "get_brand_wcpay_request:cancel") {
           this.$toast('已取消支付')
         } else {
@@ -586,9 +593,15 @@ export default {
         payByCard(payload).then(res => {
           this.$toast(res.msg || '支付成功')
           if (res.code == 200) {
+            setTimeout(() => {
+              this.$router.replace({
+                path: '/orderInfo',
+                query: { refresh: Date.now() }
+              });
+            }, 1000);
 
 
-            setTimeout(() => { this.$router.replace("/orderInfo") }, 1000)
+            // setTimeout(() => { this.$router.replace("/orderInfo") }, 1000)
           } else {
             // this.isShow = true
             this.pass = ""
@@ -717,7 +730,7 @@ export default {
     //   sessionStorage.removeItem('selectedAddressId')
     // }
 
-sessionStorage.removeItem('selectedAddressId')
+    sessionStorage.removeItem('selectedAddressId')
     this.getCard()
     this.checkPayPwd()
 
@@ -1001,5 +1014,4 @@ sessionStorage.removeItem('selectedAddressId')
 /deep/ .loadingText {
   color: #ffffff !important;
 }
-
 </style>

@@ -73,7 +73,7 @@
         </div>
       </div>
     </div>
-    <NavigationTab :active="2"></NavigationTab>
+    <!-- <NavigationTab :active="2"></NavigationTab> -->
   </div>
 </template>
 
@@ -407,7 +407,8 @@ export default {
 
 .footer {
   position: fixed;
-  bottom: 50px;
+  bottom:  0px;
+  // bottom: 50px;
   left: 0;
   background-color: white;
   width: 100%;

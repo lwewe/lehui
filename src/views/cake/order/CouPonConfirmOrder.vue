@@ -167,7 +167,7 @@ export default {
               that.getCard();
               if (payRes.code == 200) {
                 setTimeout(() => {
-                  that.$router.replace({ path: "/orderInfo", query: { tabIndex: 1 } });
+                  that.$router.replace({ path: "/orderInfo", query: {  refresh: Date.now() } });
                 }, 1000);
               } else {
                 that.$toast(payRes.msg || "支付成功，但后台校验异常");
@@ -333,7 +333,7 @@ export default {
           couponsPaySuccess(res.data.order_no).then(() => {
             this.getCard();
             setTimeout(() => {
-              this.$router.replace({ path: "/orderInfo", query: { tabIndex: 0 } });
+              this.$router.replace({ path: "/orderInfo", query: { refresh: Date.now()  } });
             }, 1000);
           });
         } else {

@@ -80,8 +80,9 @@
         </div>
 
 
-        <div  @click="showAddressPopup = false">
-           <span style="width: 100%;margin-top: 20px; border-radius: 40px; height: 40px;background-color: #E71D1E;color: #ffffff;font-size: 14px;display: inline-block;line-height: 40px;text-align: center;">确认地址</span> 
+        <div @click="showAddressPopup = false">
+          <span
+            style="width: 100%;margin-top: 20px; border-radius: 40px; height: 40px;background-color: #E71D1E;color: #ffffff;font-size: 14px;display: inline-block;line-height: 40px;text-align: center;">确认地址</span>
         </div>
       </div>
     </van-popup>
@@ -189,9 +190,11 @@
       </van-popup>
     </div>
     <van-popup v-model="showTimePicker" position="bottom" round>
+       
       <van-datetime-picker v-model="tempArriveTime" type="datetime" title="选择送达时间" :min-date="minDate"
-        :max-date="maxDate" :min-hour="minHour" :formatter="timeFormatter" @confirm="confirmTime"
+        :max-date="maxDate" :min-hour="minHour" :max-hour="21" :formatter="timeFormatter" @confirm="confirmTime"
         @cancel="showTimePicker = false" />
+
     </van-popup>
   </div>
 </template>
@@ -219,7 +222,7 @@ export default {
       tempArriveTime: new Date(),
       minDate: new Date(),
       maxDate: new Date(Date.now() + 30 * 24 * 3600 * 1000),
-      minHour: 0,
+      minHour: 9,
 
       receiverName: "",
       receiverPhone: "",
@@ -265,8 +268,27 @@ export default {
     }
   },
   methods: {
-    sureBtn(){
-      
+    // 最早可配送时间：下单 +3 小时，且限定在 09:00-21:00
+getEarliestDeliverTime() {
+  const now = new Date();
+  const t = new Date(now.getTime() + 3 * 60 * 60 * 1000);
+  const y = t.getFullYear(), m = t.getMonth(), d = t.getDate();
+  const h = t.getHours();
+
+  if (h < 9) {
+    // 早于营业时间 → 当天 09:00
+    return new Date(y, m, d, 9, 0, 0);
+  }
+  if (h >= 21) {
+    // 晚于营业时间 → 次日 09:00
+    return new Date(y, m, d + 1, 9, 0, 0);
+  }
+  // 在营业时段内 → 直接用下单+3小时的结果
+  return t;
+},
+
+    sureBtn() {
+
     },
     open(status, id) {
       // 点「请选择配送地址」（id=2）时弹收货信息
@@ -274,46 +296,50 @@ export default {
         this.showAddressPopup = true;
       }
     },
-    openTimePicker() {
-      const min = new Date(Date.now() + 60 * 60 * 1000);
-      const now = new Date();
+     openTimePicker() {
+  const min = this.getEarliestDeliverTime();
+  const now = new Date();
 
-      // 最小可选日期 = min 所在日期
-      this.minDate = new Date(min.getFullYear(), min.getMonth(), min.getDate());
-      this.maxDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 30);
+  // 最小可选日期就是 min 所在日期
+  this.minDate = new Date(min.getFullYear(), min.getMonth(), min.getDate());
+  // 最大可选日期：30 天后
+  this.maxDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 30);
 
-      // 若 min 和 now 同一天，限制最小小时
-      if (
-        min.getFullYear() === now.getFullYear() &&
-        min.getMonth() === now.getMonth() &&
-        min.getDate() === now.getDate()
-      ) {
-        this.minHour = min.getHours();
-      } else {
-        this.minHour = 0;
-      }
+  // 如果 min 就是今天，限制最小小时；否则从 09:00 开始
+  const isToday =
+    min.getFullYear() === now.getFullYear() &&
+    min.getMonth() === now.getMonth() &&
+    min.getDate() === now.getDate();
+  this.minHour = isToday ? min.getHours() : 9;
 
-      // 默认选中值直接给「最小合法时间」，用户一打开就是最早可选时间
-      this.tempArriveTime = min;
-      this.showTimePicker = true;
-    },
+  // 默认选中值 = 最早可配送时间
+  this.tempArriveTime = min;
+  this.showTimePicker = true;
+},
 
-    confirmTime(val) {
-      const min = new Date(Date.now() + 60 * 60 * 1000);
+confirmTime(val) {
+  const min = this.getEarliestDeliverTime();
 
-      // 如果用户选的时间 < 当前+1h，自动纠正为 min，并提示
-      if (val.getTime() < min.getTime()) {
-        this.tempArriveTime = min;
+  // 校验 1：不能早于最早可配送时间（下单+3小时）
+  if (val.getTime() < min.getTime()) {
+    this.tempArriveTime = min;
+    this.$toast({ message: `最早送达时间为 ${this.formatTime(min)}`, zIndex: 9999 });
+    return;
+  }
 
-        this.$toast({ message: `送达时间不能早于 ${this.formatTime(min)}`, zIndex: 9999 });
+  // 校验 2：必须在 09:00 - 21:00 之间
+  const h = val.getHours();
+  if (h < 9 || h >= 21) {
+    this.tempArriveTime = min;
+    this.$toast({ message: '配送时间为 09:00 - 21:00', zIndex: 9999 });
+    return;
+  }
 
-        return; // 不关闭 picker，让用户看到已纠正
-      }
+  this.arriveTime = String(Math.floor(val.getTime() / 1000));
+  this.arriveTimeText = this.formatTime(val);
+  this.showTimePicker = false;
+},
 
-      this.arriveTime = String(Math.floor(val.getTime() / 1000));
-      this.arriveTimeText = this.formatTime(val);
-      this.showTimePicker = false;
-    },
 
     formatTime(date) {
       const m = date.getMonth() + 1;

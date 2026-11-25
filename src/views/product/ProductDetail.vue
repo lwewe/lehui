@@ -161,7 +161,7 @@ export default {
     }
   },
   methods: {
-     getPlatformName,
+    getPlatformName,
     toCart() { this.$router.push("/shopCart") },
     toKefu() { window.location.href = localStorage.getItem("kefu") },
 
@@ -304,7 +304,7 @@ export default {
               sell_price: this.modelPrice || this.detail.sell_price,
               spec_name: params.spec_name || '',
               quantity: params.quantity,
-               platform: this.detail.platform || 1 
+              platform: this.detail.platform || 1
             }))
 
             setTimeout(() => {
@@ -318,12 +318,14 @@ export default {
               })
             }, 500)
           }
+        } else {
+          this.$toast(res.msg)
         }
       })
     },
 
     addNewAddress() { this.$router.push("/addAddress") },
-    getDetail(id) {
+    getDetail(id, isRetry = false) {
       productDetail({ id }).then(res => {
         this.loadingflag = false
         if (res.code == 200) {
@@ -362,8 +364,24 @@ export default {
           this.getAddressList()
 
         } else {
-          localStorage.removeItem("token")
-          this.getDetail(this.$route.query.id)
+          const msg = res.msg || ''
+          // 1) 商品不存在/已下架：提示 + 返回，不重试
+          if (res.code == 400 || /不存在|已下架|已删除/.test(msg)) {
+            this.$toast(msg || '商品不存在或已下架')
+            setTimeout(() => { this.$router.go(-1) }, 800)
+            return
+          }
+          // 2) 仅登录态失效才清 token 重试，且最多一次
+          const isAuthError = /登录|token|失效|过期|未登录|请先登录/i.test(msg)
+          if (!isRetry && isAuthError && localStorage.getItem('token')) {
+            localStorage.removeItem('token')
+            this.getDetail(id, true)
+            return
+          }
+          // 3) 其它错误：只提示
+          this.$toast(msg || '获取商品详情失败')
+          // localStorage.removeItem("token")
+          // this.getDetail(this.$route.query.id)
         }
       })
     },
@@ -401,7 +419,7 @@ export default {
     //     }
     //   })
     // },
-    
+
     getAddressList() {
       addressList().then(res => {
         if (res.code == 200) {

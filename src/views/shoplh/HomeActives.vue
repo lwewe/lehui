@@ -188,9 +188,9 @@ export default {
   }
 
   .title-text {
-    font-size: 14px;
+    font-size: 17px;
     font-weight: bold;
-    color: #4d4d4d;
+    color: #ffffff;
     // background: url(../../assets/lh/bj.png) no-repeat;
     background-size: cover;
     padding: 8px 20px;
@@ -198,9 +198,9 @@ export default {
     width: 180px;
     text-align: center;
     margin: 0 8px;
-
+    // text-shadow: 1px 1px 5px #6d6d6d;
     // box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    // text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
   }
 }
 

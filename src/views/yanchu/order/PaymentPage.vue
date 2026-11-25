@@ -289,7 +289,7 @@ export default {
           cancelButtonText: '取消订单'
         }).then(() => {
           // 继续支付 → 跳未支付订单列表
-          this.$router.replace({ path: '/orderInfo', query: { status: 'unpaid' } })
+          this.$router.replace({ path: '/orderInfo', query: { status: 'unpaid',refresh: Date.now()  } })
         }).catch(() => {
           // 取消订单 → 先取消订单，再返回上一页
           if (oid) {
@@ -379,7 +379,7 @@ export default {
               that.getCard()
               if (res.code == 200) {
                 setTimeout(() => {
-                  that.$router.replace({ path: "/orderInfo", query: { tabIndex: 0 } })
+                  that.$router.replace({ path: "/orderInfo", query: { refresh: Date.now()  } })
                 }, 1000)
               }
             })
@@ -538,7 +538,7 @@ export default {
         if (res.code == 200 && res.data) {
           this.getCard()
           setTimeout(() => {
-            this.$router.replace({ path: "/orderInfo", query: { tabIndex: 0 } })
+            this.$router.replace({ path: "/orderInfo", query: { refresh: Date.now() } })
           }, 1000)
         }
       })

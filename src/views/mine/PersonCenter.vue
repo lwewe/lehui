@@ -11,17 +11,10 @@
         </div>
         <div>
           <div class="phone">{{ userInfo.phone }}</div>
-          <!-- <div class="vipBack">悦享会员</div> -->
+
         </div>
       </div>
-      <!-- <div class="settingBox">
-        <div class="setting" @click="toStting('/setting')">
-          <img class="img" src="@/assets/mine/sz.png" alt="">
-        </div>
-        <div class="setting" @click="scanQRCode">
-          <img class="img" src="@/assets/mine/sys.png" alt="">
-        </div>
-      </div> -->
+
     </div>
 
     <div class="centerBox">
@@ -119,7 +112,10 @@
               <div v-for="(item, index) in leftList" :key="item.id || index" class="shop-item">
                 <div class="product-card" @click="toDetail(item)">
                   <div class="product-img-box">
-                    <img :src="item.img" alt="" class="product-img" v-if="item.img">
+                    <img :src="item.img ? item.img.replace(/(https?:\/\/[^\/]+)\/+/g, '$1/') : ''" alt=""
+                      class="product-img" v-if="item.img" referrerpolicy="no-referrer"
+                      @error="e => e.target.src = 'https://lh.bjyxfl.com/images/tx.png'" />
+                    <!-- <img :src="item.img" alt="" class="product-img" v-if="item.img"   referrerpolicy="no-referrer" > -->
                     <div class="img-placeholder" v-else>暂无图片</div>
                   </div>
                   <div class="product-info">
@@ -127,8 +123,8 @@
                     <!-- 左列 -->
                     <span class="platform-tag" :class="getPlatformClass(item.platform)"
                       v-if="getPlatformName(item.platform)">
-                   {{ getPlatformName(item.platform, item.jd_type) }}
-                    
+                      {{ getPlatformName(item.platform, item.jd_type) }}
+
                     </span>
                     <div class="product-price-row">
                       <span class="sell-price">{{ item.sell_price }}</span>
@@ -146,14 +142,17 @@
               <div v-for="(item, index) in rightList" :key="item.id || index" class="shop-item">
                 <div class="product-card" @click="toDetail(item)">
                   <div class="product-img-box">
-                    <img :src="item.img" alt="" class="product-img" v-if="item.img">
+                    <img :src="item.img ? item.img.replace(/(https?:\/\/[^\/]+)\/+/g, '$1/') : ''" alt=""
+                      class="product-img" v-if="item.img" referrerpolicy="no-referrer"
+                      @error="e => e.target.src = 'https://lh.bjyxfl.com/images/tx.png'" />
+                    <!-- <img :src="item.img" alt="" class="product-img" v-if="item.img"> -->
                     <div class="img-placeholder" v-else>暂无图片</div>
                   </div>
                   <div class="product-info">
                     <div class="product-title">{{ item.title }}</div>
                     <span class="platform-tag" :class="getPlatformClass(item.platform)"
                       v-if="getPlatformName(item.platform)">
-                   {{ getPlatformName(item.platform,item.jd_type) }}
+                      {{ getPlatformName(item.platform, item.jd_type) }}
 
                     </span>
                     <div class="product-price-row">
@@ -187,7 +186,7 @@ import { bindingcard, qrcodeBinging } from "@/api/cart";
 import { getPlatformName } from '@/utils/platform'
 
 
-import { userInfo, cardList, productList, editInfo } from "@/api/lhjdtm";
+import { userInfo, cardList, guessLike, editInfo } from "@/api/lhjdtm";
 export default {
   name: "PersonCenter",
   components: { NavigationTab, NewShopList },
@@ -273,6 +272,7 @@ export default {
     },
     // 跳转到商品详情
     toDetail(item) {
+      localStorage.setItem('lastProductId', item.id || item.product_id || '')
       this.$goDetail(item);
       // if (id) {
       //   this.$router.push({
@@ -318,13 +318,10 @@ export default {
       this.isLoading = true
 
       // 调用新接口：/jdtmshop/productList
-      return productList({
-        has_shop_cate:1,
-        platform: 1,          // 默认取京东平台
-        page: pageno,         // 页码（注意：不能用 pageno，要用 page）
-        limit: 10,            // 每页条数
-        sort: 'px',           // 默认排序
-        order: 'desc'
+      return guessLike({
+        product_id: localStorage.getItem('lastProductId') || undefined,
+        limit: 30,            // 每页条数
+
       }).then(res => {
         console.log('productList 完整返回:', res)
 
@@ -642,7 +639,7 @@ export default {
 
 .product-img-box {
   width: 100%;
-  aspect-ratio: 1;
+  aspect-ratio:1;
   overflow: hidden;
   background: #f5f5f5;
 

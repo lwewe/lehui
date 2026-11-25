@@ -217,15 +217,20 @@ export default {
       }
     },
     getConsumeType(flag) {
-      if (flag == 1) return '消费';
-      if (flag == 4) return '后台扣除';
-      return '其他';
-    },
-    getRechargeType(flag) {
-      if (flag == 2) return '微信充值';
-      if (flag == 3) return '后台充值';
-      return '其他充值';
-    },
+  const map = { 1: '消费', 4: '后台扣除', 5: '退款' }
+  return map[flag] || '其他'
+},
+getRechargeType(flag) {
+  const map = { 2: '微信充值', 3: '后台充值', 5: '退款' }
+  return map[flag] || '其他充值'
+},
+isIncome(item, isRecharge) {
+  return isRecharge || Number(item.flag) === 5
+},
+getAmountText(item, isRecharge) {
+  return (this.isIncome(item, isRecharge) ? '+' : '-') + item.price
+},
+
     timestampToTime(time) {
       if (!time) return '';
       const d = new Date(time * 1000);

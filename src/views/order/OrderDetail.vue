@@ -27,56 +27,54 @@
     <div class="addressBox addressBox2">
       <div class="itemTitle">商品信息</div>
       <div class="shopInfo" v-for="(item, index) in detail.items" :key="index">
-        <div class="shopImg" >
-          <span v-if="thimg == 1" style=" border-radius: 10px; font-size: 12px;text-align: center; background: #f3f3f3;display: inline-block;width: 100%;height: 80px;line-height: 80px;">{{ item.product_title }}</span>
-          <img v-else style="border-radius: 5px;" class="img" :src="item.product_img" alt="">
-          
+        <div class="shopImg">
+          <span v-if="thimg == 1" class="th-img-fallback">{{ item.product_title }}</span>
+          <img v-else style="border-radius: 5px;" class="img" :src="item.product_img || detail.product_img" alt="">
         </div>
 
         <div class="nameBox">
-          <div class="shopName">{{ item.product_title }}</div>
+          <div class="shopName">{{ item.product_title || detail.product_title }}</div>
           <div class="can" v-if="item.spec_name">{{ item.spec_name }}</div>
-          
+
           <!-- 途虎专属：充值账号 -->
           <div class="can" v-if="thimg == 1 && item.uuid">充值账号：{{ item.uuid }}</div>
 
           <div class="all">
-            <div class="price"><span style="font-size: 10px;">￥</span>{{ item.sell_price }}</div>
-            <div class="number">×{{ item.quantity }}</div>
+            <div class="price">
+              <span style="font-size: 10px;">￥</span>{{ item.sell_price || detail.sell_price }}
+            </div>
+            <div class="number">×{{ item.quantity || detail.quantity }}</div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 快递信息（仅普通订单展示） -->
-    <div class="addressBox addressBox2" v-if="thimg != 1 && detail.express_company">
-      <div class="itemTitle">快递信息</div>
+    <!-- 快递信息（仅普通订单展示，支持多包裹） -->
+    <div class="addressBox addressBox2" v-if="thimg != 1 && expressList.length > 0">
+      <div class="itemTitle">
+        快递信息
+        <span v-if="detail.third_party_status" class="express-tip">（{{ detail.third_party_status }}）</span>
+      </div>
       <div class="orderInfo">
-        <div class="shopPrice">
-          <div class="shopPriceText">快递公司</div>
-          <div class="price">{{ detail.express_company }}</div>
-        </div>
-        <div class="shopPrice">
-          <div class="shopPriceText">快递单号</div>
-          <div class="price" @click="copyText(detail.express_no)">{{ detail.express_no }} <span class="copy-icon">复制</span></div>
+        <div class="shopPrice" v-for="(exp, index) in expressList" :key="index">
+          <div class="shopPriceText">{{ exp.express_company || '快递' }}</div>
+          <div class="price" @click="copyText(exp.express_no)">
+            {{ exp.express_no }} <span class="copy-icon">复制</span>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- 订单信息（通用） -->
     <div class="addressBox addressBox2">
-      <div class="itemTitle">订单信息</div>
+      <div class="itemTitle df jcsb"><span>订单信息</span> <span v-if="detail.status_name" class="fs12 cl8">{{ detail.status_name }}</span></div>
       <div class="orderInfo">
-        
+
         <!-- 通用：订单号 -->
         <div class="shopPrice">
           <div class="shopPriceText">订单号</div>
           <div class="price" @click="copyText(detail.order_no)">{{ detail.order_no }} <span class="copy-icon">复制</span></div>
         </div>
-
-        
-
-       
 
         <!-- 通用：下单时间 -->
         <div class="shopPrice">
@@ -114,6 +112,15 @@
 
       </div>
     </div>
+<div class="addressBox addressBox2" v-if="paymentList.length > 0">
+  <div class="itemTitle">支付信息</div>
+  <div class="orderInfo">
+    <div class="shopPrice" v-for="(item, i) in paymentList" :key="i">
+      <div class="shopPriceText">{{ item.payName }}</div>
+      <div class="price"><span style="font-size:10px;">￥</span>{{ item.price }}</div>
+    </div>
+  </div>
+</div>
 
     <!-- 卡券信息（通用） -->
     <div class="addressBox addressBox2" v-if="detail.card_info && detail.card_info.length > 0">
@@ -152,7 +159,62 @@ export default {
       }
     }
   },
+  computed: {
+    paymentList() {
+      const d = this.detail || {}
+      let raw = d.fuli || d.fuli_list || []
+      if (typeof raw === 'string') {
+        try { raw = JSON.parse(raw) } catch (e) { return [] }
+      }
+      if (!Array.isArray(raw)) return []
+      return raw.map(item => ({
+        ...item,
+        payName: this.getPayName(item.id !== undefined ? item.id : item.pid)
+      }))
+    },
+    // 快递列表：兼容 express_list（字符串/数组）、单条 express_company/express_no
+    expressList() {
+      const d = this.detail || {}
+      let list = []
+
+      // 1) 优先解析 express_list
+      if (d.express_list) {
+        let raw = d.express_list
+        if (typeof raw === 'string') {
+          try {
+            raw = JSON.parse(raw)
+          } catch (e) {
+            raw = null
+          }
+        }
+        if (Array.isArray(raw)) {
+          list = raw.filter(i => i && i.express_no)
+        }
+      }
+
+      // 2) 兜底：单条字段
+      if (list.length === 0 && d.express_no) {
+        list = [{ express_company: d.express_company || '', express_no: d.express_no }]
+      }
+
+      // 3) 去重（按 公司+单号）
+      const seen = {}
+      return list.filter(i => {
+        const key = `${i.express_company || ''}__${i.express_no}`
+        if (seen[key]) return false
+        seen[key] = true
+        return true
+      })
+    }
+  },
   methods: {
+     getPayName(id) {
+      const map = {
+        wx: '微信支付', wxpay: '微信支付', weixin: '微信支付',
+        1: '乐汇卡', 20: '福利卡', 23: '福利卡'
+      }
+      return map[id] || '福利卡'
+    },
     copyText(text) {
       if (!text) return;
       const str = String(text).trim();
@@ -228,7 +290,7 @@ export default {
       orderDetail({ id }).then(res => {
         this.loadingflag = false
         if (res.code == 200) {
-          this.detail = res.data
+          this.detail = res.data || {}
         } else {
           this.$toast(res.msg || '获取订单详情失败')
         }
@@ -242,7 +304,7 @@ export default {
       tuhuOrderDetail(params).then(res => {
         this.loadingflag = false
         if (res.code == 200) {
-          this.detail = res.data
+          this.detail = res.data || {}
         } else {
           this.$toast(res.msg || '获取订单详情失败')
         }
@@ -257,12 +319,10 @@ export default {
     const orderId = this.$route.query.order_id;
 
     if (id) {
-      // 普通订单
-      this.thimg = 0; 
+      this.thimg = 0;
       this.getDetail(id);
     } else if (orderId) {
-      // 途虎订单
-      this.thimg = 1; 
+      this.thimg = 1;
       this.tuhuOrderDetails({ order_id: orderId });
     } else {
       this.loadingflag = false;
@@ -285,6 +345,7 @@ export default {
 .addressBox .leftBox { display: flex; align-items: center; gap: 5px; }
 .addressBox2 { margin-top: 10px; padding: 13px 15px 15px; }
 .itemTitle { font-weight: bold; font-size: 15px; }
+.express-tip { font-size: 12px; font-weight: normal; color: #999; margin-left: 4px; }
 .orderInfo .shopPrice { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; }
 .orderInfo .shopPriceText { color: #828282; font-size: 14px; }
 .orderInfo .price { font-size: 14px; font-weight: bold; }
@@ -297,6 +358,7 @@ export default {
 .shopInfo .all { font-size: 13px; display: flex; align-items: center; justify-content: space-between; margin-top: 15px; }
 .shopInfo .price { color: #C63532; font-weight: bold; font-size: 15px; }
 .shopInfo .number { color: #989898; }
+.th-img-fallback { border-radius: 10px; font-size: 12px; text-align: center; background: #f3f3f3; display: inline-block; width: 100%; height: 80px; line-height: 80px; }
 .service { background-color: white; color: #5b5a5a; font-size: 13px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; margin-top: 10px; }
 .service .serviceBox { width: 18px; padding-top: 1px; }
 </style>

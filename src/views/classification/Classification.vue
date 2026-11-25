@@ -65,7 +65,7 @@ export default {
       classList: [],         // 分类数据
       selectId: null,
       loadingflag: true,     // 首屏加载遮罩
-
+      lastLoadTime: 0,
       // ===== 分页相关 =====
       page: 1,
       limit: 100,             // 每次只返回 10 条
@@ -138,10 +138,9 @@ export default {
 
       // 2. 处理触底加载更多
       const rightBox = this.$refs.rightBox;
-      if (rightBox) {
+      if (rightBox && !this.isLoadingMore && this.hasMore) {
         const { scrollTop, scrollHeight, clientHeight } = rightBox;
-        // 距底部不足 50px 时触发
-        if (scrollHeight - scrollTop - clientHeight < 50) {
+        if (scrollHeight > clientHeight && scrollHeight - scrollTop - clientHeight < 20) {
           this.loadMore();
         }
       }
@@ -259,6 +258,12 @@ export default {
     // 加载更多
     loadMore() {
       if (!this.hasMore || this.isLoadingMore) return;
+
+      // 安卓惯性滑动会连续触发，300ms 内只允许一次
+      const now = Date.now();
+      if (now - (this.lastLoadTime || 0) < 300) return;
+      this.lastLoadTime = now;
+
       this.page++;
       this.getClassify(true);
     },

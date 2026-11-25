@@ -139,7 +139,7 @@ export default {
     }
   },
   methods: {
-         initData() {
+    initData() {
       const q = this.$route.query;
 
       this.getCard();
@@ -149,7 +149,7 @@ export default {
       const selectedId = sessionStorage.getItem('selectedAddressId');
       if (selectedId && q.order_id) {
         sessionStorage.removeItem('selectedAddressId'); // 立刻清除标记，防止死循环
-        
+
         // 先把订单号等基础数据存入
         this.order_id = q.order_id;
         this.order_no = q.order_no || "";
@@ -162,18 +162,18 @@ export default {
 
         // 直接进入静默切换地址逻辑，绝不走后面的 getOrderDetail
         this.updateOrderAddressAndReload(Number(selectedId), q.order_id);
-        return; 
+        return;
       }
 
       // 🚨 2. 正常初始化（首次进来）
       if (!this.orderList || this.orderList.length === 0) {
-        this.loadLocalData(); 
+        this.loadLocalData();
       }
 
       if (q.order_id) {
         this.order_id = q.order_id;
         this.order_no = q.order_no || "";
-        
+
         if (Number(q.total_price) > 0) {
           this.total = Number(q.total_price);
         }
@@ -186,7 +186,7 @@ export default {
             addr: q.address_detail
           };
         }
-        this.getOrderDetail(); 
+        this.getOrderDetail();
         return;
       }
 
@@ -249,7 +249,7 @@ export default {
       }
     },
     // 切换地址后的静默重算
-     
+
     async updateOrderAddressAndReload(newAddressId, orderId) {
       try {
         const res = await addressList({});
@@ -452,7 +452,7 @@ export default {
       });
     },
     // 查订单详情
-         getOrderDetail() {
+    getOrderDetail() {
       return orderDetail({ id: this.order_id }).then(res => {
         if (res.code == 200 && res.data) {
           const detail = res.data;
@@ -464,7 +464,7 @@ export default {
           if (!hasValidItems && !hasValidProduct) {
             if (this.orderList && this.orderList.length > 0) {
               console.warn("拦截无效商品，保留原数据");
-              return; 
+              return;
             }
           }
 
@@ -609,7 +609,14 @@ export default {
         payByCard({ order_id: Number(this.order_id), card_num_ids: (this.result || []).join(','), pay_pass: this.pass }).then(res => {
           if (res.code == 200) {
             this.$toast('支付成功');
-            setTimeout(() => this.$router.replace("/orderInfo"), 1000);
+            // setTimeout(() => this.$router.replace("/orderInfo"), 1000);
+            setTimeout(() => {
+              this.$router.replace({
+                path: '/orderInfo',
+                query: { refresh: Date.now() }
+              });
+            }, 1000);
+
           } else {
             this.pass = ""; this.$toast(res.msg || '支付失败');
           }
@@ -640,7 +647,14 @@ export default {
       }, res => {
         if (res.err_msg === "get_brand_wcpay_request:ok") {
           this.$toast('支付成功');
-          setTimeout(() => this.$router.replace("/orderInfo"), 1000);
+          // setTimeout(() => this.$router.replace("/orderInfo"), 1000);
+          setTimeout(() => {
+            this.$router.replace({
+              path: '/orderInfo',
+              query: { refresh: Date.now() }
+            });
+          }, 1000);
+
         } else if (res.err_msg === "get_brand_wcpay_request:cancel") {
           this.$toast('已取消支付');
         } else {
