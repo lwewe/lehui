@@ -94,29 +94,32 @@
       <!-- 支付方式提示 -->
       <div class="pay-method-tip" v-if="payInfo">
         <!-- 组合支付 -->
-        <div
-          v-if="payInfo.wxprice && payInfo.wxprice !== '0.00' && payInfo.dkprice && payInfo.dkprice !== '0.00'"
+        <div v-if="payInfo.wxprice && payInfo.wxprice !== '0.00' && payInfo.dkprice && payInfo.dkprice !== '0.00'"
           style="display: flex;align-items: center;flex-wrap:wrap;">
           <span style="display: flex;align-items: center;">
             <img src="../../assets/lh/wxpay.png" style="width: 20px;height: 20px;margin-right: 4px;" alt=""> 将使用
           </span>
-          <span style="color: #d32f2f; font-weight: bold;">福利卡支付 <span style="font-size: 10px;">￥</span>{{ payInfo.dkprice }}</span>
+          <span style="color: #d32f2f; font-weight: bold;">福利卡支付 <span style="font-size: 10px;">￥</span>{{
+            payInfo.dkprice }}</span>
           <span> + </span>
-          <span style="color: #07c160; font-weight: bold;">微信支付 <span style="font-size: 10px;">￥</span>{{ payInfo.wxprice }}</span>
+          <span style="color: #07c160; font-weight: bold;">微信支付 <span style="font-size: 10px;">￥</span>{{
+            payInfo.wxprice }}</span>
         </div>
         <!-- 纯卡支付 -->
         <div v-else-if="payInfo.dkprice && payInfo.dkprice !== '0.00'" style="display: flex;align-items: center;">
           <span style="display: flex;align-items: center;">
             <img src="../../assets/lh/czf.png" style="width:20px;height:20px;margin-right: 4px;" alt=""> 将使用
           </span>
-          <span style="color: #d32f2f; font-weight: bold;">福利卡支付 <span style="font-size: 10px;">￥</span>{{ payInfo.dkprice }}</span>
+          <span style="color: #d32f2f; font-weight: bold;">福利卡支付 <span style="font-size: 10px;">￥</span>{{
+            payInfo.dkprice }}</span>
         </div>
         <!-- 纯微信支付 -->
         <div v-else-if="payInfo.wxprice && payInfo.wxprice !== '0.00'" style="display: flex;align-items: center;">
           <span style="display: flex;align-items: center;">
             <img src="../../assets/lh/wxpay.png" style="width: 20px;height: 20px;margin-right: 4px;" alt=""> 将使用
           </span>
-          <span style="color: #07c160; font-weight: bold;">微信支付 <span style="font-size: 10px;">￥</span>{{ payInfo.wxprice }}</span>
+          <span style="color: #07c160; font-weight: bold;">微信支付 <span style="font-size: 10px;">￥</span>{{
+            payInfo.wxprice }}</span>
         </div>
       </div>
     </div>
@@ -548,10 +551,31 @@ export default {
       return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     },
     showRule() {
+      const tips = [
+        '**实际支付金额可能高于输入金额，差额为手续费，请以支付页面显示为准**'
+      ];
+      const msg = (this.cardOnly
+        ? [
+          '1. 本商户仅支持乐汇卡支付，请选余额充足的卡',
+          '2. 卡内余额需 ≥ 订单金额',
+          '3. 支付需验证6位支付密码'
+        ]
+        : [
+          '1. 优先用乐汇卡抵扣，余额不足自动「卡+微信」组合支付',
+          '2. 未选卡则微信支付全额',
+          '3. 请在倒计时结束前完成支付'
+        ]
+      ).concat(tips).join('\n');
+
       this.$dialog.alert({
         title: '支付规则',
-        message: '1. 请选择要使用的乐汇卡\n2. 卡内余额足够时，直接使用卡支付\n3. 卡内余额不足时，自动使用卡+微信组合支付\n4. 未选择卡时，使用微信支付'
+        message: msg,
+        messageAlign: 'left'
       });
+      // this.$dialog.alert({
+      //   title: '支付规则',
+      //   message: '1. 请选择要使用的乐汇卡\n2. 卡内余额足够时，直接使用卡支付\n3. 卡内余额不足时，自动使用卡+微信组合支付\n4. 未选择卡时，使用微信支付'
+      // });
     }
   },
   created() {
@@ -570,40 +594,247 @@ export default {
 
 <style scoped>
 /* 样式与原文件完全一致，无需改动 */
-.no-card { text-align: center; padding: 30px 0; color: #999; font-size: 14px; }
-.pay-info { margin: 20px 16px 0; padding: 16px; background: #FFF5F2; border-radius: 8px; }
-.pay-info-title { font-size: 15px; font-weight: bold; color: #333; margin-bottom: 10px; }
-.pay-info-row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 14px; color: #333; }
-.pay-method-tip { margin: 10px 16px 0; padding: 12px; background: #F0F9FF; border-radius: 8px; font-size: 13px; color: #333; }
-.btn-confirm { width: 100%; padding: 12px 0; background: linear-gradient(90deg, #FF4A25 0%, #FEA345 100%); color: #fff; font-size: 16px; border: none; border-radius: 30px; cursor: pointer; text-align: center; transition: opacity 0.2s; font-weight: 500; }
-.btn-confirm:active { opacity: 0.8; }
-.btn-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
-.order-page { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f5f5f5; min-height: 100vh; padding-bottom: 80px; color: #333; position: relative; }
-.header-rule { position: absolute; top: 16px; right: 16px; font-size: 14px; color: #e6a23c; display: flex; align-items: center; gap: 4px; }
-.order-info { background: #fff; text-align: center; padding: 40px 20px 10px; }
-.countdown { color: #999; font-size: 14px; margin-bottom: 12px; }
-.time-text { color: #d9534f; font-weight: 500; }
-.amount { color: #d32f2f; font-size: 36px; font-weight: 600; margin-bottom: 12px; }
-.order-number { color: #999; font-size: 13px; letter-spacing: 0.5px; }
-.card-section { background: #fff; padding: 16px 0 10px; }
-.section-title { display: flex; align-items: center; padding: 0 16px 16px; font-size: 15px; font-weight: 600; }
-.title-text { color: #d32f2f; }
-.sub-text { color: #d32f2f; font-weight: normal; font-size: 13px; margin-left: 4px; }
-.card-item { display: flex; justify-content: space-between; align-items: center; padding: 16px 16px; border-bottom: 1px solid #f0f0f0; cursor: pointer; transition: background 0.2s; }
-.card-item:active { background: #f9f9f9; }
-.card-item:last-child { border-bottom: none; }
-.card-info { display: flex; flex-direction: column; }
-.card-name { font-size: 15px; color: #333; margin-bottom: 6px; }
-.card-sub { font-size: 13px; color: #999; }
-.card-right { display: flex; align-items: center; gap: 12px; }
-.card-balance { font-size: 16px; color: #333; }
-.checkbox-wrapper { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
-.checkbox-box { width: 18px; height: 18px; border: 1px solid #ccc; border-radius: 30px; position: relative; box-sizing: border-box; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
-.checkbox-box.active { background: #d32f2f; border-color: #d32f2f; }
-.check-mark { color: #fff; font-size: 12px; font-weight: bold; }
-.footer { position: fixed; bottom: 0; left: 0; width: 100%; background: #f5f5f5; padding: 12px 16px 30px; box-sizing: border-box; display: flex; justify-content: center; }
-.wx-pay-item { border-top: 8px solid #f5f5f5; border-bottom: 1px solid #f0f0f0; }
-.wx-name { display: flex; align-items: center; }
-.wx-icon { width: 20px; height: 20px; margin-right: 6px; }
-.wx-balance { color: #07c160; }
+.no-card {
+  text-align: center;
+  padding: 30px 0;
+  color: #999;
+  font-size: 14px;
+}
+
+.pay-info {
+  margin: 20px 16px 0;
+  padding: 16px;
+  background: #FFF5F2;
+  border-radius: 8px;
+}
+
+.pay-info-title {
+  font-size: 15px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.pay-info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  font-size: 14px;
+  color: #333;
+}
+
+.pay-method-tip {
+  margin: 10px 16px 0;
+  padding: 12px;
+  background: #F0F9FF;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #333;
+}
+
+.btn-confirm {
+  width: 100%;
+  padding: 12px 0;
+  background: linear-gradient(90deg, #FF4A25 0%, #FEA345 100%);
+  color: #fff;
+  font-size: 16px;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  text-align: center;
+  transition: opacity 0.2s;
+  font-weight: 500;
+}
+
+.btn-confirm:active {
+  opacity: 0.8;
+}
+
+.btn-confirm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.order-page {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+  padding-bottom: 80px;
+  color: #333;
+  position: relative;
+}
+
+.header-rule {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font-size: 14px;
+  color: #e6a23c;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.order-info {
+  background: #fff;
+  text-align: center;
+  padding: 40px 20px 10px;
+}
+
+.countdown {
+  color: #999;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.time-text {
+  color: #d9534f;
+  font-weight: 500;
+}
+
+.amount {
+  color: #d32f2f;
+  font-size: 36px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.order-number {
+  color: #999;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+}
+
+.card-section {
+  background: #fff;
+  padding: 16px 0 10px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  padding: 0 16px 16px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.title-text {
+  color: #d32f2f;
+}
+
+.sub-text {
+  color: #d32f2f;
+  font-weight: normal;
+  font-size: 13px;
+  margin-left: 4px;
+}
+
+.card-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.card-item:active {
+  background: #f9f9f9;
+}
+
+.card-item:last-child {
+  border-bottom: none;
+}
+
+.card-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-name {
+  font-size: 15px;
+  color: #333;
+  margin-bottom: 6px;
+}
+
+.card-sub {
+  font-size: 13px;
+  color: #999;
+}
+
+.card-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.card-balance {
+  font-size: 16px;
+  color: #333;
+}
+
+.checkbox-wrapper {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkbox-box {
+  width: 18px;
+  height: 18px;
+  border: 1px solid #ccc;
+  border-radius: 30px;
+  position: relative;
+  box-sizing: border-box;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkbox-box.active {
+  background: #d32f2f;
+  border-color: #d32f2f;
+}
+
+.check-mark {
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: #f5f5f5;
+  padding: 12px 16px 30px;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+}
+
+.wx-pay-item {
+  border-top: 8px solid #f5f5f5;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.wx-name {
+  display: flex;
+  align-items: center;
+}
+
+.wx-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 6px;
+}
+
+.wx-balance {
+  color: #07c160;
+}
 </style>

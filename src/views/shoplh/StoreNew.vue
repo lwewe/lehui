@@ -132,7 +132,7 @@ export default {
       if (id === 90) { this.$router.push({ path: "/HemaFresh" }); return; }
      
       if (id === 16) return this.goToXiaoxiang();
-      if (id === 17) return this.goToHemashangcheng();
+      if (id === 17)  {this.$router.push('/StoreNewhm'); return } //return this.goToHemashangcheng();
       if (id === 18) return this.goToYonghuiLogin();
       if (id === 19) return this.goToDingdongLogin();
   

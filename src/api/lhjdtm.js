@@ -142,7 +142,7 @@ export function channelChildrenDetaill(data) {
     });
 }
 export function ProductBrandList(data) {
-    return setaxios.post("/jdtmshop/brandList/Product/brandList", {
+    return setaxios.post("/jdtmshop/brandList", {
         channel_no: store.state.channel_no,
         token: localStorage.getItem("token"),
         ...data

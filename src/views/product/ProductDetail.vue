@@ -49,6 +49,7 @@
         <div class="shopDetailText">商品详情</div>
         <div class="line"></div>
       </div>
+      <div style="font-size: 12px;">{{detail.deliverymsg}}</div>
       <div v-if="detail.content" class="wcontent" v-html="detail.content"></div>
       <div v-else class="no-content">暂无商品详情</div>
     </div>
@@ -58,9 +59,9 @@
       <van-goods-action>
         <van-goods-action-mini-btn @click="toCart" :icon="require('../../assets/tubiao/gc.png')" text="购物车" />
         <van-goods-action-mini-btn @click="toKefu" :icon="require('../../assets/tubiao/kfz.png')" text="客服" />
-        <van-goods-action-big-btn class="goCart" :class="{ goCart2: detail.stock == 0 }" text="加入购物车"
+        <van-goods-action-big-btn class="goCart" :class="{ goCart2: !canBuy }" text="加入购物车"
           @click="open('b', 1)" />
-        <van-goods-action-big-btn class="toPay" :class="{ toPay2: detail.stock == 0 }" primary text="立即购买"
+        <van-goods-action-big-btn class="toPay" :class="{ toPay2:  !canBuy }" primary text="立即购买"
           @click="open('c', 1)" />
       </van-goods-action>
     </div>
@@ -160,6 +161,19 @@ export default {
       loadingflag: true
     }
   },
+  computed: {
+    // ✅ 统一判断：canSell=false 或 stock=0 都不可购买
+    canBuy() {
+      const d = this.detail || {};
+      // canSell：true / 1 / '1' / 'true' 算可售；字段缺失(null/undefined/'')按可售处理（兼容老接口）
+      const sellOk = d.canSell == null || d.canSell === '' ||
+        d.canSell === true || d.canSell === 1 ||
+        d.canSell === '1' || d.canSell === 'true';
+      // stock：字段缺失按有货处理；否则必须 > 0
+      const stockOk = d.stock == null || d.stock === '' || Number(d.stock) > 0;
+      return sellOk && stockOk;
+    }
+  },
   methods: {
     getPlatformName,
     toCart() { this.$router.push("/shopCart") },
@@ -182,6 +196,7 @@ export default {
 
     // 加入购物车（按最新接口调整：POST /jdtmshop/cartAdd）
     resetting() {
+      if (!this.canBuy) { this.$toast("该商品不可售"); return; }
       // 1. 判断是否必须选规格
       if (this.detail.specs && this.detail.specs.length > 0 && !this.modelId) {
         this.$toast("请选择规格");
@@ -248,7 +263,9 @@ export default {
         return;
       }
       this.selectId = id
-      if (this.detail.stock == 0) { this.$toast("该商品不可售"); return }
+      // if (this.detail.stock == 0) { this.$toast("该商品不可售"); return }
+      if (id == 1 && !this.canBuy) { this.$toast("该商品不可售"); return }
+
       this.showAll = true
       this.status = status
     },
@@ -260,6 +277,7 @@ export default {
 
     // 立即购买（对接新接口 /jdtmshop/orderBuyNow）
     toConfirmOrder() {
+      if (!this.canBuy) { this.$toast("该商品不可售"); return; }
       // 1. 判断是否必须选规格
       if (this.detail.specs && this.detail.specs.length > 0 && !this.modelId) {
         this.$toast("请选择规格");
@@ -385,41 +403,7 @@ export default {
         }
       })
     },
-    // getDetail(id) {
-    //   productDetail({ id }).then(res => {
-    //     this.loadingflag = false
-    //     if (res.code == 200) {
-    //       if (!res.data) {
-    //         this.$toast(res.msg || '商品不存在')
-    //         setTimeout(() => { this.$router.go(-1) }, 800)
-    //         return
-    //       }
-
-    //       // 渲染详情数据
-    //       this.detail = res.data
-
-    //       // 设置默认规格
-    //       if (this.detail.specs && this.detail.specs.length > 0) {
-    //         this.modelId = this.detail.specs[0].id
-    //         this.modelName = this.detail.specs[0].spec_name || this.detail.specs[0].xinghao
-    //         this.modelPrice = this.detail.specs[0].price || this.detail.sell_price
-    //         this.selectList[0].text = this.modelName
-    //       } else {
-    //         this.modelName = this.detail.title
-    //         this.modelPrice = this.detail.sell_price
-    //         this.selectList[0].text = this.detail.title
-    //       }
-
-    //       // 单独获取地址列表（使用独立接口）
-    //       this.getAddressList()
-
-    //     } else {
-    //       localStorage.removeItem("token")
-    //       this.getDetail(this.$route.query.id)
-    //     }
-    //   })
-    // },
-
+    
     getAddressList() {
       addressList().then(res => {
         if (res.code == 200) {

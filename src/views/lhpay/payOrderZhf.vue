@@ -282,13 +282,28 @@ export default {
       await this.calculatePayInfo();
     },
     showRule() {
-      const msg = this.cardOnly
-        ? '1. 请选择要使用的乐汇卡\n2. 本商户仅支持福利卡支付\n3. 卡内余额需足够支付订单全额'
-        : '1. 请选择要使用的乐汇卡\n2. 卡内余额足够时，直接使用卡支付\n3. 卡内余额不足时，自动使用卡+微信组合支付\n4. 未选择卡时，使用微信支付';
+      const tips = [
+        '**实际支付金额可能高于输入金额，差额为手续费，请以支付页面显示为准**'
+      ];
+      const msg = (this.cardOnly
+        ? [
+          '1. 本商户仅支持乐汇卡支付，请选余额充足的卡',
+          '2. 卡内余额需 ≥ 订单金额',
+          '3. 支付需验证6位支付密码'
+        ]
+        : [
+          '1. 优先用乐汇卡抵扣，余额不足自动「卡+微信」组合支付',
+          '2. 未选卡则微信支付全额',
+          '3. 请在倒计时结束前完成支付'
+        ]
+      ).concat(tips).join('\n');
+
       this.$dialog.alert({
         title: '支付规则',
-        message: msg
+        message: msg,
+        messageAlign: 'left'
       });
+
     },
     async fetchOrderInfo() {
       console.log('=== 查询订单 ===');

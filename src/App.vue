@@ -200,8 +200,16 @@ export default {
 .fs12 {
   font-size: 12px;
 }
+.fs14 {
+  font-size: 14px;
+}
+.fs10 {
+  font-size: 10px;
+}
+
 .cl8{color: #b5691a;}
 .txtrg{
   text-align: right;
 }
+ 
 </style>

@@ -101,7 +101,7 @@
           <div class="imageSlider">
             <div class="sliderContainer">
               <div class="sliderItem" v-for="(item, index) in imageList" :key="index">
-                <img :src="item.img" @click="goToFour(index,item)" alt="" class="sliderImg">
+                <img :src="item.img" @click="goToFour(index, item)" alt="" class="sliderImg">
               </div>
             </div>
           </div>
@@ -188,7 +188,7 @@
       </div>
       <!-- ================= 新增结束 ================= -->
 
-      
+
 
       <div>
 
@@ -376,7 +376,7 @@ export default {
       img55: '',
       img66: '',
       img77: '',
-      
+
 
       arr1: '',
       arr3: '',
@@ -1513,7 +1513,7 @@ export default {
           this.yanse55 = datas2[0].yanse1;
           this.yanse66 = datas2[0].yanse2;
 
-this.img77 = datas6[0].banner;
+          this.img77 = datas6[0].banner;
 
           this.yanse88 = datas6[0].yanse1;
           this.yanse99 = datas6[0].yanse2;
@@ -1753,14 +1753,14 @@ this.img77 = datas6[0].banner;
       const pageIndex = Math.round(scrollLeft / pageWidth)
       this.currentSortPage = pageIndex
     },
-    goToFour(index,item) {
-     console.log(item)
-      
+    goToFour(index, item) {
+      console.log(item)
+
       let pid = '';
       let ys1 = '';
       let ys2 = '';
       let imgs = '';
-      
+
       // 根据你轮播图的索引，对应不同的专区 ID
       if (index === 1) {
 
@@ -1784,9 +1784,9 @@ this.img77 = datas6[0].banner;
 
 
 
-      }else if (index === 0) {
+      } else if (index === 0) {
 
-         pid = 65;
+        pid = 65;
         imgs = this.img77;
         ys1 = this.yanse88
         ys2 = this.yanse99
@@ -2289,6 +2289,8 @@ this.img77 = datas6[0].banner;
       }).catch(err => console.error('getIndex 失败:', err))
     },
     handleMultiCategoryClick(item) {
+    console.log(item)
+    // return false
       // 品牌专区：item.id 是 brand_id，会和下面的硬编码 id 撞车，必须先分流
       if (item.type === 'brand') {
         this.$router.push({ path: '/Homefood', query: { brandId: item.brandId } })
@@ -2305,7 +2307,10 @@ this.img77 = datas6[0].banner;
       if (item.id == 33) { this.$router.push({ path: 'TmallSupermarket' }); return } // 天猫超市
       if (item.id == 91) { /* 京东秒送逻辑, 视情况补 */ return }  // 京东秒送
       if (item.id == 16) { return this.goToXiaoxiang() }          // 小象超市
-      if (item.id == 17) { return this.goToHemashangcheng() }                  // 盒马鲜生
+      if (item.id == 17) { 
+         this.$router.push('/StoreNewhm'); return
+        // return this.goToHemashangcheng() 
+      }                  // 盒马鲜生
       if (item.id == 18) { return this.goToYonghuiLogin() }       // 永辉彩食鲜
       if (item.id == 19) { return this.goToDingdongLogin() }        // 叮咚买菜
       if (item.id == 40) { return this.goToMaidelong() }          // 麦德龙
@@ -2359,15 +2364,15 @@ this.img77 = datas6[0].banner;
 
       // 在线点餐 / 饮品直充 → 点餐品牌
       if (pid === 4 || pid === 5) {
-      
+
         const brandMap = {
           '麦当劳': 'mcd', '星巴克': 'sbk', '肯德基': 'kfc', '瑞幸': 'lk',
-          '必胜客': 'pzh', '霸王茶姬': 'chagee', '德克士': 'dicos','喜茶':'xc',
-          '库迪': 'cot', '塔斯汀': 'tas', '奈雪': 'nx','茉莉奶白':'molly','古茗':'guming'
+          '必胜客': 'pzh', '霸王茶姬': 'chagee', '德克士': 'dicos', '喜茶': 'xc',
+          '库迪': 'cot', '塔斯汀': 'tas', '奈雪': 'nx', '茉莉奶白': 'molly', '古茗': 'guming'
 
 
 
-         
+
 
 
         }

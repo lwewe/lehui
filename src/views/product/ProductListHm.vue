@@ -166,7 +166,8 @@ export default {
       highestPrice: "",
       showAll: false,
       showSynthesis: false,
-      platform: 0, jd_type: '',     // 新增
+      platform: 0, 
+      jd_type: '',     // 新增
       platformList: [
         { id: 0, name: '全部' },
         { id: 1, name: '京东' },
@@ -241,7 +242,8 @@ export default {
           page: 1,
           limit: 100,
           pid: 0,
-          with_children: 1
+          with_children: 1,
+          platform:4
         });
 
         if (res.code === 200 || res.code === 0) {

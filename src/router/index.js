@@ -13,6 +13,11 @@ import Freeca from "@/views/freeca/Freeca.vue";
 import PersonCenter from "@/views/mine/PersonCenter.vue";
 import OrderInfo from "@/views/order/OrderInfo.vue";
 import OrderDetail from "@/views/order/OrderDetail.vue";
+import OrderDetailzfm from "@/views/order/OrderDetailzfm.vue";
+import OrderDetailzfmsc from "@/views/order/OrderDetailzfmsc.vue";
+
+
+
 import OrderDetaildy from "@/views/order/OrderDetailfilmyc.vue";
 import OrderDetailhb from "@/views/order/OrderDetailhb.vue";
 
@@ -81,6 +86,7 @@ import JingzaoSuperValuenew from "@/views/shoplh/JingzaoSuperValuenew.vue";
 import Morediancan from "@/views/shoplh/Morediancan.vue";
 import ServiceNew from "@/views/shoplh/ServiceNew.vue";
 import StoreNew from "@/views/shoplh/StoreNew.vue";
+import StoreNewhm from "@/views/shoplh/StoreNewHm.vue";
 
 
 
@@ -216,22 +222,39 @@ const routes = [
         meta: {
             title: '订单详情'
         }
-    }, {
+    },
+    {
+        path: '/OrderDetailzfm',
+        component: OrderDetailzfm,
+        meta: {
+            title: '订单详情'
+        }
+    },
+    {
+        path: '/OrderDetailzfmsc',
+        component: OrderDetailzfmsc,
+        meta: {
+            title: '订单详情'
+        }
+    },
+
+
+    {
         path: '/orderDetaildy',
         component: OrderDetaildy,
         meta: {
             title: '订单详情'
         }
-    }, 
+    },
     {
         path: '/OrderDetailhb',
         component: OrderDetailhb,
         meta: {
             title: '订单详情'
         }
-    }, 
-    
-    
+    },
+
+
     {
         path: '/orderDetaildg',
         component: OrderDetaildg,
@@ -301,7 +324,7 @@ const routes = [
     },
 
 
-{
+    {
         path: '/productListhm',
         component: ProductListhm,
         meta: {
@@ -309,7 +332,7 @@ const routes = [
             keepAlive: true
 
         }
-    }, 
+    },
     {
         path: '/productList',
         component: ProductList,
@@ -318,8 +341,8 @@ const routes = [
             keepAlive: true
 
         }
-    }, 
-    
+    },
+
     {
         path: '/productDetail',
         component: ProductDetail,
@@ -587,6 +610,15 @@ const routes = [
             keepAlive: true
         }
     },
+{
+        path: '/StoreNewhm',
+        component: StoreNewhm,
+        meta: {
+            title: '服务',
+            // keepAlive: true
+        }
+    },
+
     {
         path: '/JingdongChannel',
         component: JingdongChannel,

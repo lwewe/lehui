@@ -14,13 +14,21 @@
 
     <!-- 大分类（横向滚动） -->
     <div class="top-category-bar" v-if="topCategories.length > 0">
-      <div class="category-scroll" ref="topCategoryScroll">
-        <div class="cat-item" :class="{ active: activeTopId === 0 && activeSubId === 0 }" @click="changeTopCategory(0)">
-          全部
+      <div class="category-bar-inner">
+        <div class="category-scroll" ref="topCategoryScroll">
+          <div class="cat-item" v-for="cat in topCategories" :key="cat.id" :class="{ active: activeTopId === cat.id }"
+            @click="changeTopCategory(cat.id)">
+            <img v-if="cat.img" class="cat-img" :src="cat.img" mode="aspectFit" alt="" />
+            <span class="cat-name">{{ cat.title }}</span>
+          </div>
         </div>
-        <div class="cat-item" v-for="cat in topCategories" :key="cat.id" :class="{ active: activeTopId === cat.id }"
-          @click="changeTopCategory(cat.id)">
-          {{ cat.title }}
+
+        <!-- ✅ 固定在最右侧的「全部」：点一下展开/收起全部分类面板 -->
+        <div class="bar-all-btn top-all-btn" :class="{ active: activeTopId === 0 }" @click="toggleCategoryPanel('top')">
+          
+          <span>全部</span>
+          <img src="../../assets/dw.png" style="width: 10px;" alt="">
+          <!-- <van-icon name="apps-o" size="20px" /> -->
         </div>
       </div>
     </div>
@@ -48,16 +56,47 @@
           </div>
         </div>
       </div>
-      <!-- ✅ 小分类（横向滚动） -->
+
+      <!-- 小分类（横向滚动） -->
       <div class="sub-category-bar" v-if="subCategories.length > 0">
-        <div class="sub-scroll">
-          <div class="sub-item" :class="{ active: activeSubId === 0 }" @click="changeSubCategory(0)">
-            全部
+        <div class="category-bar-inner">
+          <div class="sub-scroll">
+            <div class="sub-item" v-for="sub in subCategories" :key="sub.id" :class="{ active: activeSubId === sub.id }"
+              @click="changeSubCategory(sub.id)">
+              <img v-if="sub.img" class="sub-img" :src="sub.img" mode="aspectFit" alt="" />
+              <span class="sub-name">{{ sub.title }}</span>
+            </div>
           </div>
-          <div class="sub-item" v-for="sub in subCategories" :key="sub.id" :class="{ active: activeSubId === sub.id }"
-            @click="changeSubCategory(sub.id)">
-            {{ sub.title }}
+
+          <!-- ✅ 固定在最右侧的「全部」：点一下展开/收起当前一级下的全部分类 -->
+          <div class="bar-all-btn sub-all-btn" :class="{ active: activeSubId === 0 }" @click="toggleCategoryPanel('sub')">
+             <span>全部</span>
+            <!-- <van-icon name="apps-o" size="15px" /> -->
+           
           </div>
+        </div>
+      </div>
+
+      <!-- ✅ 全部分类面板（点「全部」展开，点「收起」关闭） -->
+      <div class="all-category-panel" :class="{subClss:categoryPanelType === 'sub'}" v-if="showCategoryPanel">
+        <div class="panel-grid">
+          <!-- 全部商品 -->
+          <div class="panel-item" @click="selectAllFromPanel">
+            <div class="panel-icon panel-all">全</div>
+            <div class="panel-name">全部</div>
+          </div>
+          <!-- 各分类 -->
+          <div class="panel-item" v-for="(item, index) in panelCategories" :key="item.id" @click="selectPanelCategory(item)">
+            <div class="panel-icon"  >
+              <img v-if="item.img" :src="item.img" alt="" />
+              <span v-else>{{ (item.title || item.name || '').charAt(0) }}</span>
+            </div>
+            <div class="panel-name">{{ item.title || item.name }}</div>
+          </div>
+        </div>
+        <div class="panel-footer" @click="showCategoryPanel = false">
+          <span>收起</span>
+          <van-icon name="arrow-up" size="14px" />
         </div>
       </div>
 
@@ -93,27 +132,32 @@
           </div>
           <div class="title">全部筛选</div>
 
-          <!-- 价格筛选 -->
-          <div class="listItem">
-            <div class="titleItem">价格筛选</div>
-            <div class="priceBox">
-              <div class="inpBox">
-                <input class="inp" type="number" v-model="bottomPrice" placeholder="最低价">
-              </div>
-              <div>-</div>
-              <div class="inpBox">
-                <input class="inp" type="number" v-model="highestPrice" placeholder="最高价">
-              </div>
+          <!-- 品牌筛选 -->
+          <div class="listItem" v-if="brandGroups.length > 0">
+            <div class="titleItem">品牌</div>
+            <div class="brandSearch">
+              <input v-model="brandKeyword" class="brandSearchInput" placeholder="搜索品牌" />
             </div>
-          </div>
 
-          <!-- 平台筛选 -->
-          <div class="listItem">
-            <div class="titleItem">平台</div>
-            <div class="brandBox">
-              <div class="sortText" v-for="item in platformList" :key="item.id"
-                :class="{ sortText1: platform == item.id }" @click="changePlatform(item.id)">
-                {{ item.name }}
+            <div class="brandListWrap">
+              <div class="brandGroupBox" ref="brandGroupBox">
+                <div class="brandGroup" v-for="group in filteredBrandGroups" :key="group.letter"
+                  :data-letter="group.letter">
+                  <div class="letter">{{ group.letter }}</div>
+                  <div class="brandBox">
+                    <div class="sortText" v-for="item in group.list" :key="item.id"
+                      :class="{ sortText1: brandId == item.id }" @click="changeBrand(item.id)">
+                      {{ item.name }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 右侧字母索引 -->
+              <div class="letterIndex">
+                <div v-for="letter in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ#'.split('')" :key="letter"
+                  :class="{ active: activeLetter === letter, disabled: !availableLetters.includes(letter) }"
+                  @click="scrollToLetter(letter)">{{ letter }}</div>
               </div>
             </div>
           </div>
@@ -146,7 +190,7 @@
 <script>
 import axios from 'axios';
 import NewShopList from "@/components/NewShopList.vue";
-import { searchProduct, productList, categoryList } from "@/api/lhjdtm";
+import { searchProduct, productList, categoryList, ProductBrandList } from "@/api/lhjdtm";
 
 export default {
   name: "ProductList",
@@ -161,9 +205,12 @@ export default {
       activeTopId: 0,         // 当前大分类 id（0=全部）
       activeSubId: 0,         // 当前小分类 id（0=全部）
       shop_cate_id: '',
+      // ✅ 全部分类面板
+      showCategoryPanel: false,
+      categoryPanelType: 'top',   // 'top'=展示一级分类 / 'sub'=展示当前一级下的二级分类
       searchValue: "",
-      bottomPrice: "",
-      highestPrice: "",
+      bottomPrice: "", brandId: '',
+      highestPrice: "", brandGroups: [],
       showAll: false,
       showSynthesis: false,
       platform: 0, jd_type: '',     // 新增
@@ -195,6 +242,8 @@ export default {
       cancelTokenSource: null,
       timer: null,
       total: 0,
+      brandKeyword: '',
+      activeLetter: '',        // ✅ 补上：右侧字母索引当前高亮字母（之前漏定义）
     }
   },
   computed: {
@@ -204,12 +253,140 @@ export default {
     },
     priceActive() {
       return this.synthesisId === 4 || this.synthesisId === 5;
+    },
+    // ✅ 面板里要展示的分类：一级=全部一级；二级=当前一级下的二级
+    panelCategories() {
+      if (this.categoryPanelType === 'sub' && this.activeTopId !== 0) {
+        const top = this.categoryList.find(c => Number(c.id) === Number(this.activeTopId));
+        if (top && top.children && top.children.length) return top.children;
+      }
+      return this.topCategories;
+    },
+    filteredBrandGroups() {
+      const kw = this.brandKeyword.trim().toLowerCase();
+      if (!kw) return this.brandGroups;
+      return this.brandGroups.map(g => ({
+        ...g, list: g.list.filter(b => b.name.toLowerCase().includes(kw))
+      })).filter(g => g.list.length > 0);
+    },
+    availableLetters() {
+      return this.filteredBrandGroups.map(g => g.letter);
     }
+
   },
   methods: {
+    // ✅ 点右侧「全部」：展开/收起分类面板
+    toggleCategoryPanel(type) {
+      if (this.showCategoryPanel && this.categoryPanelType === type) {
+        this.showCategoryPanel = false;
+      } else {
+        this.categoryPanelType = type;
+        this.showCategoryPanel = true;
+      }
+    },
+
+    // ✅ 面板图标配色（循环使用，贴近截图彩色图标）
+    panelIconColor(index) {
+      const colors = [
+        '#4EC4C4', '#F59A5B', '#C49A6C', '#F368A6',
+        '#5FCB8D', '#37C4C4', '#F86B6B', '#38A9E8',
+        '#FFB74D', '#EF6C9C', '#5C6BC0', '#26A69A',
+        '#EC6E6E', '#29B6C6', '#66BB6A', '#42A5F5',
+        '#AB47BC', '#FFA726', '#8D6E63', '#78909C'
+      ];
+      return colors[index % colors.length];
+    },
+
+    // ✅ 面板里点「全部」：恢复全选并收起
+    selectAllFromPanel() {
+      this.showCategoryPanel = false;
+      if (this.categoryPanelType === 'sub') {
+        this.changeSubCategory(0);
+      } else {
+        this.changeTopCategory(0);
+      }
+    },
+
+    // ✅ 面板里点某个分类：选中它并收起
+    selectPanelCategory(item) {
+      this.showCategoryPanel = false;
+      if (this.categoryPanelType === 'sub') {
+        if (this.activeSubId === item.id) return;
+        this.activeSubId = item.id;
+        this.shop_cate_id = item.id;
+        this.fetchData(true);
+      } else {
+        this.changeTopCategory(item.id);
+      }
+    },
+
+    scrollToLetter(letter) {
+      if (!this.availableLetters.includes(letter)) return;
+      this.activeLetter = letter;
+      this.$nextTick(() => {
+        const box = this.$refs.brandGroupBox;
+        const el = box && box.querySelector('[data-letter="' + letter + '"]');
+        if (box && el) box.scrollTop = el.offsetTop;
+      });
+    },
+
+    // ✅ 获取品牌列表，按 A/B/C/D 分组
+    async fetchBrandList() {
+      try {
+        const res = await ProductBrandList({});
+        if (res.code != 200) return;
+        const data = res.data && res.data.data ? res.data.data : res.data;
+
+        let groups = [];
+        if (Array.isArray(data)) {
+          // 格式1：平铺数组 [{ id, name, letter:'A' }]
+          const map = {};
+          data.forEach(b => {
+            const letter = (b.letter || b.initial || b.abc || '#').toString().toUpperCase().charAt(0);
+            if (!map[letter]) map[letter] = [];
+            map[letter].push({ id: b.id, name: b.name || b.brand_name || b.title });
+          });
+          groups = Object.keys(map).sort().map(k => ({ letter: k, list: map[k] }));
+        } else if (data && typeof data === 'object') {
+          // 格式2：分组对象 { A:[{id,name}], B:[...] }
+          groups = Object.keys(data).sort((a, b) => {
+            if (a === '#') return 1;    // # 放最后
+            if (b === '#') return -1;
+            return a.localeCompare(b);
+          }).map(k => ({
+            letter: k,
+            list: (data[k] || []).map(b => ({
+              id: b.id,
+              name: b.name || b.brand_name || b.title
+            }))
+          }));
+        }
+        this.brandGroups = groups;
+      } catch (err) {
+        console.error('获取品牌失败:', err);
+      }
+    },
+
+    // ✅ 点击品牌（再点一次取消选中）
+    changeBrand(id) {
+      this.brandId = (this.brandId == id) ? '' : id;
+    },
+
+
+    buildFilterParams() {
+      const p = {};
+      if (this.platform !== 0) p.platform = this.platform;                       // 0=全部不过滤
+      if (this.platform === 1 && this.jd_type != null && this.jd_type !== '') p.jd_type = this.jd_type; // 仅京东系有效
+      if (this.brandId !== '' && this.brandId != null) p.brand_id = this.brandId;
+      if (this.bottomPrice !== '' && this.bottomPrice != null) p.min_price = this.bottomPrice;
+      if (this.highestPrice !== '' && this.highestPrice !== null) p.max_price = this.highestPrice;
+      return p;
+    },
     scrollToActiveTop(retry = 0) {
       this.$nextTick(() => {
-        const container = this.$refs.topCategoryScroll;   // 必须在回调里
+        const container = this.$refs.topCategoryScroll;
+        // 选「全部」时没有 active 分类项，直接结束，避免无谓重试
+        if (this.activeTopId === 0) return;
         if (!container) {
           if (retry < 20) {
             setTimeout(() => this.scrollToActiveTop(retry + 1), 30);
@@ -277,8 +454,12 @@ export default {
             };
           });
 
-          // 3. 提取大分类
-          this.topCategories = this.categoryList.map(c => ({ id: c.id, title: c.title }));
+          // 3. 提取大分类（✅ 带上 img，模板才能显示图标）
+          this.topCategories = this.categoryList.map(c => ({
+            id: c.id,
+            title: c.title,
+            img: c.img
+          }));
 
           // 4. 处理选中状态
           if (this.searchValue && this.searchValue.trim()) {
@@ -408,7 +589,8 @@ export default {
       const hasKeyword = this.searchValue && this.searchValue.trim();
       const apiMethod = hasKeyword ? searchProduct : productList;
 
-      // 构建请求参数
+      // ✅ 构建请求参数：搜索/列表都带全部筛选
+      const filterParams = this.buildFilterParams();
       let params = {};
 
       if (hasKeyword) {
@@ -417,18 +599,10 @@ export default {
           keyword: this.searchValue.trim(),
           page: this.pageno,
           limit: 10,
+          sort: this.getSortType(),   // ✅ 补上：搜索也要按当前排序
+          order: this.getSortOrder(), // ✅
+          ...filterParams,
         };
-        if (this.platform !== 0) {
-          params.platform = this.platform;
-        }
-        // if (this.jd_type !== '' && this.jd_type !== null) {
-        //   params.jd_type = this.jd_type;
-        // }
-
-        if (this.jd_type != null && this.jd_type !== '') {
-          params.jd_type = this.jd_type;
-        }
-
       } else {
         params = {
           has_shop_cate: 1,
@@ -436,27 +610,10 @@ export default {
           limit: 10,
           sort: this.getSortType(),
           order: this.getSortOrder(),
+          ...filterParams,
         };
-
         if (this.shop_cate_id) {
           params.shop_cate_id = this.shop_cate_id;
-        }
-        if (this.platform !== 0) {
-          params.platform = this.platform;
-        }
-
-        // if (this.jd_type !== '' && this.jd_type !== null) {
-        //   params.jd_type = this.jd_type;
-        // }
-
-        if (this.jd_type != null && this.jd_type !== '') {
-          params.jd_type = this.jd_type;
-        }
-        if (this.bottomPrice) {
-          params.min_price = this.bottomPrice;
-        }
-        if (this.highestPrice) {
-          params.max_price = this.highestPrice;
         }
       }
 
@@ -466,18 +623,10 @@ export default {
       apiMethod(params).then(res => {
         this.isFetching = false;
 
-        console.log('=== 接口返回 ===');
-        console.log('完整 res:', res);
-        console.log('res.code:', res.code);
-        console.log('res.data:', res.data);
-        console.log('res.data.data:', res.data && res.data.data);
-
         if (res.code == 200) {
           const data = res.data || {};
           const list = data.data || [];
           this.total = data.total || 0;
-
-          console.log('获取到商品数量:', list.length);
 
           // 处理空数据
           if (!list || list.length === 0) {
@@ -500,8 +649,6 @@ export default {
               }
             });
           }
-
-          console.log('当前商品列表:', this.shopList);
 
           // 判断是否还有更多
           if (this.shopList.length >= this.total || list.length < 10) {
@@ -558,6 +705,8 @@ export default {
     // 切换平台
     changePlatform(id) {
       this.platform = id;
+      if (id !== 1) this.jd_type = '';   // ✅ 切非京东时清空细分
+
       this.activeTopId = 0;
       this.activeTopObj = null;   // 加上
       this.activeSubId = 0;
@@ -584,6 +733,8 @@ export default {
     // 重置筛选
     resetting() {
       this.platform = 0;
+      this.jd_type = '';      // ✅
+      this.brandId = '';      // ✅
       this.bottomPrice = '';
       this.highestPrice = '';
       this.fetchData(true);
@@ -608,22 +759,27 @@ export default {
     const kw = this.$route.query.keyword || '';
     this.searchValue = kw;
 
-    // cate_id
-    // const cateId = this.$route.query.cate_id || this.$route.query.id || '';
-    // this.cate_id = cateId ? Number(cateId) : '';
-
     const shopCateId = this.$route.query.shop_cate_id || '';
     this.shop_cate_id = shopCateId ? Number(shopCateId) : '';
     console.log('productList 读到 shop_cate_id =', shopCateId, '类型 =', typeof shopCateId)
     console.log('this.shop_cate_id =', this.shop_cate_id)
     // platform
-        const platform = this.$route.query.platform;
+    const platform = this.$route.query.platform;
     this.platform = (platform !== undefined && platform !== '') ? Number(platform) : 0;
 
     const jdType = this.$route.query.jd_type;
     this.jd_type = (jdType !== undefined && jdType !== '') ? Number(jdType) : '';
 
+    // ✅ 新增：品牌 / 价格区间
+    const brandId = this.$route.query.brand_id;
+    this.brandId = (brandId !== undefined && brandId !== '') ? Number(brandId) : '';
+    const minPrice = this.$route.query.min_price;
+    const maxPrice = this.$route.query.max_price;
+    this.bottomPrice = (minPrice !== undefined && minPrice !== '') ? String(minPrice) : '';
+    this.highestPrice = (maxPrice !== undefined && maxPrice !== '') ? String(maxPrice) : '';
+
     await this.fetchCategory();
+    this.fetchBrandList();
     this.fetchData(true);
 
     // 分类树拿到后，DOM 更新完，滚一次
@@ -634,39 +790,36 @@ export default {
 
   watch: {
     '$route.query': {
-      handler(newQuery, oldQuery) {
+      handler(newQuery) {
         const kw = newQuery.keyword || '';
-        this.searchValue = kw;   // 有就赋值，没有就清空
-
-        // const raw = newQuery.cate_id || newQuery.id || '';
-        // const newId = raw ? Number(raw) : '';
-
         const raw = newQuery.shop_cate_id || '';
         const newId = raw ? Number(raw) : '';
 
-        // platform
-          const platform = newQuery.platform;
-        this.platform = (platform !== undefined && platform !== '') ? Number(platform) : 0;
-
+        const platform = newQuery.platform;
+        const newPlatform = (platform !== undefined && platform !== '') ? Number(platform) : 0;
         const jdType = newQuery.jd_type;
-        this.jd_type = (jdType !== undefined && jdType !== '') ? Number(jdType) : '';
+        const newJdType = (jdType !== undefined && jdType !== '') ? Number(jdType) : '';
+        const brandId = newQuery.brand_id;
+        const newBrandId = (brandId !== undefined && brandId !== '') ? Number(brandId) : '';
+        const minPrice = newQuery.min_price;
+        const maxPrice = newQuery.max_price;
+        const newMinPrice = (minPrice !== undefined && minPrice !== '') ? String(minPrice) : '';
+        const newMaxPrice = (maxPrice !== undefined && maxPrice !== '') ? String(maxPrice) : '';
 
-        // cate_id 相同、没有 keyword 时，不重复请求
+        // 全部筛选条件都没变才跳过
         if (
-          // newId === this.cate_id &&
-          // oldQuery !== undefined &&
-          // !kw &&
-          // newQuery.cate_id === oldQuery.cate_id
+          newId === this.shop_cate_id && !kw &&
+          newPlatform === this.platform && newJdType === this.jd_type &&
+          newBrandId === this.brandId &&
+          newMinPrice === this.bottomPrice && newMaxPrice === this.highestPrice
+        ) return;
 
-          newId === this.shop_cate_id &&
-          oldQuery !== undefined &&
-          !kw &&
-          newQuery.shop_cate_id === oldQuery.shop_cate_id
-
-        ) {
-          return;
-        }
-
+        this.searchValue = kw;
+        this.platform = newPlatform;
+        this.jd_type = newJdType;
+        this.brandId = newBrandId;
+        this.bottomPrice = newMinPrice;
+        this.highestPrice = newMaxPrice;
         this.shop_cate_id = newId;
 
         if (kw && !newId) {
@@ -678,10 +831,9 @@ export default {
         }
 
         this.fetchData(true);
-        this.$nextTick(() => {
-          this.scrollToActiveTop();
-        });
+        this.$nextTick(() => { this.scrollToActiveTop(); });
       }
+
     }
   },
   activated() {
@@ -743,7 +895,7 @@ export default {
 
 .topBox .pTop {
   background-color: #ffffff;
-  padding: 10px 8px 6px 0;
+  padding: 10px 8px 2px 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -760,7 +912,7 @@ export default {
   background: #ffffff;
   display: flex;
   justify-content: space-between;
-  margin-top: 10px;
+  margin-top: 2px;
   padding: 8px 20px;
 }
 
@@ -785,8 +937,6 @@ export default {
 }
 
 .centerBox .listBox {
-  // display: flex;  
-  // flex-wrap: wrap;
   display: block;
   justify-content: space-between;
   margin-top: 10px;
@@ -958,14 +1108,59 @@ export default {
 }
 
 
+/* ============ 分类栏：滚动区 + 右侧固定「全部」 ============ */
+.category-bar-inner {
+  display: flex;
+  align-items: flex-start;
+  background: #fff;
+  padding-bottom: 4px;
+}
+
+/* 右侧固定「全部」按钮 */
+.bar-all-btn {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #333;
+  transition: all 0.2s;
+
+  span {
+    margin-top: 2px;
+  }
+
+  &.active {
+    color: #777777;
+    // font-weight: 600;
+  }
+}
+
+.top-all-btn {
+  width: 22px;
+  text-align: center;
+  padding: 2px 0 8px;
+  font-size: 12px;
+  box-shadow: -6px 0 8px -4px rgba(0, 0, 0, 0.06); /* 左侧轻微阴影，和滚动区区分 */
+}
+
+.sub-all-btn {
+  width: 22px;text-align: center;
+  padding: 5px 0;
+  font-size: 12px;
+  box-shadow: -6px 0 8px -4px rgba(0, 0, 0, 0.06);
+}
+
 /* ============ 大分类横向滚动 ============ */
 .top-category-bar {
-  background: #fff;
-  padding: 1px 0 8px 0;
+  padding:  0;
   overflow: hidden;
-  border-bottom: 1px solid #f5f5f5;
+  // border-bottom: 1px solid #f5f5f5;
 
   .category-scroll {
+    flex: 1;
+    min-width: 0;
     display: flex;
     overflow-x: auto;
     white-space: nowrap;
@@ -980,18 +1175,52 @@ export default {
 
     .cat-item {
       flex-shrink: 0;
-      padding: 6px 14px;
-      font-size: 14px;
+      padding: 2px 6px;
+      font-size: 12px;
       color: #333;
-      background: #f7f7f7;
-      border-radius: 16px;
       cursor: pointer;
       transition: all 0.2s;
 
+      /* 图标 + 文字上下排列 */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+
+      .cat-img {
+        width: 32px;
+        height: 32px;
+        object-fit: contain;
+        border-radius: 50%;
+        background: #fff;
+        padding: 2px;
+        box-sizing: border-box;
+        transition: all 0.2s;
+      }
+
+      .cat-name {
+        margin-top: 4px;
+        color: #222222;
+        background-color: #f7f7f7;
+        padding: 2px 6px;
+        border-radius: 10px;
+        transition: all 0.2s;
+      }
+
+      /* 选中：图标放大描边 + 文字高亮 */
       &.active {
-        background: #ED3137;
-        color: #fff;
-        font-weight: 600;
+        .cat-img {
+          background: #fff;
+          transform: scale(1.12);
+          box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85);
+        }
+
+        .cat-name {
+          color: #fff;
+          background: linear-gradient(135deg, #FF6B6B, #ED3137);
+          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+        }
       }
     }
   }
@@ -999,11 +1228,12 @@ export default {
 
 /* ============ 小分类横向滚动 ============ */
 .sub-category-bar {
-  background: #fff;
-  padding: 8px 0;
+  padding: 0px 0px 4px 0;
   overflow: hidden;
 
   .sub-scroll {
+    flex: 1;
+    min-width: 0;
     display: flex;
     overflow-x: auto;
     white-space: nowrap;
@@ -1026,11 +1256,217 @@ export default {
       cursor: pointer;
       transition: all 0.2s;
 
-      &.active {
-        background: #FFE3E0;
-        color: #CD3638;
-        font-weight: 600;
+      /* 图标 + 文字上下排列 */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+
+      .sub-img {
+        width: 20px;
+        height: 20px;
+        object-fit: contain;
+        border-radius: 50%;
+        background: #fff;
+        padding: 2px;
+        box-sizing: border-box;
+        transition: all 0.2s;
       }
+
+      .sub-name {
+        line-height: 1.2;
+        transition: all 0.2s;
+        padding-top: 5px;
+        font-size: 12px;
+      }
+
+      /* 选中：整块高亮 + 图标放大描边 */
+      &.active {
+        background: linear-gradient(135deg, #FFE3E0, #FFD0CC);
+        color: #CD3638;
+
+        .sub-img {
+          transform: scale(1.12);
+          box-shadow: 0 0 0 2px rgba(205, 54, 56, 0.25);
+        }
+
+        .sub-name {
+          color: #CD3638;
+        }
+      }
+    }
+  }
+}
+
+/* ============ 全部分类网格面板 ============ */
+.all-category-panel {
+  position: absolute;
+  width: 94%;
+  left: 0;
+  top: 50px;
+  background: #fff;
+  padding: 16px 10px 8px;
+
+  .panel-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px 0;
+  }
+
+  .panel-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+
+    .panel-icon {
+      width: 34px;
+      height:34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 16px;
+      overflow: hidden;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+      }
+    }
+
+    .panel-all {
+      background: linear-gradient(135deg, #FF6B6B, #ED3137);
+    }
+
+    .panel-name {
+      margin-top: 6px;
+      font-size: 12px;
+      color: #333;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+  }
+
+  .panel-footer {
+    margin-top: 18px;
+    padding: 10px 0 4px;
+    text-align: center;
+    color: #999;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+  }
+}
+.all-category-panel.subClss{
+ 
+  top: 127px !important;
+}
+.brandSearch {
+  margin-top: 10px;
+}
+
+.brandSearchInput {
+  width: 100%;
+  box-sizing: border-box;
+  height: 34px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 30px;
+  background: #F6F6F6;
+  font-size: 13px;
+}
+
+.brandGroupBox {
+  margin-top: 12px;
+  max-height: 50vh;
+  /* 原来 220px 太矮，加高 */
+  overflow-y: auto;
+}
+
+.brandGroup {
+  margin-bottom: 10px;
+
+  .letter {
+    position: sticky;
+    /* 字母吸顶，滚动时能看到当前在哪个字母 */
+    top: 0;
+    z-index: 2;
+    background: #fff;
+    color: #999;
+    font-size: 13px;
+    font-weight: bold;
+    padding: 4px 0;
+    border-bottom: 1px solid #eee;
+  }
+}
+
+/* 品牌名太长会撑破布局，截断成省略号 */
+.brandBox .sortText {
+  flex: 0 0 calc(25% - 8px);
+  min-width: 0;
+  padding: 5px 8px;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.no-brand {
+  text-align: center;
+  color: #999;
+  font-size: 12px;
+  padding: 20px 0;
+}
+
+.brandListWrap {
+  position: relative;
+}
+
+.brandGroupBox {
+  max-height: 50vh;
+  overflow-y: auto;
+  padding-right: 24px;
+  position: relative;
+  /* 关键！offsetTop 靠它算 */
+}
+
+.letterIndex {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 9;
+  font-size: 11px;
+  line-height: 14px;
+  user-select: none;
+
+  div {
+    cursor: pointer;
+    color: #666;
+
+    &.active {
+      color: #CD3638;
+      font-weight: bold;
+    }
+
+    &.disabled {
+      color: #ddd;
+      pointer-events: none;
     }
   }
 }

@@ -53,9 +53,9 @@
                       <span v-if="gIndex === 0" class="mini-platform-tag">
                         {{ formatPlatformTag(sub.platform, sub.jd_type) }}
                       </span>
-                      {{ goods.title }} 
+                      {{ goods.title }}
                     </div>
-                     
+
                     <div class="specs1" v-if="goods.spec_name"><span class="specs">{{ goods.spec_name }}</span></div>
                     <div class="price-line">
                       <span class="unit-price"><span style="font-size: 10px;">￥</span>{{ goods.sell_price }}</span>
@@ -105,12 +105,12 @@
                   </template>
                   <template v-if="[15, 16].includes(Number(item.platform))">
                     <div class="fs12 df jcsb ">
-                      <span>{{ goods.title }}</span> <span class="cl8">{{ item.status_name }}</span>
+                      <span class="fs14">{{ goods.title }}</span> <span class="cl8">{{ item.status_name }}</span>
                     </div>
                   </template>
-                 <template v-if="[1,2,5,7,22].includes(Number(item.platform))">
+                  <template v-if="[1, 2, 5, 7,12, 22].includes(Number(item.platform))">
                     <div class="fs12  txtrg">
-                       <span class="cl8">{{ item.status_name }}</span>
+                      <span class="cl8">{{ item.status_name }}</span>
                     </div>
                   </template>
                   <div class="specs1" v-if="goods.spec_name"><span class="specs">{{ goods.spec_name }}</span></div>
@@ -210,7 +210,7 @@
                     @click.stop="handleActiondc('viewDetail', item, $event)">点餐详情</button>
 
                   <button
-                    v-if="!item.isGroup && item.platform != 21 && item.platform != 15 && item.platform != 17 && item.platform != 18"
+                    v-if="!item.isGroup && item.platform != 21 && item.platform != 15 && item.platform != 16 && item.platform != 17 && item.platform != 18"
                     class="btn" @click.stop="handleAction('viewLogistics', item, $event)">查看物流</button>
 
                 </template>
@@ -627,10 +627,12 @@ export default {
     goDetail(item) {
       console.log(item)
       if (item.platform == 15) {
+        this.$router.push({ path: '/orderDetailzfm', query: { order_id: JSON.stringify(item)} });
         return false
       }
 
       if (item.platform == 16) {
+        this.$router.push({ path: '/orderDetailzfmsc', query: { order_id: JSON.stringify(item) } });
         return false
       }
 

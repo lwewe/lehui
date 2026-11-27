@@ -83,6 +83,12 @@
           <span>订单金额：</span>
           <span><span style="font-size: 10px;">￥</span>{{ orderInfo.total_fee || '0.00' }}</span>
         </div>
+
+         <div class="pay-info-row" v-if="showServiceFee">
+          <span>服务费：</span>
+          <span style="color: #e6a23c;"><span style="font-size: 10px;">￥</span>{{ orderInfo.service_fee }}</span>
+        </div>
+        
         <div class="pay-info-row" v-if="payInfo.dkprice && payInfo.dkprice !== '0.00'">
           <span>卡支付金额：</span>
           <span style="color: #d32f2f;"><span style="font-size: 10px;">￥</span>{{ payInfo.dkprice }}</span>
@@ -166,6 +172,12 @@ export default {
     };
   },
   computed: {
+        // 4饿了么 / 5美团外卖 / 6美食团购 / 7美团小象 显示服务费
+    showServiceFee() {
+      return ['4', '5', '6', '7'].includes(String(this.orderType))
+        && Number(this.orderInfo.service_fee) > 0;
+    },
+
     // ✅ 微信支付选项是否露出
     wxPayVisible() {
       return !this.isCardOnly;
@@ -280,10 +292,33 @@ export default {
 
     // 显示规则
     showRule() {
+      const tips = [
+        '**实际支付金额可能高于输入金额，差额为手续费，请以支付页面显示为准**'
+      ];
+      const msg = (this.cardOnly
+        ? [
+          '1. 本商户仅支持乐汇卡支付，请选余额充足的卡',
+          '2. 卡内余额需 ≥ 订单金额',
+          '3. 支付需验证6位支付密码'
+        ]
+        : [
+          '1. 优先用乐汇卡抵扣，余额不足自动「卡+微信」组合支付',
+          '2. 未选卡则微信支付全额',
+          '3. 请在倒计时结束前完成支付'
+        ]
+      ).concat(tips).join('\n');
+
       this.$dialog.alert({
         title: '支付规则',
-        message: '1. 请选择要使用的乐汇卡\n2. 卡内余额足够时，直接使用卡支付\n3. 卡内余额不足时，自动使用卡+微信组合支付\n4. 未选择卡时，使用微信支付'
+        message: msg,
+        messageAlign: 'left'
       });
+
+      // this.$dialog.alert({
+      //   messageAlign: 'left',
+      //   title: '支付规则',
+      //   message: '1. 请选择要使用的乐汇卡\n2. 卡内余额足够时，直接使用卡支付\n3. 卡内余额不足时，自动使用卡+微信组合支付\n4. 未选择卡时，使用微信支付'
+      // });
     },
 
     // 获取订单信息

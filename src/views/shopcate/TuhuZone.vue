@@ -3,7 +3,7 @@
     <!-- 1. 顶部 Banner -->
     <div class="top-banner-area">
       <div style="padding: 10px;">
-        <img class="banner-img" :src="bannerImg" alt="途虎养车Banner" />
+        <img class="banner-img" src="http://lh.bjyxfl.com/webIndex/imgs/th1.png" alt="途虎养车Banner" />
       </div>
     </div>
 
@@ -14,7 +14,7 @@
     </div>
 
     <!-- 3. Tab 切换：品牌直充 / 电子卡券 -->
-    <div class="tab-container">
+    <!-- <div class="tab-container">
       <div class="tab-item" :class="{ active: activeTab === 0 }" @click="switchTab(0)">
         品牌直充
         <span class="tab-count" v-if="directCount">{{ directCount }}</span>
@@ -23,10 +23,10 @@
         电子卡券
         <span class="tab-count" v-if="cardCount">{{ cardCount }}</span>
       </div>
-    </div>
+    </div> -->
 
     <!-- 4. 搜索栏（可选） -->
-    <div class="search-bar">
+    <div class="search-bar" style="display: none;">
       <input class="search-input" v-model="keyword" placeholder="搜索途虎商品" @confirm="fetchProducts" />
       <span class="search-btn" @click="fetchProducts">搜索</span>
     </div>
@@ -54,7 +54,9 @@
           <div class="goods-img-wrap">
             <div class="face-block">
               <!-- <div class="face-symbol">¥</div> -->
-              <div class="face-value">{{ item.item_type_text }}</div>
+              <img src="http://lh.bjyxfl.com/webIndex/imgs/th2.png" alt="" style="width: 100%;
+    object-fit: cover;">
+              <!-- <div class="face-value">{{ item.item_type_text }}</div> -->
             </div>
             <!-- 停售遮罩 -->
             <div class="sold-out-mask" v-if="item.status !== 1">停售</div>
@@ -64,7 +66,7 @@
             <div class="goods-name">{{ item.title }}</div>
 
             <!-- 类型标签 -->
-            <div class="tag-row">
+            <div class="tag-row" style="display: none;">
               <span class="type-tag" :class="item.item_type === 0 ? 'direct' : 'card'">
                 {{ item.item_type === 0 ? '品牌直充' : '电子卡券' }}
               </span>
@@ -134,7 +136,7 @@
 
           <!-- 接口没有 content，用默认文案 -->
           <div class="sysm-content" v-else>
-           💡 请您一定核对充值账号， 充值后不可退。
+            💡 请您一定核对充值账号， 充值后不可退。
           </div>
 
         </div>
@@ -212,14 +214,14 @@ export default {
   },
 
   methods: {
-      getIndex() {
+    getIndex() {
       return getIndexList().then(res => {
         if (res.code == 200) {
-         
-         const  imgs =   res.data.tubiao.filter(item => item.id == 15)
-         console.log('imgs')
-         console.log(imgs)
-         this.bannerImg =  imgs[0].banner
+
+          const imgs = res.data.tubiao.filter(item => item.id == 15)
+          console.log('imgs')
+          console.log(imgs)
+          this.bannerImg = imgs[0].banner
         }
       })
     },
@@ -377,7 +379,7 @@ export default {
 
 <style scoped lang="less">
 .tuhu-zone-page {
-  background: #f7f7f7;
+  background: #f8f8f8;
   min-height: 100vh;
 }
 
@@ -443,7 +445,7 @@ export default {
     padding: 10px 0;
     font-size: 14px;
     color: #666;
-    border-radius:0px;
+    border-radius: 0px;
     cursor: pointer;
     transition: all 0.2s;
     position: relative;
@@ -502,16 +504,15 @@ export default {
   margin: 0 10px 10px;
   font-size: 12px;
   color: #666;
-  background: #f0f7ff;
+  background: #e7f0f9;
   padding: 8px 10px;
-  border-radius: 8px;
+  border-radius: 6px;
 }
 
 /* ================= 6. 商品网格 ================= */
-.goods-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+ .goods-grid {
+  column-count: 2;          /* 两列瀑布流 */
+  column-gap: 12px;
   padding: 0 10px 60px 10px;
 
   .goods-item {
@@ -521,12 +522,26 @@ export default {
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
     cursor: pointer;
 
+    /* ★ 瀑布流关键：不被拆分到两列，卡片之间用 margin 留间距 */
+    break-inside: avoid;
+    -webkit-column-break-inside: avoid;
+    display: inline-block;
+    width: 100%;
+    margin-bottom: 12px;
+
     .goods-img-wrap {
       position: relative;
       width: 100%;
-      aspect-ratio: 1/1;
+      aspect-ratio: 1/1;    /* 图片区固定正方形，不再等高拉伸 */
       background: #f0f0f0;
       overflow: hidden;
+
+      .face-block img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
 
       .goods-img {
         width: 100%;
@@ -556,12 +571,8 @@ export default {
       font-weight: 500;
       color: #333;
       margin-bottom: 6px;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      overflow: hidden;
       line-height: 1.4;
-      -webkit-box-orient: vertical;
-      // min-height: 39px;
+      word-break: break-all;   /* 文字全部显示，不截断 */
     }
 
     .tag-row {
@@ -579,15 +590,8 @@ export default {
       line-height: 14px;
       padding: 1px 4px;
 
-      &.direct {
-        background-color: #ed2e33;
-        color: #fff;
-      }
-
-      &.card {
-        background-color: #ff9500;
-        color: #fff;
-      }
+      &.direct { background-color: #ed2e33; color: #fff; }
+      &.card { background-color: #ff9500; color: #fff; }
     }
 
     .face-tag {
@@ -608,16 +612,8 @@ export default {
 
     .price-box {
       color: #d32f2f;
-
-      .symbol {
-        font-size: 12px;
-        font-weight: bold;
-      }
-
-      .price {
-        font-size: 16px;
-        font-weight: bold;
-      }
+      .symbol { font-size: 12px; font-weight: bold; }
+      .price { font-size: 16px; font-weight: bold; }
     }
 
     .add-btn {
@@ -634,10 +630,7 @@ export default {
       font-weight: 500;
       cursor: pointer;
 
-      &.disabled {
-        background: #ccc;
-        cursor: not-allowed;
-      }
+      &.disabled { background: #ccc; cursor: not-allowed; }
     }
   }
 }
